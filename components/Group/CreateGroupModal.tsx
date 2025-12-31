@@ -1,6 +1,7 @@
 import React from "react";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
+import { Dropdown } from "@/components/UI/Dropdown";
 import { MAX_GROUPS, CURRENCIES } from "@/constants";
 import { Currency } from "@/types";
 
@@ -66,22 +67,18 @@ export const CreateGroupModal = ({
 						<label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
 							Currency
 						</label>
-						<select
+						<Dropdown
 							value={selectedCurrency.code}
-							onChange={(e) => {
-								const currency = CURRENCIES.find(
-									(c) => c.code === e.target.value
-								);
+							onChange={(code) => {
+								const currency = CURRENCIES.find((c) => c.code === code);
 								if (currency) setSelectedCurrency(currency);
 							}}
-							className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white border-2 border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base touch-manipulation"
-						>
-							{CURRENCIES.map((currency) => (
-								<option key={currency.code} value={currency.code}>
-									{currency.symbol} {currency.name} ({currency.code})
-								</option>
-							))}
-						</select>
+							options={CURRENCIES.map((currency) => ({
+								value: currency.code,
+								label: `${currency.symbol} ${currency.name} (${currency.code})`,
+							}))}
+							placeholder="Select currency"
+						/>
 					</div>
 					<div className="flex gap-2 sm:gap-3">
 						<Button
