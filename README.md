@@ -26,28 +26,31 @@ A modern, user-friendly web application for splitting bills and expenses among g
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - pnpm (or npm/yarn)
 
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd splitbiller
 ```
 
-2. Install dependencies:
+1. Install dependencies:
+
 ```bash
 pnpm install
 ```
 
-3. Run the development server:
+1. Run the development server:
+
 ```bash
 pnpm dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+1. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Build for Production
 
@@ -108,12 +111,16 @@ splitbiller/
 ## Key Features Explained
 
 ### Balance Calculation
+
 The app calculates balances by:
+
 - Crediting the person who paid the full amount
 - Debiting each participant their share (amount ÷ number of participants)
 
 ### Settlement Algorithm
+
 The settlement feature uses a greedy algorithm to minimize the number of transactions needed:
+
 - Matches the largest creditor with the largest debtor
 - Continues until all debts are settled
 - Provides the most efficient payment path
@@ -121,5 +128,3 @@ The settlement feature uses a greedy algorithm to minimize the number of transac
 ## License
 
 This project is private and not licensed for public use.
-
-
