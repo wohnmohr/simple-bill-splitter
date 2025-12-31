@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Group, Currency } from "@/types";
 import { MAX_GROUPS, CURRENCIES } from "@/constants";
 import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
@@ -6,17 +6,19 @@ import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
 export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   // Load groups from localStorage on mount
   useEffect(() => {
     const loadedGroups = loadGroupsFromStorage();
     setGroups(loadedGroups);
+    hasLoadedRef.current = true;
     // Don't auto-select a group on refresh - show groups home instead
   }, []);
 
-  // Save groups to localStorage whenever groups change
+  // Save groups to localStorage whenever groups change (after initial load)
   useEffect(() => {
-    if (groups.length > 0) {
+    if (hasLoadedRef.current) {
       saveGroupsToStorage(groups);
     }
   }, [groups]);

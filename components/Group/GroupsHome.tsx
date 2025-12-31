@@ -1,5 +1,6 @@
 import { Group } from "@/types";
 import { MAX_GROUPS } from "@/constants";
+import { getGroupColorTheme } from "@/utils/colorThemes";
 
 interface GroupsHomeProps {
 	groups: Group[];
@@ -38,54 +39,68 @@ export const GroupsHome = ({
 					</button>
 				</div>
 			) : (
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-					{groups.map((group) => (
-						<div
-							key={group.id}
-							className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/50 p-4 sm:p-6 hover:shadow-xl active:shadow-lg transition-shadow cursor-pointer touch-manipulation"
-							onClick={() => onSelectGroup(group.id)}
-						>
-							<div className="flex items-start justify-between mb-3 sm:mb-4">
-								<div className="flex-1 min-w-0">
-									<h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 truncate">
-										{group.name}
-									</h3>
-									<div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
-										<span className="font-semibold">
-											{group.currency.symbol}
-										</span>
-										<span>{group.currency.code}</span>
+				<div className="flex flex-col gap-2 sm:gap-3">
+					{groups.map((group) => {
+						const theme = getGroupColorTheme(group.id);
+						return (
+							<div
+								key={group.id}
+								className={`bg-gradient-to-r ${theme.gradient} rounded-xl shadow-lg border-2 ${theme.border} p-3 sm:p-4 hover:shadow-xl active:shadow-lg transition-all cursor-pointer touch-manipulation group`}
+								onClick={() => onSelectGroup(group.id)}
+							>
+								<div className="flex items-center justify-between gap-3 sm:gap-4">
+									<div className="flex-1 min-w-0 flex items-center gap-3 sm:gap-4">
+										{/* Color accent bar */}
+										<div
+											className={`w-1.5 sm:w-2 h-12 sm:h-14 rounded-full bg-white/40 group-hover:bg-white/60 transition-colors shrink-0`}
+										/>
+										<div className="flex-1 min-w-0">
+											<h3 className="text-base sm:text-lg font-bold text-white truncate drop-shadow-sm">
+												{group.name}
+											</h3>
+											<div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-white/90 mt-1">
+												<div className="flex items-center gap-1">
+													<span className="font-semibold">
+														{group.members.length}
+													</span>
+													<span>
+														{group.members.length === 1 ? "member" : "members"}
+													</span>
+												</div>
+												<div className="w-1 h-1 rounded-full bg-white/60" />
+												<div className="flex items-center gap-1">
+													<span className="font-semibold">
+														{group.expenses.length}
+													</span>
+													<span>
+														{group.expenses.length === 1
+															? "expense"
+															: "expenses"}
+													</span>
+												</div>
+											</div>
+										</div>
 									</div>
-								</div>
-								<button
-									onClick={(e) => {
-										e.stopPropagation();
-										onDeleteGroup(group.id);
-									}}
-									className="text-red-500 hover:text-red-700 active:text-red-800 text-xl font-bold px-2 shrink-0 touch-manipulation"
-									aria-label="Delete group"
-								>
-									×
-								</button>
-							</div>
-							<div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600">
-								<div>
-									<span className="font-semibold">{group.members.length}</span>{" "}
-									{group.members.length === 1 ? "member" : "members"}
-								</div>
-								<div>
-									<span className="font-semibold">{group.expenses.length}</span>{" "}
-									{group.expenses.length === 1 ? "expense" : "expenses"}
+									<button
+										onClick={(e) => {
+											e.stopPropagation();
+											onDeleteGroup(group.id);
+										}}
+										className="text-white/90 hover:text-white active:text-white/80 text-xl font-bold px-2 shrink-0 touch-manipulation hover:bg-white/20 rounded-lg transition-colors"
+										aria-label="Delete group"
+									>
+										×
+									</button>
 								</div>
 							</div>
-						</div>
-					))}
+						);
+					})}
 					{groups.length < MAX_GROUPS && (
 						<button
 							onClick={onCreateGroup}
-							className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border-2 border-dashed border-indigo-300 p-4 sm:p-6 hover:bg-indigo-50 active:bg-indigo-100 transition-colors flex flex-col items-center justify-center min-h-[120px] sm:min-h-[150px] touch-manipulation"
+							className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border-2 border-dashed border-indigo-300 p-3 sm:p-4 hover:bg-indigo-50 active:bg-indigo-100 transition-colors flex items-center justify-center gap-2 touch-manipulation"
 						>
-							<div className="text-3xl sm:text-4xl text-indigo-600 mb-2">+</div>
+							<div className="text-xl sm:text-2xl text-indigo-600">+</div>
 							<div className="text-sm sm:text-base text-indigo-600 font-semibold">
 								New Group
 							</div>

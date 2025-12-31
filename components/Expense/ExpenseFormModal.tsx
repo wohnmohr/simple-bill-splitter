@@ -1,6 +1,7 @@
 import React from "react";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
+import { Dropdown } from "@/components/UI/Dropdown";
 import { Person } from "@/types";
 
 interface ExpenseFormModalProps {
@@ -163,18 +164,18 @@ export const ExpenseFormModal = ({
 						<label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
 							Paid By
 						</label>
-						<select
+						<Dropdown
 							value={paidBy}
-							onChange={(e) => handlePaidByChange(e.target.value)}
-							className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white border-2 border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
-						>
-							<option value="">Select person</option>
-							{people.map((person) => (
-								<option key={person.id} value={person.id}>
-									{person.name}
-								</option>
-							))}
-						</select>
+							onChange={handlePaidByChange}
+							options={[
+								{ value: "", label: "Select person" },
+								...people.map((person) => ({
+									value: person.id,
+									label: person.name,
+								})),
+							]}
+							placeholder="Select person"
+						/>
 					</div>
 					<div>
 						<label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
