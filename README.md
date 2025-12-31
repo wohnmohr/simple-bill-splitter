@@ -1,4 +1,4 @@
-# Simple Bill Splitter
+# SplitBiller
 
 A modern, user-friendly web application for splitting bills and expenses among groups of people. Built with Next.js, React, and TypeScript.
 
@@ -34,7 +34,7 @@ A modern, user-friendly web application for splitting bills and expenses among g
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd simple-bill-splitter
+cd splitbiller
 ```
 
 2. Install dependencies:
@@ -71,7 +71,7 @@ pnpm start
 ## Project Structure
 
 ```
-simple-bill-splitter/
+splitbiller/
 ├── app/                    # Next.js app directory
 │   ├── layout.tsx         # Root layout
 │   ├── page.tsx           # Main page component

@@ -39,9 +39,7 @@ export const ExpenseViewModal = ({
 						onClick={onClose}
 						className="p-2 text-gray-400 hover:text-gray-600 active:text-gray-700 hover:bg-gray-100 active:bg-gray-200 rounded-lg text-xl touch-manipulation"
 						aria-label="Close"
-					>
-						×
-					</button>
+					></button>
 				</div>
 				<div className="space-y-3 sm:space-y-4">
 					{expense.description && (

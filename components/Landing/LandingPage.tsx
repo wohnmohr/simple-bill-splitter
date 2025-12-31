@@ -2,6 +2,22 @@
 
 import Link from "next/link";
 import { Button } from "@/components/UI/Button";
+import {
+	Receipt,
+	UserX,
+	Globe,
+	Lock,
+	ArrowRightLeft,
+	Zap,
+	ArrowRight,
+	Users,
+	UtensilsCrossed,
+	Luggage,
+	Home,
+	UsersRound,
+	Check,
+	X,
+} from "lucide-react";
 
 // Ad Component - Replace with actual ad code
 const AdPlacement = ({ className = "" }: { className?: string }) => {
@@ -22,7 +38,13 @@ export const LandingPage = () => {
 			{/* Hero Section */}
 			<header className="px-4 sm:px-6 py-12 sm:py-20">
 				<div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8">
-					<div className="text-5xl sm:text-7xl mb-4">💰</div>
+					<div className="flex justify-center mb-4">
+						<img
+							src="/logo.png"
+							alt="SplitBiller Logo"
+							className="w-40 h-40 sm:w-60 sm:h-60 object-contain"
+						/>
+					</div>
 					<h1 className="text-4xl sm:text-6xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent leading-tight pb-2">
 						Split Expenses Instantly — No Login, No App
 					</h1>
@@ -36,20 +58,14 @@ export const LandingPage = () => {
 					</p>
 					<div className="pt-4">
 						<Link href="/dashboard">
-							<Button className="text-base sm:text-lg px-8 sm:px-12 py-4 sm:py-5">
-								👉 Start splitting bills now
+							<Button className="text-base sm:text-lg px-8 sm:px-12 py-4 sm:py-5 flex items-center gap-2 mx-auto">
+								<ArrowRight className="h-5 w-5" />
+								Start splitting bills now
 							</Button>
 						</Link>
 					</div>
 				</div>
 			</header>
-
-			{/* Subtle Ad Placement 1 - After Hero */}
-			<section className="px-4 sm:px-6 pb-8">
-				<div className="max-w-4xl mx-auto">
-					<AdPlacement />
-				</div>
-			</section>
 
 			{/* Why Use This Section */}
 			<section className="px-4 sm:px-6 py-12 sm:py-16">
@@ -63,37 +79,49 @@ export const LandingPage = () => {
 					</p>
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 						<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="text-2xl mb-2">✔</div>
+							<div className="mb-3">
+								<Receipt className="h-8 w-8 text-indigo-600" />
+							</div>
 							<h3 className="text-lg font-bold text-gray-800 mb-2">
 								Split bills online instantly
 							</h3>
 						</div>
 						<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="text-2xl mb-2">✔</div>
+							<div className="mb-3">
+								<UserX className="h-8 w-8 text-indigo-600" />
+							</div>
 							<h3 className="text-lg font-bold text-gray-800 mb-2">
 								No account, no app, no signup
 							</h3>
 						</div>
 						<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="text-2xl mb-2">✔</div>
+							<div className="mb-3">
+								<Globe className="h-8 w-8 text-indigo-600" />
+							</div>
 							<h3 className="text-lg font-bold text-gray-800 mb-2">
 								Works entirely in your browser
 							</h3>
 						</div>
 						<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="text-2xl mb-2">✔</div>
+							<div className="mb-3">
+								<Lock className="h-8 w-8 text-indigo-600" />
+							</div>
 							<h3 className="text-lg font-bold text-gray-800 mb-2">
 								Privacy-first — nothing is stored
 							</h3>
 						</div>
 						<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="text-2xl mb-2">✔</div>
+							<div className="mb-3">
+								<ArrowRightLeft className="h-8 w-8 text-indigo-600" />
+							</div>
 							<h3 className="text-lg font-bold text-gray-800 mb-2">
 								Simple "who owes whom" result
 							</h3>
 						</div>
 						<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="text-2xl mb-2">⚡</div>
+							<div className="mb-3">
+								<Zap className="h-8 w-8 text-indigo-600" />
+							</div>
 							<h3 className="text-lg font-bold text-gray-800 mb-2">
 								Lightweight & fast
 							</h3>
@@ -114,25 +142,41 @@ export const LandingPage = () => {
 					</h2>
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
 						<div className="text-center">
-							<div className="text-4xl mb-3">1️⃣</div>
+							<div className="mb-3 flex justify-center">
+								<div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
+									<Users className="h-6 w-6 text-indigo-600" />
+								</div>
+							</div>
 							<h3 className="font-bold text-gray-800 mb-2">
 								Add people involved in the expense
 							</h3>
 						</div>
 						<div className="text-center">
-							<div className="text-4xl mb-3">2️⃣</div>
+							<div className="mb-3 flex justify-center">
+								<div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
+									<Receipt className="h-6 w-6 text-indigo-600" />
+								</div>
+							</div>
 							<h3 className="font-bold text-gray-800 mb-2">
 								Enter each expense and who paid
 							</h3>
 						</div>
 						<div className="text-center">
-							<div className="text-4xl mb-3">3️⃣</div>
+							<div className="mb-3 flex justify-center">
+								<div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
+									<UsersRound className="h-6 w-6 text-indigo-600" />
+								</div>
+							</div>
 							<h3 className="font-bold text-gray-800 mb-2">
 								Select who shared that expense
 							</h3>
 						</div>
 						<div className="text-center">
-							<div className="text-4xl mb-3">4️⃣</div>
+							<div className="mb-3 flex justify-center">
+								<div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
+									<ArrowRightLeft className="h-6 w-6 text-indigo-600" />
+								</div>
+							</div>
 							<h3 className="font-bold text-gray-800 mb-2">
 								Instantly see who owes whom and how much
 							</h3>
@@ -153,7 +197,9 @@ export const LandingPage = () => {
 					</h2>
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 						<article className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="text-3xl mb-3">🍽️</div>
+							<div className="mb-3">
+								<UtensilsCrossed className="h-8 w-8 text-indigo-600" />
+							</div>
 							<h3 className="text-xl font-bold text-gray-800 mb-2">
 								Split Restaurant Bills
 							</h3>
@@ -163,7 +209,9 @@ export const LandingPage = () => {
 							</p>
 						</article>
 						<article className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="text-3xl mb-3">🧳</div>
+							<div className="mb-3">
+								<Luggage className="h-8 w-8 text-indigo-600" />
+							</div>
 							<h3 className="text-xl font-bold text-gray-800 mb-2">
 								Split Trip Expenses
 							</h3>
@@ -172,7 +220,9 @@ export const LandingPage = () => {
 							</p>
 						</article>
 						<article className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="text-3xl mb-3">🏠</div>
+							<div className="mb-3">
+								<Home className="h-8 w-8 text-indigo-600" />
+							</div>
 							<h3 className="text-xl font-bold text-gray-800 mb-2">
 								Roommate Expenses
 							</h3>
@@ -182,7 +232,9 @@ export const LandingPage = () => {
 							</p>
 						</article>
 						<article className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="text-3xl mb-3">👥</div>
+							<div className="mb-3">
+								<Users className="h-8 w-8 text-indigo-600" />
+							</div>
 							<h3 className="text-xl font-bold text-gray-800 mb-2">
 								Office & Team Outings
 							</h3>
@@ -230,44 +282,79 @@ export const LandingPage = () => {
 									<td className="p-4 font-semibold text-gray-700">
 										Login required
 									</td>
-									<td className="p-4 text-center text-green-600 font-bold">
-										❌ No
+									<td className="p-4 text-center">
+										<div className="text-green-600 font-bold inline-flex items-center justify-center gap-1">
+											<X className="h-5 w-5" />
+											No
+										</div>
 									</td>
-									<td className="p-4 text-center text-gray-600">✔ Yes</td>
+									<td className="p-4 text-center">
+										<div className="text-gray-600 inline-flex items-center justify-center gap-1">
+											<Check className="h-5 w-5" />
+											Yes
+										</div>
+									</td>
 								</tr>
 								<tr className="border-b border-gray-100">
 									<td className="p-4 font-semibold text-gray-700">
 										App download
 									</td>
-									<td className="p-4 text-center text-green-600 font-bold">
-										❌ No
+									<td className="p-4 text-center">
+										<div className="text-green-600 font-bold inline-flex items-center justify-center gap-1">
+											<X className="h-5 w-5" />
+											No
+										</div>
 									</td>
-									<td className="p-4 text-center text-gray-600">✔ Yes</td>
+									<td className="p-4 text-center">
+										<div className="text-gray-600 inline-flex items-center justify-center gap-1">
+											<Check className="h-5 w-5" />
+											Yes
+										</div>
+									</td>
 								</tr>
 								<tr className="border-b border-gray-100">
 									<td className="p-4 font-semibold text-gray-700">
 										Data stored
 									</td>
-									<td className="p-4 text-center text-green-600 font-bold">
-										❌ No
+									<td className="p-4 text-center">
+										<div className="text-green-600 font-bold inline-flex items-center justify-center gap-1">
+											<X className="h-5 w-5" />
+											No
+										</div>
 									</td>
-									<td className="p-4 text-center text-gray-600">✔ Yes</td>
+									<td className="p-4 text-center">
+										<div className="text-gray-600 inline-flex items-center justify-center gap-1">
+											<Check className="h-5 w-5" />
+											Yes
+										</div>
+									</td>
 								</tr>
 								<tr className="border-b border-gray-100">
 									<td className="p-4 font-semibold text-gray-700">
 										One-time use
 									</td>
-									<td className="p-4 text-center text-green-600 font-bold">
-										✔ Yes
+									<td className="p-4 text-center">
+										<div className="text-green-600 font-bold inline-flex items-center justify-center gap-1">
+											<Check className="h-5 w-5" />
+											Yes
+										</div>
 									</td>
-									<td className="p-4 text-center text-gray-600">❌ No</td>
+									<td className="p-4 text-center">
+										<div className="text-gray-600 inline-flex items-center justify-center gap-1">
+											<X className="h-5 w-5" />
+											No
+										</div>
+									</td>
 								</tr>
 								<tr>
 									<td className="p-4 font-semibold text-gray-700">
 										Instant results
 									</td>
-									<td className="p-4 text-center text-green-600 font-bold">
-										✔ Yes
+									<td className="p-4 text-center">
+										<div className="text-green-600 font-bold inline-flex items-center justify-center gap-1">
+											<Check className="h-5 w-5" />
+											Yes
+										</div>
 									</td>
 									<td className="p-4 text-center text-gray-600">Often slow</td>
 								</tr>
@@ -288,7 +375,9 @@ export const LandingPage = () => {
 						Privacy-First Expense Splitting
 					</h2>
 					<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-8">
-						<div className="text-4xl mb-4 text-center">🔒</div>
+						<div className="mb-4 flex justify-center">
+							<Lock className="h-12 w-12 text-indigo-600" />
+						</div>
 						<p className="text-xl font-bold text-gray-800 mb-6 text-center">
 							Your data never leaves your device.
 						</p>
@@ -379,8 +468,9 @@ export const LandingPage = () => {
 					</p>
 					<div className="pt-4">
 						<Link href="/dashboard">
-							<Button className="text-base sm:text-lg px-8 sm:px-12 py-4 sm:py-5">
-								👉 Use the free expense splitter
+							<Button className="text-base sm:text-lg px-8 sm:px-12 py-4 sm:py-5 flex items-center gap-2 mx-auto">
+								<ArrowRight className="h-5 w-5" />
+								Use the free expense splitter
 							</Button>
 						</Link>
 					</div>
@@ -393,6 +483,26 @@ export const LandingPage = () => {
 					<AdPlacement />
 				</div>
 			</section>
+
+			{/* Footer */}
+			<footer className="px-4 sm:px-6 py-8 border-t border-gray-200 mt-12">
+				<div className="max-w-4xl mx-auto text-center space-y-2">
+					<p className="text-sm text-gray-600">
+						© {new Date().getFullYear()} splitbiller.com. All rights reserved.
+					</p>
+					<p className="text-sm text-gray-600">
+						Created by{" "}
+						<a
+							href="https://www.wohnmohr.com"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-indigo-600 hover:text-indigo-800 font-medium underline"
+						>
+							wohnmohr
+						</a>
+					</p>
+				</div>
+			</footer>
 		</main>
 	);
 };

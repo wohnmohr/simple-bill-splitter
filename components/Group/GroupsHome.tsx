@@ -1,6 +1,5 @@
 import { Group } from "@/types";
 import { MAX_GROUPS } from "@/constants";
-import { getGroupColorTheme } from "@/utils/colorThemes";
 
 interface GroupsHomeProps {
 	groups: Group[];
@@ -41,11 +40,10 @@ export const GroupsHome = ({
 			) : (
 				<div className="flex flex-col gap-2 sm:gap-3">
 					{groups.map((group) => {
-						const theme = getGroupColorTheme(group.id);
 						return (
 							<div
 								key={group.id}
-								className={`bg-gradient-to-r ${theme.gradient} rounded-xl shadow-lg border-2 ${theme.border} p-3 sm:p-4 hover:shadow-xl active:shadow-lg transition-all cursor-pointer touch-manipulation group`}
+								className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg border-2 border-indigo-200 p-3 sm:p-4 hover:shadow-xl active:shadow-lg transition-all cursor-pointer touch-manipulation group"
 								onClick={() => onSelectGroup(group.id)}
 							>
 								<div className="flex items-center justify-between gap-3 sm:gap-4">

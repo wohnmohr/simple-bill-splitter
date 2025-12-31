@@ -9,7 +9,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-	title: "Split Expenses Instantly — No Login, No App | Free Bill Splitter",
+	title: "SplitBiller — Split Expenses Instantly | No Login, No App",
 	description:
 		"Split group expenses online in seconds. Calculate who owes whom without signing up, downloading an app, or sharing personal data. Perfect for restaurants, trips, roommates, and office lunches. Privacy-first expense splitter.",
 	keywords: [
@@ -29,15 +29,18 @@ export const metadata: Metadata = {
 		"expense sharing",
 		"privacy-first bill splitter",
 	],
+	icons: {
+		icon: "/favicon.ico",
+	},
 	openGraph: {
-		title: "Split Expenses Instantly — No Login, No App",
+		title: "SplitBiller — Split Expenses Instantly | No Login, No App",
 		description:
 			"Split group expenses online in seconds. No signup, no app, no data stored. Perfect for restaurants, trips, and roommates.",
 		type: "website",
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "Split Expenses Instantly — No Login, No App",
+		title: "SplitBiller — Split Expenses Instantly | No Login, No App",
 		description:
 			"Split group expenses online in seconds. No signup, no app, no data stored.",
 	},
