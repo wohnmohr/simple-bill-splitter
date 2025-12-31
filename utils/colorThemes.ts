@@ -18,8 +18,8 @@ const colorThemes: ColorTheme[] = [
     border: "border-pink-200",
   },
   {
-    gradient: "from-blue-500 to-blue-600",
-    border: "border-blue-200",
+    gradient: "from-indigo-400 to-purple-500",
+    border: "border-indigo-200",
   },
   {
     gradient: "from-cyan-500 to-cyan-600",

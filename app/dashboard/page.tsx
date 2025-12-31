@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Users } from "lucide-react";
 import { Tab, Currency, Expense } from "@/types";
 import { CURRENCIES } from "@/constants";
 import { calculateBalances, calculateSettlements } from "@/utils/calculations";
@@ -132,30 +133,6 @@ export default function Home() {
 	return (
 		<main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-20 sm:pb-24">
 			<div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
-				<div className="mb-3 sm:mb-4">
-					<button
-						onClick={() => router.push("/")}
-						className="flex items-center gap-2 text-gray-700 hover:text-indigo-600 active:text-indigo-700 transition-colors touch-manipulation group"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							className="h-5 w-5 sm:h-6 sm:w-6 group-hover:-translate-x-1 transition-transform"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-							strokeWidth={2.5}
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M15 19l-7-7 7-7"
-							/>
-						</svg>
-						<span className="text-sm sm:text-base font-medium">
-							Back to Landing
-						</span>
-					</button>
-				</div>
 				<Header />
 
 				{groups.length === 0 ? (
@@ -188,9 +165,6 @@ export default function Home() {
 										d="M15 19l-7-7 7-7"
 									/>
 								</svg>
-								<span className="text-sm sm:text-base font-medium">
-									Back to Groups
-								</span>
 							</button>
 						</div>
 						<GroupSelector
@@ -207,7 +181,7 @@ export default function Home() {
 										onClick={() => setShowMembersModal(true)}
 										className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 active:from-indigo-800 active:to-purple-800 shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation"
 									>
-										<span className="text-base sm:text-lg">👥</span>
+										<Users className="h-5 w-5 sm:h-6 sm:w-6" />
 										<span>
 											{currentGroup.members.length === 0
 												? "Add Members"
