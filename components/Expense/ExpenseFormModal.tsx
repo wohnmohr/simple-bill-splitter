@@ -216,11 +216,11 @@ export const ExpenseFormModal = ({
 
 	return (
 		<Modal isOpen={isOpen} onClose={handleClose}>
-			<div className="pt-12 pb-4 px-4 sm:pt-6 sm:p-6 min-h-[60vh] sm:min-h-0">
+			<div className="pt-12 pb-4 px-4 sm:pt-6 sm:p-6 min-h-[85vh] sm:min-h-0 flex flex-col">
 				<h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 sm:mb-4">
 					{title}
 				</h2>
-				<Stack gap="md">
+				<Stack gap="md" className="flex-1 overflow-y-auto">
 					<TextInput
 						label="Description"
 						value={description}

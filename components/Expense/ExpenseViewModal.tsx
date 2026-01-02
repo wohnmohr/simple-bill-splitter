@@ -30,7 +30,7 @@ export const ExpenseViewModal = ({
 
 	return (
 		<Modal isOpen={isOpen} onClose={onClose}>
-			<div className="p-4 sm:p-6">
+			<div className="p-4 sm:p-6 min-h-[85vh] sm:min-h-0 flex flex-col">
 				<div className="flex justify-between items-center mb-4 sm:mb-6">
 					<h2 className="text-lg sm:text-xl font-bold text-gray-800">
 						Expense Details
@@ -41,7 +41,7 @@ export const ExpenseViewModal = ({
 						aria-label="Close"
 					></button>
 				</div>
-				<div className="space-y-3 sm:space-y-4">
+				<div className="space-y-3 sm:space-y-4 flex-1 overflow-y-auto">
 					{expense.description && (
 						<div className="text-center px-3 sm:px-4 py-2.5 sm:py-3 bg-indigo-50 rounded-xl border border-indigo-200">
 							<div className="text-xs sm:text-sm font-semibold text-gray-800 break-words">
