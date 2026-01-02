@@ -1,7 +1,6 @@
 import React from "react";
 import { TextInput, ActionIcon } from "@mantine/core";
 import { Modal } from "@/components/UI/Modal";
-import { Button } from "@/components/UI/Button";
 import { Group, Person } from "@/types";
 
 interface AddMembersModalProps {
@@ -35,55 +34,66 @@ export const AddMembersModal = ({
 
 	return (
 		<Modal isOpen={isOpen} onClose={handleClose}>
-			<div className="p-4 sm:p-6">
-				<h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">
-					Members of {group.name}
-				</h2>
+			<div className="p-4 sm:p-6 h-[85vh] sm:h-auto sm:max-h-[80vh] flex flex-col overflow-hidden">
+				<div className="flex-shrink-0">
+					<h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">
+						Members of {group.name}
+						<span className="ml-2 text-sm font-normal text-gray-500">
+							({group.members.length})
+						</span>
+					</h2>
 
-				{/* Add Member Form */}
-				<div className="border-b border-gray-200 pb-3 sm:pb-4 mb-4 sm:mb-6">
-					<label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
-						Add New Member
-					</label>
-					<div className="flex gap-2">
-						<TextInput
-							value={memberName}
-							onChange={(e) => setMemberName(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === "Enter") {
-									handleSubmit();
-								}
-							}}
-							placeholder="Enter member name"
-							className="flex-1"
-							autoFocus
-							radius="md"
-							styles={{
-								input: {
-									borderColor: "#c7d2fe",
-									borderWidth: 2,
-								},
-							}}
-						/>
-						<Button
-							onClick={handleSubmit}
-							disabled={!memberName.trim()}
-							variant="primary"
-						>
-							Add
-						</Button>
+					{/* Add Member Form */}
+					<div className="border-b border-gray-200 pb-3 sm:pb-4 mb-4 sm:mb-6">
+						<label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
+							Add New Member
+						</label>
+						<div className="flex gap-2">
+							<TextInput
+								value={memberName}
+								onChange={(e) => setMemberName(e.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === "Enter") {
+										handleSubmit();
+									}
+								}}
+								placeholder="Enter member name"
+								className="flex-1"
+								autoFocus
+								radius="md"
+								styles={{
+									input: {
+										borderColor: "#c7d2fe",
+										borderWidth: 2,
+									},
+								}}
+							/>
+							<ActionIcon
+								onClick={handleSubmit}
+								disabled={!memberName.trim()}
+								size="lg"
+								radius="md"
+								aria-label="Add member"
+								style={{
+									background: "linear-gradient(to right, #4f46e5, #9333ea)",
+									color: "#ffffff",
+								}}
+							>
+								+
+							</ActionIcon>
+						</div>
 					</div>
 				</div>
 
-				{/* Members List */}
-				<div>
+				{/* Members List - Scrollable */}
+				<div className="flex-1 overflow-y-auto min-h-0 -mx-4 sm:-mx-6 px-4 sm:px-6">
 					{group.members.length === 0 ? (
 						<p className="text-xs sm:text-sm text-gray-500 text-center py-4">
 							No members yet. Add at least one member to start tracking
 							expenses.
 						</p>
 					) : (
-						<div className="space-y-2 max-h-64 overflow-y-auto">
+						<div className="space-y-2">
 							{group.members.map((member: Person) => (
 								<div
 									key={member.id}
