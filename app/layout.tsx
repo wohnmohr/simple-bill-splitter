@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import Script from "next/script";
+import { MantineProvider } from "@/components/providers/MantineProvider";
+import "@mantine/core/styles.css";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -56,14 +58,16 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className={poppins.className}>
-				<Script
-					async
-					src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1932835805964012"
-					crossOrigin="anonymous"
-					strategy="afterInteractive"
-				/>
-				{children}
-				<Analytics />
+				<MantineProvider>
+					<Script
+						async
+						src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1932835805964012"
+						crossOrigin="anonymous"
+						strategy="afterInteractive"
+					/>
+					{children}
+					<Analytics />
+				</MantineProvider>
 			</body>
 		</html>
 	);

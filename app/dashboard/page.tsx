@@ -36,6 +36,8 @@ export default function Home() {
 		paidBy: string;
 		participants: Set<string>;
 		description?: string;
+		splitMethod?: string;
+		percentages?: Record<string, number>;
 	} | null>(null);
 
 	const {
@@ -76,9 +78,18 @@ export default function Home() {
 		amount: number,
 		paidBy: string,
 		participants: Set<string>,
-		description?: string
+		description?: string,
+		splitMethod?: string,
+		percentages?: Record<string, number>
 	) => {
-		addExpense(amount, paidBy, participants, description);
+		addExpense(
+			amount,
+			paidBy,
+			participants,
+			description,
+			splitMethod as any,
+			percentages
+		);
 		setShowExpenseForm(false);
 	};
 
@@ -90,6 +101,8 @@ export default function Home() {
 			paidBy: expense.paidBy,
 			participants: new Set(expense.participants),
 			description: expense.description,
+			splitMethod: expense.splitMethod || "equally",
+			percentages: expense.percentages,
 		});
 	};
 
@@ -97,7 +110,9 @@ export default function Home() {
 		amount: number,
 		paidBy: string,
 		participants: Set<string>,
-		description?: string
+		description?: string,
+		splitMethod?: string,
+		percentages?: Record<string, number>
 	) => {
 		if (editingExpenseId) {
 			updateExpense(
@@ -105,7 +120,9 @@ export default function Home() {
 				amount,
 				paidBy,
 				participants,
-				description
+				description,
+				splitMethod as any,
+				percentages
 			);
 			setEditingExpenseId(null);
 			setEditExpenseData(null);
@@ -289,6 +306,8 @@ export default function Home() {
 						initialPaidBy={editExpenseData.paidBy}
 						initialParticipants={editExpenseData.participants}
 						initialDescription={editExpenseData.description}
+						initialSplitMethod={editExpenseData.splitMethod as any}
+						initialPercentages={editExpenseData.percentages}
 						title="Edit Expense"
 					/>
 				)}

@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import { Settlement, Person, Currency } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
+import { Copy, MessageCircle, Check, Share2 } from "lucide-react";
 
 interface SettlementListProps {
 	settlements: Settlement[];
@@ -12,8 +16,71 @@ export const SettlementList = ({
 	people,
 	currency,
 }: SettlementListProps) => {
+	const [copied, setCopied] = useState(false);
+
 	const getPersonName = (personId: string) => {
 		return people.find((p) => p.id === personId)?.name || "Unknown";
+	};
+
+	const formatSettlementsText = () => {
+		if (settlements.length === 0) {
+			return "No settlements needed. Everyone is balanced!";
+		}
+
+		const brandHeader = "💸 SplitBiller\n" + "=".repeat(30) + "\n";
+		const header = "💰 Settlement Summary\n\n";
+
+		const lines = settlements.map((settlement, index) => {
+			const fromName = getPersonName(settlement.from);
+			const toName = getPersonName(settlement.to);
+			const amount = formatCurrency(settlement.amount, currency);
+			return `${index + 1}. ${fromName} → ${toName}: ${amount}`;
+		});
+
+		const footer = `\n${"=".repeat(30)}\nTotal transactions: ${
+			settlements.length
+		}\n\nSplit expenses easily with SplitBiller\nNo login required • Free to use`;
+
+		return brandHeader + header + lines.join("\n") + footer;
+	};
+
+	const handleCopy = async () => {
+		try {
+			const text = formatSettlementsText();
+			await navigator.clipboard.writeText(text);
+			setCopied(true);
+			setTimeout(() => setCopied(false), 2000);
+		} catch (err) {
+			console.error("Failed to copy:", err);
+		}
+	};
+
+	const handleWhatsAppShare = () => {
+		const text = formatSettlementsText();
+		const encodedText = encodeURIComponent(text);
+		const whatsappUrl = `https://wa.me/?text=${encodedText}`;
+		window.open(whatsappUrl, "_blank");
+	};
+
+	const handleShare = async () => {
+		const text = formatSettlementsText();
+		try {
+			if (navigator.share) {
+				await navigator.share({
+					text: text,
+				});
+			} else {
+				// Fallback to copy if Web Share API is not available
+				await navigator.clipboard.writeText(text);
+				setCopied(true);
+				setTimeout(() => setCopied(false), 2000);
+			}
+		} catch (err) {
+			// User cancelled or error occurred
+			if ((err as Error).name !== "AbortError") {
+				console.error("Failed to share:", err);
+			}
+		}
 	};
 
 	if (settlements.length === 0) {
@@ -29,6 +96,33 @@ export const SettlementList = ({
 
 	return (
 		<div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/50 p-3 sm:p-4">
+			<div className="flex justify-end gap-2 mb-3">
+				<button
+					onClick={handleShare}
+					className="p-1.5 sm:p-2 text-gray-600 hover:text-indigo-600 active:text-indigo-700 transition-colors touch-manipulation rounded-lg hover:bg-indigo-50 active:bg-indigo-100"
+					title="Share settlements"
+				>
+					<Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
+				</button>
+				<button
+					onClick={handleWhatsAppShare}
+					className="p-1.5 sm:p-2 text-gray-600 hover:text-green-600 active:text-green-700 transition-colors touch-manipulation rounded-lg hover:bg-green-50 active:bg-green-100"
+					title="Share to WhatsApp"
+				>
+					<MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+				</button>
+				<button
+					onClick={handleCopy}
+					className="p-1.5 sm:p-2 text-gray-600 hover:text-indigo-600 active:text-indigo-700 transition-colors touch-manipulation rounded-lg hover:bg-indigo-50 active:bg-indigo-100"
+					title={copied ? "Copied!" : "Copy settlements"}
+				>
+					{copied ? (
+						<Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+					) : (
+						<Copy className="h-4 w-4 sm:h-5 sm:w-5" />
+					)}
+				</button>
+			</div>
 			<div className="space-y-2">
 				{settlements.map((settlement, index) => (
 					<div

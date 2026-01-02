@@ -1,4 +1,6 @@
 import React from "react";
+import { TextInput } from "@mantine/core";
+import { Button } from "@/components/UI/Button";
 import { Group } from "@/types";
 
 interface MemberFormProps {
@@ -22,8 +24,7 @@ export const MemberForm = ({ group, onAddMember }: MemberFormProps) => {
 				Add Members to {group.name}
 			</h2>
 			<div className="flex gap-2 mb-4">
-				<input
-					type="text"
+				<TextInput
 					value={memberName}
 					onChange={(e) => setMemberName(e.target.value)}
 					onKeyDown={(e) => {
@@ -32,14 +33,18 @@ export const MemberForm = ({ group, onAddMember }: MemberFormProps) => {
 						}
 					}}
 					placeholder="Enter member name"
-					className="flex-1 px-4 py-2 bg-white border-2 border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+					className="flex-1"
+					radius="md"
+					styles={{
+						input: {
+							borderColor: "#c7d2fe",
+							borderWidth: 2,
+						},
+					}}
 				/>
-				<button
-					onClick={handleSubmit}
-					className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 font-semibold"
-				>
+				<Button onClick={handleSubmit} variant="primary">
 					Add
-				</button>
+				</Button>
 			</div>
 			{group.members.length === 0 && (
 				<p className="text-sm text-gray-500 text-center">

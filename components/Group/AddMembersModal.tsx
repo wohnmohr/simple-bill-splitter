@@ -1,5 +1,7 @@
 import React from "react";
+import { TextInput, ActionIcon } from "@mantine/core";
 import { Modal } from "@/components/UI/Modal";
+import { Button } from "@/components/UI/Button";
 import { Group, Person } from "@/types";
 
 interface AddMembersModalProps {
@@ -38,8 +40,43 @@ export const AddMembersModal = ({
 					Members of {group.name}
 				</h2>
 
+				{/* Add Member Form */}
+				<div className="border-b border-gray-200 pb-3 sm:pb-4 mb-4 sm:mb-6">
+					<label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
+						Add New Member
+					</label>
+					<div className="flex gap-2">
+						<TextInput
+							value={memberName}
+							onChange={(e) => setMemberName(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter") {
+									handleSubmit();
+								}
+							}}
+							placeholder="Enter member name"
+							className="flex-1"
+							autoFocus
+							radius="md"
+							styles={{
+								input: {
+									borderColor: "#c7d2fe",
+									borderWidth: 2,
+								},
+							}}
+						/>
+						<Button
+							onClick={handleSubmit}
+							disabled={!memberName.trim()}
+							variant="primary"
+						>
+							Add
+						</Button>
+					</div>
+				</div>
+
 				{/* Members List */}
-				<div className="mb-4 sm:mb-6">
+				<div>
 					{group.members.length === 0 ? (
 						<p className="text-xs sm:text-sm text-gray-500 text-center py-4">
 							No members yet. Add at least one member to start tracking
@@ -55,46 +92,18 @@ export const AddMembersModal = ({
 									<span className="font-medium text-gray-800 text-sm sm:text-base truncate flex-1">
 										{member.name}
 									</span>
-									<button
+									<ActionIcon
 										onClick={() => onDeleteMember(member.id)}
-										className="text-red-500 hover:text-red-700 active:text-red-800 text-lg font-bold px-2 shrink-0 touch-manipulation"
+										color="red"
+										variant="subtle"
 										aria-label={`Delete ${member.name}`}
 									>
 										×
-									</button>
+									</ActionIcon>
 								</div>
 							))}
 						</div>
 					)}
-				</div>
-
-				{/* Add Member Form */}
-				<div className="border-t border-gray-200 pt-3 sm:pt-4">
-					<label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
-						Add New Member
-					</label>
-					<div className="flex gap-2">
-						<input
-							type="text"
-							value={memberName}
-							onChange={(e) => setMemberName(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === "Enter") {
-									handleSubmit();
-								}
-							}}
-							placeholder="Enter member name"
-							className="flex-1 px-3 sm:px-4 py-2 bg-white border-2 border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
-							autoFocus
-						/>
-						<button
-							onClick={handleSubmit}
-							disabled={!memberName.trim()}
-							className="px-4 sm:px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 active:from-indigo-800 active:to-purple-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base touch-manipulation"
-						>
-							Add
-						</button>
-					</div>
 				</div>
 			</div>
 		</Modal>

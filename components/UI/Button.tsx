@@ -1,34 +1,60 @@
 import { ButtonHTMLAttributes, ReactNode } from "react";
+import { Button as MantineButton } from "@mantine/core";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps
+	extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "color"> {
 	variant?: "primary" | "secondary" | "danger";
+	size?: "xs" | "sm" | "md" | "lg" | "xl";
 	children: ReactNode;
 }
 
 export const Button = ({
 	variant = "primary",
+	size = "md",
 	children,
 	className = "",
 	...props
 }: ButtonProps) => {
-	const baseClasses =
-		"px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold transition-all focus:outline-none focus:ring-2 text-sm sm:text-base touch-manipulation";
+	const mantineVariant =
+		variant === "primary"
+			? "filled"
+			: variant === "secondary"
+			? "light"
+			: "filled";
 
-	const variantClasses = {
-		primary:
-			"bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 active:from-indigo-800 active:to-purple-800 focus:ring-indigo-500 shadow-lg shadow-indigo-200 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed disabled:shadow-none",
-		secondary:
-			"bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 focus:ring-gray-400",
-		danger:
-			"bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus:ring-red-500 shadow-lg shadow-red-200",
-	};
+	const mantineColor =
+		variant === "danger" ? "red" : variant === "secondary" ? "gray" : undefined;
 
 	return (
-		<button
-			className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+		<MantineButton
+			variant={mantineVariant}
+			color={mantineColor}
+			size={size}
+			className={`${className} ${variant === "primary" ? "!text-white" : ""}`}
+			style={
+				variant === "primary"
+					? {
+							background: "linear-gradient(to right, #4f46e5, #9333ea)",
+							color: "#ffffff",
+							transition: "all 0.2s",
+					  }
+					: undefined
+			}
+			styles={
+				variant === "primary"
+					? {
+							label: {
+								color: "#ffffff",
+							},
+							root: {
+								color: "#ffffff",
+							},
+					  }
+					: undefined
+			}
 			{...props}
 		>
 			{children}
-		</button>
+		</MantineButton>
 	);
 };
