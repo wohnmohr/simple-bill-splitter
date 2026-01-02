@@ -71,17 +71,45 @@ export const ExpenseViewModal = ({
 							{expense.participants.map((id) => getPersonName(id)).join(", ")}
 						</div>
 					</div>
-					<div className="px-3 sm:px-4 py-3 sm:py-4 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl border-2 border-indigo-300">
-						<div className="text-xs text-indigo-600 mb-1 text-center font-semibold">
-							Per person
+					{expense.splitMethod === "percentage" && expense.percentages ? (
+						<div className="px-3 sm:px-4 py-3 sm:py-4 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl border-2 border-indigo-300">
+							<div className="text-xs text-indigo-600 mb-2 text-center font-semibold">
+								Split by Percentage
+							</div>
+							<div className="space-y-2">
+								{expense.participants.map((participantId) => {
+									const percentage = expense.percentages![participantId] || 0;
+									const share = (expense.amount * percentage) / 100;
+									return (
+										<div
+											key={participantId}
+											className="flex justify-between items-center text-xs sm:text-sm"
+										>
+											<span className="text-gray-700 font-medium">
+												{getPersonName(participantId)}
+											</span>
+											<span className="text-indigo-700 font-bold">
+												{percentage.toFixed(2)}% ={" "}
+												{formatCurrency(share, currency)}
+											</span>
+										</div>
+									);
+								})}
+							</div>
 						</div>
-						<div className="text-lg sm:text-xl font-extrabold text-indigo-700 text-center">
-							{formatCurrency(
-								expense.amount / expense.participants.length,
-								currency
-							)}
+					) : (
+						<div className="px-3 sm:px-4 py-3 sm:py-4 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl border-2 border-indigo-300">
+							<div className="text-xs text-indigo-600 mb-1 text-center font-semibold">
+								Per person (Split Equally)
+							</div>
+							<div className="text-lg sm:text-xl font-extrabold text-indigo-700 text-center">
+								{formatCurrency(
+									expense.amount / expense.participants.length,
+									currency
+								)}
+							</div>
 						</div>
-					</div>
+					)}
 					<div className="flex gap-2 sm:gap-3 pt-2">
 						<Button
 							variant="primary"

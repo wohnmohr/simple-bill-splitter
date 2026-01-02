@@ -1,4 +1,5 @@
 import React from "react";
+import { TextInput } from "@mantine/core";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
 import { Dropdown } from "@/components/UI/Dropdown";
@@ -45,24 +46,25 @@ export const CreateGroupModal = ({
 					Create New Group
 				</h2>
 				<div className="space-y-3 sm:space-y-4">
-					<div>
-						<label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
-							Group Name
-						</label>
-						<input
-							type="text"
-							value={groupName}
-							onChange={(e) => setGroupName(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === "Enter") {
-									handleSubmit();
-								}
-							}}
-							placeholder="e.g., Weekend Trip"
-							className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white border-2 border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
-							autoFocus
-						/>
-					</div>
+					<TextInput
+						label="Group Name"
+						value={groupName}
+						onChange={(e) => setGroupName(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === "Enter") {
+								handleSubmit();
+							}
+						}}
+						placeholder="e.g., Weekend Trip"
+						autoFocus
+						radius="md"
+						styles={{
+							input: {
+								borderColor: "#c7d2fe",
+								borderWidth: 2,
+							},
+						}}
+					/>
 					<div>
 						<label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
 							Currency

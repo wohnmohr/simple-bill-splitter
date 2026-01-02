@@ -34,7 +34,7 @@ const AdPlacement = ({ className = "" }: { className?: string }) => {
 
 export const LandingPage = () => {
 	return (
-		<main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+		<main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">
 			{/* Hero Section */}
 			<header className="px-4 sm:px-6 py-12 sm:py-20">
 				<div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8">
@@ -48,19 +48,25 @@ export const LandingPage = () => {
 					<h1 className="text-4xl sm:text-6xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent leading-tight pb-2">
 						Split Expenses Instantly — No Login, No App
 					</h1>
-					<p className="text-lg sm:text-xl text-gray-700 max-w-2xl mx-auto">
+					<p className="text-lg sm:text-xl !text-gray-700 max-w-2xl mx-auto">
 						Split group expenses online in seconds. Calculate who owes whom
 						without signing up, downloading an app, or sharing personal data.
 					</p>
-					<p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
+					<p className="text-base sm:text-lg !text-gray-600 max-w-2xl mx-auto">
 						Perfect for restaurants, trips, roommates, office lunches, and
 						one-time group expenses.
 					</p>
 					<div className="pt-4">
 						<Link href="/dashboard">
-							<Button className="text-base sm:text-lg px-8 sm:px-12 py-4 sm:py-5 flex items-center gap-2 mx-auto">
-								<ArrowRight className="h-5 w-5" />
-								Start splitting bills now
+							<Button
+								variant="primary"
+								size="xl"
+								className="!px-8 !py-4 !text-lg !font-semibold"
+							>
+								<span className="flex items-center gap-3">
+									Start splitting bills now
+									<ArrowRight className="h-6 w-6 !text-white" />
+								</span>
 							</Button>
 						</Link>
 					</div>
@@ -70,10 +76,10 @@ export const LandingPage = () => {
 			{/* Why Use This Section */}
 			<section className="px-4 sm:px-6 py-12 sm:py-16">
 				<div className="max-w-4xl mx-auto">
-					<h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 text-center">
+					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900 mb-6 text-center">
 						Why Use This Expense Splitter?
 					</h2>
-					<p className="text-lg text-gray-700 mb-8 text-center">
+					<p className="text-lg !text-gray-700 mb-8 text-center">
 						If you're looking for a Splitwise alternative without login, this is
 						exactly that.
 					</p>
@@ -82,7 +88,7 @@ export const LandingPage = () => {
 							<div className="mb-3">
 								<Receipt className="h-8 w-8 text-indigo-600" />
 							</div>
-							<h3 className="text-lg font-bold text-gray-800 mb-2">
+							<h3 className="text-lg font-bold !text-gray-800 mb-2">
 								Split bills online instantly
 							</h3>
 						</div>
@@ -127,7 +133,7 @@ export const LandingPage = () => {
 							</h3>
 						</div>
 					</div>
-					<p className="text-center text-gray-600 mt-8">
+					<p className="text-center !text-gray-600 mt-8">
 						This is a lightweight group expense calculator built for people who
 						want fast answers, not another finance app.
 					</p>
@@ -137,7 +143,7 @@ export const LandingPage = () => {
 			{/* How It Works Section */}
 			<section className="px-4 sm:px-6 py-12 sm:py-16 bg-white/40">
 				<div className="max-w-4xl mx-auto">
-					<h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 text-center">
+					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900 mb-4 text-center">
 						How It Works (Simple & Fair)
 					</h2>
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
@@ -147,7 +153,7 @@ export const LandingPage = () => {
 									<Users className="h-6 w-6 text-indigo-600" />
 								</div>
 							</div>
-							<h3 className="font-bold text-gray-800 mb-2">
+							<h3 className="font-bold !text-gray-800 mb-2">
 								Add people involved in the expense
 							</h3>
 						</div>
@@ -182,7 +188,7 @@ export const LandingPage = () => {
 							</h3>
 						</div>
 					</div>
-					<p className="text-center text-gray-600 mt-8">
+					<p className="text-center !text-gray-600 mt-8">
 						All expenses are split equally, and debts are automatically
 						simplified so fewer transactions are needed.
 					</p>
@@ -192,7 +198,7 @@ export const LandingPage = () => {
 			{/* Use Cases Section */}
 			<section className="px-4 sm:px-6 py-12 sm:py-16">
 				<div className="max-w-4xl mx-auto">
-					<h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center">
+					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900 mb-8 text-center">
 						Use Cases People Actually Search For
 					</h2>
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -200,10 +206,10 @@ export const LandingPage = () => {
 							<div className="mb-3">
 								<UtensilsCrossed className="h-8 w-8 text-indigo-600" />
 							</div>
-							<h3 className="text-xl font-bold text-gray-800 mb-2">
+							<h3 className="text-xl font-bold !text-gray-800 mb-2">
 								Split Restaurant Bills
 							</h3>
-							<p className="text-gray-600">
+							<p className="!text-gray-600">
 								Quickly split dinner or lunch bills among friends without
 								awkward math at the table.
 							</p>
@@ -256,30 +262,30 @@ export const LandingPage = () => {
 			{/* Comparison Table Section */}
 			<section className="px-4 sm:px-6 py-12 sm:py-16 bg-white/40">
 				<div className="max-w-4xl mx-auto">
-					<h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center">
+					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900 mb-8 text-center">
 						Splitwise Alternative Without Login
 					</h2>
-					<p className="text-center text-gray-700 mb-8">
+					<p className="text-center !text-gray-700 mb-8">
 						Unlike traditional expense apps:
 					</p>
 					<div className="overflow-x-auto">
 						<table className="w-full bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50">
 							<thead>
 								<tr className="border-b border-gray-200">
-									<th className="text-left p-4 font-bold text-gray-800">
+									<th className="text-left p-4 font-bold !text-gray-800">
 										Feature
 									</th>
-									<th className="text-center p-4 font-bold text-gray-800">
+									<th className="text-center p-4 font-bold !text-gray-800">
 										This Tool
 									</th>
-									<th className="text-center p-4 font-bold text-gray-800">
+									<th className="text-center p-4 font-bold !text-gray-800">
 										Other Apps
 									</th>
 								</tr>
 							</thead>
 							<tbody>
 								<tr className="border-b border-gray-100">
-									<td className="p-4 font-semibold text-gray-700">
+									<td className="p-4 font-semibold !text-gray-700">
 										Login required
 									</td>
 									<td className="p-4 text-center">
@@ -356,12 +362,12 @@ export const LandingPage = () => {
 											Yes
 										</div>
 									</td>
-									<td className="p-4 text-center text-gray-600">Often slow</td>
+									<td className="p-4 text-center !text-gray-600">Often slow</td>
 								</tr>
 							</tbody>
 						</table>
 					</div>
-					<p className="text-center text-gray-600 mt-6">
+					<p className="text-center !text-gray-600 mt-6">
 						This tool is designed for one-time expense splitting, not long-term
 						tracking.
 					</p>
@@ -371,17 +377,17 @@ export const LandingPage = () => {
 			{/* Privacy Section */}
 			<section className="px-4 sm:px-6 py-12 sm:py-16">
 				<div className="max-w-4xl mx-auto">
-					<h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 text-center">
+					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900 mb-6 text-center">
 						Privacy-First Expense Splitting
 					</h2>
 					<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-8">
 						<div className="mb-4 flex justify-center">
 							<Lock className="h-12 w-12 text-indigo-600" />
 						</div>
-						<p className="text-xl font-bold text-gray-800 mb-6 text-center">
+						<p className="text-xl font-bold !text-gray-800 mb-6 text-center">
 							Your data never leaves your device.
 						</p>
-						<ul className="space-y-4 text-gray-700">
+						<ul className="space-y-4 !text-gray-700">
 							<li className="flex items-start">
 								<span className="mr-3">•</span>
 								<span>All calculations run locally in your browser</span>
@@ -395,7 +401,7 @@ export const LandingPage = () => {
 								<span>Refresh the page and everything resets</span>
 							</li>
 						</ul>
-						<p className="text-center text-gray-600 mt-6">
+						<p className="text-center !text-gray-600 mt-6">
 							Ideal if you want a private, anonymous expense splitter.
 						</p>
 					</div>
@@ -405,15 +411,15 @@ export const LandingPage = () => {
 			{/* FAQ Section */}
 			<section className="px-4 sm:px-6 py-12 sm:py-16 bg-white/40">
 				<div className="max-w-4xl mx-auto">
-					<h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center">
+					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900 mb-8 text-center">
 						Frequently Asked Questions
 					</h2>
 					<div className="space-y-6">
 						<article className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<h3 className="text-xl font-bold text-gray-800 mb-2">
+							<h3 className="text-xl font-bold !text-gray-800 mb-2">
 								How do I split expenses among friends?
 							</h3>
-							<p className="text-gray-600">
+							<p className="!text-gray-600">
 								Add everyone involved, enter who paid, select participants, and
 								the calculator shows who owes whom.
 							</p>
@@ -459,18 +465,24 @@ export const LandingPage = () => {
 			{/* Final CTA Section */}
 			<section className="px-4 sm:px-6 py-12 sm:py-16">
 				<div className="max-w-4xl mx-auto text-center space-y-6">
-					<h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900">
 						Start Splitting Bills Now
 					</h2>
-					<p className="text-lg text-gray-700">
+					<p className="text-lg !text-gray-700">
 						Stop wasting time downloading apps or creating accounts. Split
 						expenses instantly and move on.
 					</p>
 					<div className="pt-4">
 						<Link href="/dashboard">
-							<Button className="text-base sm:text-lg px-8 sm:px-12 py-4 sm:py-5 flex items-center gap-2 mx-auto">
-								<ArrowRight className="h-5 w-5" />
-								Use the free expense splitter
+							<Button
+								variant="primary"
+								size="xl"
+								className="!px-8 !py-4 !text-lg !font-semibold"
+							>
+								<span className="flex items-center gap-3">
+									Use the free expense splitter
+									<ArrowRight className="h-6 w-6 !text-white" />
+								</span>
 							</Button>
 						</Link>
 					</div>
@@ -487,16 +499,16 @@ export const LandingPage = () => {
 			{/* Footer */}
 			<footer className="px-4 sm:px-6 py-8 border-t border-gray-200 mt-12">
 				<div className="max-w-4xl mx-auto text-center space-y-2">
-					<p className="text-sm text-gray-600">
+					<p className="text-sm !text-gray-600">
 						© {new Date().getFullYear()} splitbiller.com. All rights reserved.
 					</p>
-					<p className="text-sm text-gray-600">
+					<p className="text-sm !text-gray-600">
 						Created by{" "}
 						<a
 							href="https://www.wohnmohr.com"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="text-indigo-600 hover:text-indigo-800 font-medium underline"
+							className="!text-indigo-600 hover:!text-indigo-800 font-medium underline"
 						>
 							wohnmohr
 						</a>
