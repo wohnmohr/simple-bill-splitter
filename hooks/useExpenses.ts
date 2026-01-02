@@ -1,5 +1,4 @@
-import { Expense } from "@/types";
-import { Group } from "@/types";
+import { Expense, Group, SplitMethod } from "@/types";
 
 export const useExpenses = (
   groups: Group[],
@@ -10,7 +9,9 @@ export const useExpenses = (
     amount: number,
     paidBy: string,
     participants: Set<string>,
-    description?: string
+    description?: string,
+    splitMethod: SplitMethod = "equally",
+    percentages?: Record<string, number>
   ): boolean => {
     if (amount <= 0 || !paidBy || participants.size === 0 || !currentGroup) {
       return false;
@@ -25,6 +26,8 @@ export const useExpenses = (
       paidBy,
       participants: Array.from(participantSet),
       description,
+      splitMethod,
+      percentages: splitMethod === "percentage" ? percentages : undefined,
     };
 
     const updatedGroups = groups.map((g) =>
@@ -42,7 +45,9 @@ export const useExpenses = (
     amount: number,
     paidBy: string,
     participants: Set<string>,
-    description?: string
+    description?: string,
+    splitMethod: SplitMethod = "equally",
+    percentages?: Record<string, number>
   ): boolean => {
     if (amount <= 0 || !paidBy || participants.size === 0 || !currentGroup) {
       return false;
@@ -63,6 +68,8 @@ export const useExpenses = (
                 paidBy,
                 participants: Array.from(participantSet),
                 description,
+                splitMethod,
+                percentages: splitMethod === "percentage" ? percentages : undefined,
               }
               : e
           ),

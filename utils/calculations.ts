@@ -11,19 +11,47 @@ export const calculateBalances = (
   });
 
   expenses.forEach((expense) => {
-    const perPersonShare = expense.amount / expense.participants.length;
+    let perPersonShare: number;
+    const splitMethod = expense.splitMethod || "equally";
+
+    if (splitMethod === "percentage" && expense.percentages) {
+      // Calculate share based on percentages
+      const totalPercentage = expense.participants.reduce((sum, id) => {
+        return sum + (expense.percentages![id] || 0);
+      }, 0);
+
+      // Normalize percentages if they don't sum to 100
+      const normalizedPercentages = totalPercentage > 0
+        ? expense.participants.reduce((acc, id) => {
+          acc[id] = (expense.percentages![id] || 0) / totalPercentage * 100;
+          return acc;
+        }, {} as Record<string, number>)
+        : {};
+
+      // For percentage split, we'll calculate each person's share individually
+      expense.participants.forEach((participantId) => {
+        const percentage = normalizedPercentages[participantId] || 0;
+        const share = (expense.amount * percentage) / 100;
+        balances.set(
+          participantId,
+          (balances.get(participantId) || 0) - share
+        );
+      });
+    } else {
+      // Equal split (default)
+      perPersonShare = expense.amount / expense.participants.length;
+      expense.participants.forEach((participantId) => {
+        balances.set(
+          participantId,
+          (balances.get(participantId) || 0) - perPersonShare
+        );
+      });
+    }
 
     balances.set(
       expense.paidBy,
       (balances.get(expense.paidBy) || 0) + expense.amount
     );
-
-    expense.participants.forEach((participantId) => {
-      balances.set(
-        participantId,
-        (balances.get(participantId) || 0) - perPersonShare
-      );
-    });
   });
 
   return Array.from(balances.entries()).map(([personId, balance]) => ({

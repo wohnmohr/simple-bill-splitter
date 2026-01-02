@@ -3,12 +3,16 @@ export type Person = {
   name: string;
 };
 
+export type SplitMethod = "equally" | "percentage";
+
 export type Expense = {
   id: string;
   amount: number;
   paidBy: string; // person id
   participants: string[]; // array of person ids
   description?: string; // optional description for the expense
+  splitMethod: SplitMethod; // how the expense is split
+  percentages?: Record<string, number>; // person id -> percentage (only for percentage split)
 };
 
 export type Group = {
