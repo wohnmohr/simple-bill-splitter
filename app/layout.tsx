@@ -34,7 +34,26 @@ export const metadata: Metadata = {
 		"privacy-first bill splitter",
 	],
 	icons: {
-		icon: "/favicon.ico",
+		icon: [
+			{ url: "/favicon.ico", sizes: "any" },
+			{
+				url: "/web-app-manifest-192x192.png",
+				sizes: "192x192",
+				type: "image/png",
+			},
+			{
+				url: "/web-app-manifest-512x512.png",
+				sizes: "512x512",
+				type: "image/png",
+			},
+		],
+		apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+	},
+	manifest: "/manifest.json",
+	appleWebApp: {
+		capable: true,
+		statusBarStyle: "default",
+		title: "SplitBiller",
 	},
 	openGraph: {
 		title: "SplitBiller — Split Expenses Instantly | No Login, No App",
