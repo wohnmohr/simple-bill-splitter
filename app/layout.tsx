@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
-import Script from "next/script";
 import { MantineProvider } from "@/components/providers/MantineProvider";
 import "@mantine/core/styles.css";
 import "./globals.css";
@@ -13,6 +12,9 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+	metadataBase: new URL(
+		process.env.NEXT_PUBLIC_SITE_URL || "https://splitbiller.com"
+	),
 	title: "SplitBiller — Split Expenses Instantly | No Login, No App",
 	description:
 		"Split group expenses online in seconds. Calculate who owes whom without signing up, downloading an app, or sharing personal data. Perfect for restaurants, trips, roommates, and office lunches. Privacy-first expense splitter.",
@@ -60,6 +62,8 @@ export const metadata: Metadata = {
 		description:
 			"Split group expenses online in seconds. No signup, no app, no data stored. Perfect for restaurants, trips, and roommates.",
 		type: "website",
+		url: "/",
+		siteName: "SplitBiller",
 	},
 	twitter: {
 		card: "summary_large_image",
@@ -78,12 +82,6 @@ export default function RootLayout({
 		<html lang="en">
 			<body className={poppins.className}>
 				<MantineProvider>
-					<Script
-						async
-						src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1932835805964012"
-						crossOrigin="anonymous"
-						strategy="afterInteractive"
-					/>
 					{children}
 					<Analytics />
 				</MantineProvider>

@@ -19,44 +19,46 @@ import {
 	X,
 } from "lucide-react";
 
-// Ad Component - Replace with actual ad code
-const AdPlacement = ({ className = "" }: { className?: string }) => {
-	return (
-		<div
-			className={`bg-gray-100 border border-gray-200 rounded-lg p-4 text-center text-xs text-gray-500 ${className}`}
-		>
-			<div className="h-24 sm:h-32 flex items-center justify-center">
-				<span className="text-gray-400">Advertisement</span>
-			</div>
-		</div>
-	);
-};
-
 export const LandingPage = () => {
 	return (
 		<main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">
+			{/* Product Hunt Banner */}
+			<a
+				href="https://www.producthunt.com/products/split-biller?utm_source=banner&utm_medium=embed"
+				target="_blank"
+				rel="noopener noreferrer"
+				className="block bg-[#ff6154] text-white text-center text-sm sm:text-base font-semibold px-4 py-2.5 hover:bg-[#e0533f] transition-colors"
+			>
+				<span className="inline-flex items-center gap-2 flex-wrap justify-center">
+					<img
+						src="https://ph-files.imgix.net/e82f50fe-9e12-48be-b029-948fa71563cd.png?auto=compress,format&codec=mozjpeg&cs=strip&fit=crop&h=32&w=32"
+						alt="split biller on Product Hunt"
+						className="w-5 h-5 rounded"
+					/>
+					We&apos;re live on Product Hunt — support us with an upvote!
+					<ArrowRight className="h-4 w-4 !text-white" />
+				</span>
+			</a>
+
 			{/* Hero Section */}
-			<header className="px-4 sm:px-6 py-12 sm:py-20">
-				<div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8">
-					<div className="flex justify-center mb-4">
+			<header className="px-4 sm:px-6 pt-8 pb-10 sm:pt-10 sm:pb-14">
+				<div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-5">
+					<div className="flex justify-center">
 						<img
 							src="/logo.png"
 							alt="SplitBiller Logo"
-							className="w-40 h-40 sm:w-60 sm:h-60 object-contain"
+							className="w-24 h-24 sm:w-32 sm:h-32 object-contain"
 						/>
 					</div>
-					<h1 className="text-4xl sm:text-6xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent leading-tight pb-2">
-						Split Expenses Instantly — No Login, No App
+					<h1 className="text-[clamp(1.25rem,6vw,3.25rem)] font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent leading-tight whitespace-nowrap">
+						Split Expenses Instantly
 					</h1>
-					<p className="text-lg sm:text-xl !text-gray-700 max-w-2xl mx-auto">
-						Split group expenses online in seconds. Calculate who owes whom
-						without signing up, downloading an app, or sharing personal data.
+					<p className="text-base sm:text-lg !text-gray-700 max-w-2xl mx-auto">
+						Calculate who owes whom in seconds — no sign-up, no app, no data
+						stored. Perfect for restaurants, trips, roommates, and office
+						lunches.
 					</p>
-					<p className="text-base sm:text-lg !text-gray-600 max-w-2xl mx-auto">
-						Perfect for restaurants, trips, roommates, office lunches, and
-						one-time group expenses.
-					</p>
-					<div className="pt-4">
+					<div className="pt-2">
 						<Link href="/dashboard">
 							<Button
 								variant="primary"
@@ -70,83 +72,79 @@ export const LandingPage = () => {
 							</Button>
 						</Link>
 					</div>
+					<div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-2 text-sm !text-gray-600">
+						<span className="inline-flex items-center gap-1.5">
+							<Check className="h-4 w-4 text-indigo-600" />
+							Free forever
+						</span>
+						<span className="inline-flex items-center gap-1.5">
+							<Check className="h-4 w-4 text-indigo-600" />
+							No sign-up
+						</span>
+						<span className="inline-flex items-center gap-1.5">
+							<Check className="h-4 w-4 text-indigo-600" />
+							Works on any device
+						</span>
+					</div>
+					<div className="flex justify-center pt-2">
+						<a
+							href="https://www.producthunt.com/products/split-biller?utm_source=hero&utm_medium=embed"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-[#ff6154]/30 text-sm font-semibold !text-[#ff6154] shadow-sm hover:bg-white transition-colors"
+						>
+							<img
+								src="https://ph-files.imgix.net/e82f50fe-9e12-48be-b029-948fa71563cd.png?auto=compress,format&codec=mozjpeg&cs=strip&fit=crop&h=32&w=32"
+								alt="split biller on Product Hunt"
+								className="w-5 h-5 rounded"
+							/>
+							Featured on Product Hunt
+						</a>
+					</div>
 				</div>
 			</header>
 
 			{/* Why Use This Section */}
-			<section className="px-4 sm:px-6 py-12 sm:py-16">
+			<section className="px-4 sm:px-6 py-8 sm:py-12">
 				<div className="max-w-4xl mx-auto">
-					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900 mb-6 text-center">
+					<h2 className="text-2xl sm:text-3xl font-bold !text-gray-900 mb-2 text-center">
 						Why Use This Expense Splitter?
 					</h2>
-					<p className="text-lg !text-gray-700 mb-8 text-center">
-						If you're looking for a Splitwise alternative without login, this is
-						exactly that.
+					<p className="text-base !text-gray-600 mb-6 text-center">
+						A Splitwise alternative without the login.
 					</p>
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-						<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="mb-3">
-								<Receipt className="h-8 w-8 text-indigo-600" />
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+						{[
+							{ icon: Receipt, label: "Split bills online instantly" },
+							{ icon: UserX, label: "No account, no app, no signup" },
+							{ icon: Globe, label: "Works entirely in your browser" },
+							{ icon: Lock, label: "Privacy-first — nothing is stored" },
+							{ icon: ArrowRightLeft, label: 'Simple "who owes whom" result' },
+							{ icon: Zap, label: "Lightweight & fast" },
+						].map(({ icon: Icon, label }) => (
+							<div
+								key={label}
+								className="flex items-center gap-3 bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/50 p-4"
+							>
+								<div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
+									<Icon className="h-5 w-5 text-indigo-600" />
+								</div>
+								<h3 className="text-sm sm:text-base font-semibold !text-gray-800">
+									{label}
+								</h3>
 							</div>
-							<h3 className="text-lg font-bold !text-gray-800 mb-2">
-								Split bills online instantly
-							</h3>
-						</div>
-						<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="mb-3">
-								<UserX className="h-8 w-8 text-indigo-600" />
-							</div>
-							<h3 className="text-lg font-bold text-gray-800 mb-2">
-								No account, no app, no signup
-							</h3>
-						</div>
-						<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="mb-3">
-								<Globe className="h-8 w-8 text-indigo-600" />
-							</div>
-							<h3 className="text-lg font-bold text-gray-800 mb-2">
-								Works entirely in your browser
-							</h3>
-						</div>
-						<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="mb-3">
-								<Lock className="h-8 w-8 text-indigo-600" />
-							</div>
-							<h3 className="text-lg font-bold text-gray-800 mb-2">
-								Privacy-first — nothing is stored
-							</h3>
-						</div>
-						<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="mb-3">
-								<ArrowRightLeft className="h-8 w-8 text-indigo-600" />
-							</div>
-							<h3 className="text-lg font-bold text-gray-800 mb-2">
-								Simple "who owes whom" result
-							</h3>
-						</div>
-						<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="mb-3">
-								<Zap className="h-8 w-8 text-indigo-600" />
-							</div>
-							<h3 className="text-lg font-bold text-gray-800 mb-2">
-								Lightweight & fast
-							</h3>
-						</div>
+						))}
 					</div>
-					<p className="text-center !text-gray-600 mt-8">
-						This is a lightweight group expense calculator built for people who
-						want fast answers, not another finance app.
-					</p>
 				</div>
 			</section>
 
 			{/* How It Works Section */}
-			<section className="px-4 sm:px-6 py-12 sm:py-16 bg-white/40">
+			<section className="px-4 sm:px-6 py-8 sm:py-12 bg-white/40">
 				<div className="max-w-4xl mx-auto">
-					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900 mb-4 text-center">
+					<h2 className="text-2xl sm:text-3xl font-bold !text-gray-900 mb-6 text-center">
 						How It Works (Simple & Fair)
 					</h2>
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+					<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
 						<div className="text-center">
 							<div className="mb-3 flex justify-center">
 								<div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -188,7 +186,7 @@ export const LandingPage = () => {
 							</h3>
 						</div>
 					</div>
-					<p className="text-center !text-gray-600 mt-8">
+					<p className="text-center !text-gray-600 mt-6">
 						All expenses are split equally, and debts are automatically
 						simplified so fewer transactions are needed.
 					</p>
@@ -196,12 +194,12 @@ export const LandingPage = () => {
 			</section>
 
 			{/* Use Cases Section */}
-			<section className="px-4 sm:px-6 py-12 sm:py-16">
+			<section className="px-4 sm:px-6 py-8 sm:py-12">
 				<div className="max-w-4xl mx-auto">
-					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900 mb-8 text-center">
+					<h2 className="text-2xl sm:text-3xl font-bold !text-gray-900 mb-6 text-center">
 						Use Cases People Actually Search For
 					</h2>
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 						<article className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
 							<div className="mb-3">
 								<UtensilsCrossed className="h-8 w-8 text-indigo-600" />
@@ -252,20 +250,13 @@ export const LandingPage = () => {
 				</div>
 			</section>
 
-			{/* Subtle Ad Placement 2 - Middle of Content */}
-			<section className="px-4 sm:px-6 py-8">
-				<div className="max-w-4xl mx-auto">
-					<AdPlacement />
-				</div>
-			</section>
-
 			{/* Comparison Table Section */}
-			<section className="px-4 sm:px-6 py-12 sm:py-16 bg-white/40">
+			<section className="px-4 sm:px-6 py-8 sm:py-12 bg-white/40">
 				<div className="max-w-4xl mx-auto">
-					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900 mb-8 text-center">
+					<h2 className="text-2xl sm:text-3xl font-bold !text-gray-900 mb-2 text-center">
 						Splitwise Alternative Without Login
 					</h2>
-					<p className="text-center !text-gray-700 mb-8">
+					<p className="text-center !text-gray-600 mb-6">
 						Unlike traditional expense apps:
 					</p>
 					<div className="overflow-x-auto">
@@ -375,19 +366,19 @@ export const LandingPage = () => {
 			</section>
 
 			{/* Privacy Section */}
-			<section className="px-4 sm:px-6 py-12 sm:py-16">
+			<section className="px-4 sm:px-6 py-8 sm:py-12">
 				<div className="max-w-4xl mx-auto">
-					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900 mb-6 text-center">
+					<h2 className="text-2xl sm:text-3xl font-bold !text-gray-900 mb-6 text-center">
 						Privacy-First Expense Splitting
 					</h2>
-					<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-8">
-						<div className="mb-4 flex justify-center">
-							<Lock className="h-12 w-12 text-indigo-600" />
+					<div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
+						<div className="mb-3 flex justify-center">
+							<Lock className="h-10 w-10 text-indigo-600" />
 						</div>
-						<p className="text-xl font-bold !text-gray-800 mb-6 text-center">
+						<p className="text-lg sm:text-xl font-bold !text-gray-800 mb-4 text-center">
 							Your data never leaves your device.
 						</p>
-						<ul className="space-y-4 !text-gray-700">
+						<ul className="space-y-2.5 !text-gray-700 max-w-md mx-auto">
 							<li className="flex items-start">
 								<span className="mr-3">•</span>
 								<span>All calculations run locally in your browser</span>
@@ -409,12 +400,12 @@ export const LandingPage = () => {
 			</section>
 
 			{/* FAQ Section */}
-			<section className="px-4 sm:px-6 py-12 sm:py-16 bg-white/40">
+			<section className="px-4 sm:px-6 py-8 sm:py-12 bg-white/40">
 				<div className="max-w-4xl mx-auto">
-					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900 mb-8 text-center">
+					<h2 className="text-2xl sm:text-3xl font-bold !text-gray-900 mb-6 text-center">
 						Frequently Asked Questions
 					</h2>
-					<div className="space-y-6">
+					<div className="space-y-3">
 						<article className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
 							<h3 className="text-xl font-bold !text-gray-800 mb-2">
 								How do I split expenses among friends?
@@ -463,16 +454,15 @@ export const LandingPage = () => {
 			</section>
 
 			{/* Final CTA Section */}
-			<section className="px-4 sm:px-6 py-12 sm:py-16">
-				<div className="max-w-4xl mx-auto text-center space-y-6">
-					<h2 className="text-3xl sm:text-4xl font-bold !text-gray-900">
+			<section className="px-4 sm:px-6 py-10 sm:py-14">
+				<div className="max-w-4xl mx-auto text-center space-y-4">
+					<h2 className="text-2xl sm:text-3xl font-bold !text-gray-900">
 						Start Splitting Bills Now
 					</h2>
-					<p className="text-lg !text-gray-700">
-						Stop wasting time downloading apps or creating accounts. Split
-						expenses instantly and move on.
+					<p className="text-base sm:text-lg !text-gray-700 max-w-xl mx-auto">
+						No downloads, no accounts — split expenses instantly and move on.
 					</p>
-					<div className="pt-4">
+					<div className="pt-2">
 						<Link href="/dashboard">
 							<Button
 								variant="primary"
@@ -489,16 +479,25 @@ export const LandingPage = () => {
 				</div>
 			</section>
 
-			{/* Subtle Ad Placement 3 - Before Footer */}
-			<section className="px-4 sm:px-6 py-8">
-				<div className="max-w-4xl mx-auto">
-					<AdPlacement />
-				</div>
-			</section>
-
 			{/* Footer */}
-			<footer className="px-4 sm:px-6 py-8 border-t border-gray-200 mt-12">
-				<div className="max-w-4xl mx-auto text-center space-y-2">
+			<footer className="px-4 sm:px-6 py-6 border-t border-gray-200">
+				<div className="max-w-4xl mx-auto text-center space-y-3">
+					<div className="flex justify-center">
+						<a
+							href="https://www.producthunt.com/products/split-biller?utm_source=badge&utm_medium=embed"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#ff6154] text-white text-sm font-semibold shadow-sm hover:bg-[#e0533f] transition-colors"
+						>
+							<img
+								src="https://ph-files.imgix.net/e82f50fe-9e12-48be-b029-948fa71563cd.png?auto=compress,format&codec=mozjpeg&cs=strip&fit=crop&h=32&w=32"
+								alt="split biller on Product Hunt"
+								className="w-5 h-5 rounded"
+							/>
+							Find us on Product Hunt
+							<ArrowRight className="h-4 w-4 !text-white" />
+						</a>
+					</div>
 					<p className="text-sm !text-gray-600">
 						© {new Date().getFullYear()} splitbiller.com. All rights reserved.
 					</p>

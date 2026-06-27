@@ -166,7 +166,7 @@ export default function Home() {
 						<div className="mb-3 sm:mb-4">
 							<button
 								onClick={() => setSelectedGroupId(null)}
-								className="flex items-center gap-2 text-gray-700 hover:text-indigo-600 active:text-indigo-700 transition-colors touch-manipulation group"
+								className="flex items-center gap-1.5 text-sm sm:text-base font-medium text-gray-700 hover:text-indigo-600 active:text-indigo-700 transition-colors touch-manipulation group"
 							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
@@ -182,6 +182,7 @@ export default function Home() {
 										d="M15 19l-7-7 7-7"
 									/>
 								</svg>
+								<span>All groups</span>
 							</button>
 						</div>
 						<GroupSelector
