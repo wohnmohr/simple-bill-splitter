@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Settlement, Person, Currency } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
-import { Copy, MessageCircle, Check, Share2 } from "lucide-react";
+import { Copy, MessageCircle, Check, Share2, ArrowRight } from "lucide-react";
 
 interface SettlementListProps {
 	settlements: Settlement[];
@@ -85,18 +85,25 @@ export const SettlementList = ({
 
 	if (settlements.length === 0) {
 		return (
-			<div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/50 p-3 sm:p-4">
-				<p className="text-xs sm:text-sm text-gray-500 text-center py-4">
-					No settlements needed. Everyone is balanced!
+			<div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/50 p-6 sm:p-8 text-center">
+				<Check className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 text-green-500" />
+				<p className="text-sm sm:text-base font-semibold text-gray-700">
+					All settled up!
 				</p>
-				<p className="text-xs text-gray-500 mt-3 sm:mt-4">Min transactions</p>
+				<p className="text-xs sm:text-sm text-gray-500 mt-1">
+					No payments needed — everyone is balanced.
+				</p>
 			</div>
 		);
 	}
 
 	return (
 		<div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/50 p-3 sm:p-4">
-			<div className="flex justify-end gap-2 mb-3">
+			<div className="flex items-center justify-between gap-2 mb-3">
+				<h3 className="text-sm sm:text-base font-bold text-gray-800">
+					Who pays whom
+				</h3>
+				<div className="flex gap-1 sm:gap-2">
 				<button
 					onClick={handleShare}
 					className="p-1.5 sm:p-2 text-gray-600 hover:text-indigo-600 active:text-indigo-700 transition-colors touch-manipulation rounded-lg hover:bg-indigo-50 active:bg-indigo-100"
@@ -122,6 +129,7 @@ export const SettlementList = ({
 						<Copy className="h-4 w-4 sm:h-5 sm:w-5" />
 					)}
 				</button>
+				</div>
 			</div>
 			<div className="space-y-2">
 				{settlements.map((settlement, index) => (
@@ -129,24 +137,26 @@ export const SettlementList = ({
 						key={index}
 						className="border-2 border-indigo-200 rounded-xl p-2.5 sm:p-3 bg-gradient-to-r from-indigo-50 to-purple-50"
 					>
-						<div className="flex flex-col gap-1">
-							<span className="text-xs text-gray-700 break-words">
-								<span className="font-bold">
+						<div className="flex items-center justify-between gap-2">
+							<div className="flex items-center gap-1.5 sm:gap-2 min-w-0 text-xs sm:text-sm text-gray-700">
+								<span className="font-bold truncate max-w-[35%]">
 									{getPersonName(settlement.from)}
-								</span>{" "}
-								owes{" "}
-								<span className="font-bold">
+								</span>
+								<ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-indigo-500 shrink-0" />
+								<span className="font-bold truncate max-w-[35%]">
 									{getPersonName(settlement.to)}
 								</span>
-							</span>
-							<span className="text-sm sm:text-base font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+							</div>
+							<span className="text-sm sm:text-base font-bold shrink-0 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
 								{formatCurrency(settlement.amount, currency)}
 							</span>
 						</div>
 					</div>
 				))}
 			</div>
-			<p className="text-xs text-gray-500 mt-3 sm:mt-4">Min transactions</p>
+			<p className="text-xs text-gray-500 mt-3 sm:mt-4">
+				Simplified to the fewest possible payments.
+			</p>
 		</div>
 	);
 };

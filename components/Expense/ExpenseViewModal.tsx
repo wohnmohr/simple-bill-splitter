@@ -2,6 +2,7 @@ import { Expense, Person, Currency } from "@/types";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
 import { formatCurrency } from "@/utils/formatting";
+import { X } from "lucide-react";
 
 interface ExpenseViewModalProps {
 	isOpen: boolean;
@@ -37,9 +38,11 @@ export const ExpenseViewModal = ({
 					</h2>
 					<button
 						onClick={onClose}
-						className="p-2 text-gray-400 hover:text-gray-600 active:text-gray-700 hover:bg-gray-100 active:bg-gray-200 rounded-lg text-xl touch-manipulation"
+						className="p-2 text-gray-400 hover:text-gray-600 active:text-gray-700 hover:bg-gray-100 active:bg-gray-200 rounded-lg touch-manipulation"
 						aria-label="Close"
-					></button>
+					>
+						<X className="h-5 w-5 sm:h-6 sm:w-6" />
+					</button>
 				</div>
 				<div className="space-y-3 sm:space-y-4 flex-1 overflow-y-auto">
 					{expense.description && (
