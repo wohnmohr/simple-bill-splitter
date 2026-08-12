@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Group, Currency } from "@/types";
 import { MAX_GROUPS, CURRENCIES } from "@/constants";
 import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
+import { consumePendingGroupSelection } from "@/utils/shareImport";
 
 export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -13,7 +14,10 @@ export const useGroups = () => {
     const loadedGroups = loadGroupsFromStorage();
     setGroups(loadedGroups);
     hasLoadedRef.current = true;
-    // Don't auto-select a group on refresh - show groups home instead
+    const pendingId = consumePendingGroupSelection();
+    if (pendingId && loadedGroups.some((g) => g.id === pendingId)) {
+      setSelectedGroupId(pendingId);
+    }
   }, []);
 
   // Save groups to localStorage whenever groups change (after initial load)

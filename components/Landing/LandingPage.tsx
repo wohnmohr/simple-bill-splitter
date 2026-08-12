@@ -17,7 +17,38 @@ import {
 	UsersRound,
 	Check,
 	X,
+	Percent,
+	Scale,
+	IndianRupee,
+	UserMinus,
 } from "lucide-react";
+import { track } from "@/lib/analytics";
+import { ALL_TOOL_SLUGS, TOOL_PAGES, ToolSlug } from "@/content/tools";
+
+const TOOL_ICONS: Record<ToolSlug, typeof Receipt> = {
+	"restaurant-bill-splitter": UtensilsCrossed,
+	"trip-expense-splitter": Luggage,
+	"roommate-expense-splitter": Home,
+	"upi-bill-splitter": IndianRupee,
+	"split-bill-with-tip": Percent,
+	"split-bill-with-tax": Receipt,
+	"split-bill-unequally": Scale,
+	"split-bill-without-signup": UserMinus,
+	"splitwise-alternative": ArrowRightLeft,
+};
+
+const TOOL_BLURBS: Record<ToolSlug, string> = {
+	"restaurant-bill-splitter":
+		"Dinner bill + tip or service charge, split among friends.",
+	"trip-expense-splitter": "Hotels, rides, meals — settle the whole trip.",
+	"roommate-expense-splitter": "Rent, utilities, and groceries without the spreadsheet.",
+	"upi-bill-splitter": "Split in ₹ and open UPI pay links for each settlement.",
+	"split-bill-with-tip": "Add a tip %, then divide fairly.",
+	"split-bill-with-tax": "Include GST/sales tax in each person’s share.",
+	"split-bill-unequally": "Custom amounts or percentages when orders differ.",
+	"split-bill-without-signup": "Instant split — no account, no app download.",
+	"splitwise-alternative": "Who owes whom, without forcing friends onto an app.",
+};
 
 export const LandingPage = () => {
 	return (
@@ -40,6 +71,35 @@ export const LandingPage = () => {
 				</span>
 			</a>
 
+			{/* Site nav */}
+			<nav className="sticky top-0 z-40 border-b border-indigo-100/80 bg-white/80 backdrop-blur-md">
+				<div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+					<Link href="/" className="flex items-center gap-2 shrink-0">
+						<img
+							src="/logo.png"
+							alt="SplitBiller"
+							className="w-8 h-8 object-contain"
+						/>
+						<span className="font-bold text-base bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+							SplitBiller
+						</span>
+					</Link>
+					<div className="flex items-center gap-2 sm:gap-3">
+						<a
+							href="#tools"
+							className="text-sm font-medium text-gray-700 hover:text-indigo-700 px-2 py-1.5"
+						>
+							Tools
+						</a>
+						<Link href="/dashboard">
+							<Button variant="primary" size="sm">
+								Open app
+							</Button>
+						</Link>
+					</div>
+				</div>
+			</nav>
+
 			{/* Hero Section */}
 			<header className="px-4 sm:px-6 pt-8 pb-10 sm:pt-10 sm:pb-14">
 				<div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-5">
@@ -58,8 +118,13 @@ export const LandingPage = () => {
 						stored. Perfect for restaurants, trips, roommates, and office
 						lunches.
 					</p>
-					<div className="pt-2">
-						<Link href="/dashboard">
+					<div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+						<Link
+							href="/dashboard"
+							onClick={() =>
+								track("landing_cta_clicked", { location: "hero" })
+							}
+						>
 							<Button
 								variant="primary"
 								size="xl"
@@ -71,6 +136,12 @@ export const LandingPage = () => {
 								</span>
 							</Button>
 						</Link>
+						<a
+							href="#tools"
+							className="text-sm font-semibold text-indigo-700 hover:text-indigo-900"
+						>
+							Browse quick calculators ↓
+						</a>
 					</div>
 					<div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-2 text-sm !text-gray-600">
 						<span className="inline-flex items-center gap-1.5">
@@ -103,6 +174,92 @@ export const LandingPage = () => {
 					</div>
 				</div>
 			</header>
+
+			{/* Quick tools — primary navigation to SEO pages */}
+			<section id="tools" className="px-4 sm:px-6 py-10 sm:py-14 scroll-mt-16">
+				<div className="max-w-5xl mx-auto">
+					<div className="text-center mb-8 space-y-2">
+						<h2 className="text-2xl sm:text-3xl font-bold !text-gray-900">
+							Quick calculators
+						</h2>
+						<p className="text-base !text-gray-600 max-w-2xl mx-auto">
+							Jump into a tool for your exact situation — then share the
+							settlement with friends.
+						</p>
+					</div>
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+						{ALL_TOOL_SLUGS.map((slug) => {
+							const config = TOOL_PAGES[slug];
+							const Icon = TOOL_ICONS[slug];
+							return (
+								<Link
+									key={slug}
+									href={`/${slug}`}
+									onClick={() =>
+										track("landing_cta_clicked", {
+											location: "tools_grid",
+											tool: slug,
+										})
+									}
+									className="group flex flex-col gap-3 bg-white/90 backdrop-blur-sm rounded-2xl border border-indigo-100/80 p-5 shadow-md hover:border-indigo-300 hover:shadow-lg transition-all"
+								>
+									<div className="h-10 w-10 rounded-xl bg-indigo-100 flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+										<Icon className="h-5 w-5 text-indigo-600" />
+									</div>
+									<div>
+										<h3 className="font-bold text-gray-900 group-hover:text-indigo-700 transition-colors">
+											{config.title}
+										</h3>
+										<p className="text-sm text-gray-600 mt-1 leading-snug">
+											{TOOL_BLURBS[slug]}
+										</p>
+									</div>
+									<span className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-indigo-600">
+										Open tool
+										<ArrowRight className="h-4 w-4" />
+									</span>
+								</Link>
+							);
+						})}
+					</div>
+				</div>
+			</section>
+
+			{/* Demo Section */}
+			<section className="px-4 sm:px-6 pb-8 sm:pb-12">
+				<div className="max-w-4xl mx-auto">
+					<h2 className="text-2xl sm:text-3xl font-bold !text-gray-900 mb-6 text-center">
+						See it in action
+					</h2>
+					<div className="rounded-2xl overflow-hidden shadow-xl border border-white/50 bg-white">
+						<div
+							style={{
+								position: "relative",
+								paddingBottom: "calc(52.9688% + 41px)",
+								height: 0,
+								width: "100%",
+							}}
+						>
+							<iframe
+								src="https://demo.arcade.software/ziv5LbSvTljkl6cuICDu?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true"
+								title="Create and Manage Group Trip Expenses"
+								frameBorder="0"
+								loading="lazy"
+								allowFullScreen
+								allow="clipboard-write"
+								style={{
+									position: "absolute",
+									top: 0,
+									left: 0,
+									width: "100%",
+									height: "100%",
+									colorScheme: "light",
+								}}
+							/>
+						</div>
+					</div>
+				</div>
+			</section>
 
 			{/* Why Use This Section */}
 			<section className="px-4 sm:px-6 py-8 sm:py-12">
@@ -190,63 +347,6 @@ export const LandingPage = () => {
 						All expenses are split equally, and debts are automatically
 						simplified so fewer transactions are needed.
 					</p>
-				</div>
-			</section>
-
-			{/* Use Cases Section */}
-			<section className="px-4 sm:px-6 py-8 sm:py-12">
-				<div className="max-w-4xl mx-auto">
-					<h2 className="text-2xl sm:text-3xl font-bold !text-gray-900 mb-6 text-center">
-						Use Cases People Actually Search For
-					</h2>
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-						<article className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="mb-3">
-								<UtensilsCrossed className="h-8 w-8 text-indigo-600" />
-							</div>
-							<h3 className="text-xl font-bold !text-gray-800 mb-2">
-								Split Restaurant Bills
-							</h3>
-							<p className="!text-gray-600">
-								Quickly split dinner or lunch bills among friends without
-								awkward math at the table.
-							</p>
-						</article>
-						<article className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="mb-3">
-								<Luggage className="h-8 w-8 text-indigo-600" />
-							</div>
-							<h3 className="text-xl font-bold text-gray-800 mb-2">
-								Split Trip Expenses
-							</h3>
-							<p className="text-gray-600">
-								Perfect for travel, road trips, vacations, and weekend getaways.
-							</p>
-						</article>
-						<article className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="mb-3">
-								<Home className="h-8 w-8 text-indigo-600" />
-							</div>
-							<h3 className="text-xl font-bold text-gray-800 mb-2">
-								Roommate Expenses
-							</h3>
-							<p className="text-gray-600">
-								Split shared house bills, groceries, or one-time expenses
-								fairly.
-							</p>
-						</article>
-						<article className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6">
-							<div className="mb-3">
-								<Users className="h-8 w-8 text-indigo-600" />
-							</div>
-							<h3 className="text-xl font-bold text-gray-800 mb-2">
-								Office & Team Outings
-							</h3>
-							<p className="text-gray-600">
-								Settle group lunch or team outing expenses in seconds.
-							</p>
-						</article>
-					</div>
 				</div>
 			</section>
 
@@ -463,7 +563,12 @@ export const LandingPage = () => {
 						No downloads, no accounts — split expenses instantly and move on.
 					</p>
 					<div className="pt-2">
-						<Link href="/dashboard">
+						<Link
+							href="/dashboard"
+							onClick={() =>
+								track("landing_cta_clicked", { location: "footer" })
+							}
+						>
 							<Button
 								variant="primary"
 								size="xl"
@@ -480,38 +585,57 @@ export const LandingPage = () => {
 			</section>
 
 			{/* Footer */}
-			<footer className="px-4 sm:px-6 py-6 border-t border-gray-200">
-				<div className="max-w-4xl mx-auto text-center space-y-3">
-					<div className="flex justify-center">
-						<a
-							href="https://www.producthunt.com/products/split-biller?utm_source=badge&utm_medium=embed"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#ff6154] text-white text-sm font-semibold shadow-sm hover:bg-[#e0533f] transition-colors"
-						>
-							<img
-								src="https://ph-files.imgix.net/e82f50fe-9e12-48be-b029-948fa71563cd.png?auto=compress,format&codec=mozjpeg&cs=strip&fit=crop&h=32&w=32"
-								alt="split biller on Product Hunt"
-								className="w-5 h-5 rounded"
-							/>
-							Find us on Product Hunt
-							<ArrowRight className="h-4 w-4 !text-white" />
-						</a>
+			<footer className="px-4 sm:px-6 py-8 border-t border-gray-200">
+				<div className="max-w-5xl mx-auto space-y-6">
+					<div>
+						<p className="text-sm font-semibold text-gray-800 mb-3 text-center">
+							All tools
+						</p>
+						<ul className="flex flex-wrap justify-center gap-2">
+							{ALL_TOOL_SLUGS.map((slug) => (
+								<li key={slug}>
+									<Link
+										href={`/${slug}`}
+										className="inline-block rounded-lg bg-white/80 border border-indigo-100 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
+									>
+										{TOOL_PAGES[slug].title}
+									</Link>
+								</li>
+							))}
+						</ul>
 					</div>
-					<p className="text-sm !text-gray-600">
-						© {new Date().getFullYear()} splitbiller.com. All rights reserved.
-					</p>
-					<p className="text-sm !text-gray-600">
-						Created by{" "}
-						<a
-							href="https://www.wohnmohr.com"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="!text-indigo-600 hover:!text-indigo-800 font-medium underline"
-						>
-							wohnmohr
-						</a>
-					</p>
+					<div className="text-center space-y-3">
+						<div className="flex justify-center">
+							<a
+								href="https://www.producthunt.com/products/split-biller?utm_source=badge&utm_medium=embed"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#ff6154] text-white text-sm font-semibold shadow-sm hover:bg-[#e0533f] transition-colors"
+							>
+								<img
+									src="https://ph-files.imgix.net/e82f50fe-9e12-48be-b029-948fa71563cd.png?auto=compress,format&codec=mozjpeg&cs=strip&fit=crop&h=32&w=32"
+									alt="split biller on Product Hunt"
+									className="w-5 h-5 rounded"
+								/>
+								Find us on Product Hunt
+								<ArrowRight className="h-4 w-4 !text-white" />
+							</a>
+						</div>
+						<p className="text-sm !text-gray-600">
+							© {new Date().getFullYear()} splitbiller.com. All rights reserved.
+						</p>
+						<p className="text-sm !text-gray-600">
+							Created by{" "}
+							<a
+								href="https://www.wohnmohr.com"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="!text-indigo-600 hover:!text-indigo-800 font-medium underline"
+							>
+								wohnmohr
+							</a>
+						</p>
+					</div>
 				</div>
 			</footer>
 		</main>
