@@ -5,7 +5,7 @@ export type CompactSharePayload = {
 	v: 1;
 	n: string; // group name
 	c: string; // currency code
-	m: { i: string; n: string }[]; // members
+	m: { i: string; n: string; u?: string }[]; // members (+ optional UPI id)
 	e: {
 		a: number; // amount
 		p: string; // paidBy

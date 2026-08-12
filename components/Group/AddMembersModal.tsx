@@ -7,7 +7,8 @@ interface AddMembersModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	group: Group;
-	onAddMember: (name: string) => void;
+	onAddMember: (name: string, upiId?: string) => void;
+	onUpdateMemberUpi?: (personId: string, upiId: string) => void;
 	onDeleteMember: (personId: string) => void;
 }
 
@@ -16,21 +17,27 @@ export const AddMembersModal = ({
 	onClose,
 	group,
 	onAddMember,
+	onUpdateMemberUpi,
 	onDeleteMember,
 }: AddMembersModalProps) => {
 	const [memberName, setMemberName] = React.useState("");
+	const [memberUpi, setMemberUpi] = React.useState("");
 
 	const handleSubmit = () => {
 		if (memberName.trim()) {
-			onAddMember(memberName);
+			onAddMember(memberName, memberUpi || undefined);
 			setMemberName("");
+			setMemberUpi("");
 		}
 	};
 
 	const handleClose = () => {
 		setMemberName("");
+		setMemberUpi("");
 		onClose();
 	};
+
+	const showUpi = group.currency.code === "INR";
 
 	return (
 		<Modal isOpen={isOpen} onClose={handleClose}>
@@ -43,9 +50,8 @@ export const AddMembersModal = ({
 						</span>
 					</h2>
 
-					{/* Add Member Form */}
-					<div className="border-b border-gray-200 pb-3 sm:pb-4 mb-4 sm:mb-6">
-						<label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
+					<div className="border-b border-gray-200 pb-3 sm:pb-4 mb-4 sm:mb-6 space-y-2">
+						<label className="block text-xs sm:text-sm font-semibold text-gray-700">
 							Add New Member
 						</label>
 						<div className="flex gap-2">
@@ -82,10 +88,29 @@ export const AddMembersModal = ({
 								+
 							</ActionIcon>
 						</div>
+						{showUpi && (
+							<TextInput
+								value={memberUpi}
+								onChange={(e) => setMemberUpi(e.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === "Enter") {
+										handleSubmit();
+									}
+								}}
+								placeholder="UPI ID (name@upi) — optional"
+								radius="md"
+								data-ph-mask
+								styles={{
+									input: {
+										borderColor: "#c7d2fe",
+										borderWidth: 2,
+									},
+								}}
+							/>
+						)}
 					</div>
 				</div>
 
-				{/* Members List - Scrollable */}
 				<div className="flex-1 overflow-y-auto min-h-0 -mx-4 sm:-mx-6 px-4 sm:px-6">
 					{group.members.length === 0 ? (
 						<p className="text-xs sm:text-sm text-gray-500 text-center py-4">
@@ -97,19 +122,33 @@ export const AddMembersModal = ({
 							{group.members.map((member: Person) => (
 								<div
 									key={member.id}
-									className="flex items-center justify-between p-2.5 sm:p-3 bg-gray-50 rounded-xl border border-gray-200"
+									className="p-2.5 sm:p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2"
 								>
-									<span className="font-medium text-gray-800 text-sm sm:text-base truncate flex-1">
-										{member.name}
-									</span>
-									<ActionIcon
-										onClick={() => onDeleteMember(member.id)}
-										color="red"
-										variant="subtle"
-										aria-label={`Delete ${member.name}`}
-									>
-										×
-									</ActionIcon>
+									<div className="flex items-center justify-between gap-2">
+										<span className="font-medium text-gray-800 text-sm sm:text-base truncate flex-1">
+											{member.name}
+										</span>
+										<ActionIcon
+											onClick={() => onDeleteMember(member.id)}
+											color="red"
+											variant="subtle"
+											aria-label={`Delete ${member.name}`}
+										>
+											×
+										</ActionIcon>
+									</div>
+									{showUpi && onUpdateMemberUpi && (
+										<TextInput
+											value={member.upiId || ""}
+											onChange={(e) =>
+												onUpdateMemberUpi(member.id, e.target.value)
+											}
+											placeholder="UPI ID (name@upi)"
+											size="xs"
+											radius="md"
+											data-ph-mask
+										/>
+									)}
 								</div>
 							))}
 						</div>

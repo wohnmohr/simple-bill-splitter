@@ -1,6 +1,8 @@
 export type Person = {
   id: string;
   name: string;
+  /** Optional UPI VPA (e.g. name@upi) for INR settlements */
+  upiId?: string;
 };
 
 export type SplitMethod = "equally" | "percentage";
