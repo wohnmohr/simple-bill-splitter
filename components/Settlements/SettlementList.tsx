@@ -1,91 +1,37 @@
 "use client";
 
-import { useState } from "react";
-import { Settlement, Person, Currency } from "@/types";
+import { Settlement, Person, Currency, Expense } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
-import { Copy, MessageCircle, Check, Share2, ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
+import { ShareSettlementActions } from "@/components/Share/ShareSettlementActions";
 
 interface SettlementListProps {
 	settlements: Settlement[];
 	people: Person[];
 	currency: Currency;
+	groupName?: string;
+	expenses?: Expense[];
+	/** Hide share controls (e.g. already on a shared view) */
+	readOnly?: boolean;
 }
 
 export const SettlementList = ({
 	settlements,
 	people,
 	currency,
+	groupName = "Split",
+	expenses = [],
+	readOnly = false,
 }: SettlementListProps) => {
-	const [copied, setCopied] = useState(false);
-
 	const getPersonName = (personId: string) => {
 		return people.find((p) => p.id === personId)?.name || "Unknown";
 	};
 
-	const formatSettlementsText = () => {
-		if (settlements.length === 0) {
-			return "No settlements needed. Everyone is balanced!";
-		}
-
-		const brandHeader = "💸 SplitBiller\n" + "=".repeat(30) + "\n";
-		const header = "💰 Settlement Summary\n\n";
-
-		const lines = settlements.map((settlement, index) => {
-			const fromName = getPersonName(settlement.from);
-			const toName = getPersonName(settlement.to);
-			const amount = formatCurrency(settlement.amount, currency);
-			return `${index + 1}. ${fromName} → ${toName}: ${amount}`;
-		});
-
-		const footer = `\n${"=".repeat(30)}\nTotal transactions: ${
-			settlements.length
-		}\n\nSplit expenses easily with SplitBiller\nNo login required • Free to use`;
-
-		return brandHeader + header + lines.join("\n") + footer;
-	};
-
-	const handleCopy = async () => {
-		try {
-			const text = formatSettlementsText();
-			await navigator.clipboard.writeText(text);
-			setCopied(true);
-			setTimeout(() => setCopied(false), 2000);
-		} catch (err) {
-			console.error("Failed to copy:", err);
-		}
-	};
-
-	const handleWhatsAppShare = () => {
-		const text = formatSettlementsText();
-		const encodedText = encodeURIComponent(text);
-		const whatsappUrl = `https://wa.me/?text=${encodedText}`;
-		window.open(whatsappUrl, "_blank");
-	};
-
-	const handleShare = async () => {
-		const text = formatSettlementsText();
-		try {
-			if (navigator.share) {
-				await navigator.share({
-					text: text,
-				});
-			} else {
-				// Fallback to copy if Web Share API is not available
-				await navigator.clipboard.writeText(text);
-				setCopied(true);
-				setTimeout(() => setCopied(false), 2000);
-			}
-		} catch (err) {
-			// User cancelled or error occurred
-			if ((err as Error).name !== "AbortError") {
-				console.error("Failed to share:", err);
-			}
-		}
-	};
+	const canShare = !readOnly && expenses.length > 0 && people.length > 0;
 
 	if (settlements.length === 0) {
 		return (
-			<div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/50 p-6 sm:p-8 text-center">
+			<div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/50 p-6 sm:p-8 text-center space-y-4">
 				<Check className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 text-green-500" />
 				<p className="text-sm sm:text-base font-semibold text-gray-700">
 					All settled up!
@@ -93,44 +39,37 @@ export const SettlementList = ({
 				<p className="text-xs sm:text-sm text-gray-500 mt-1">
 					No payments needed — everyone is balanced.
 				</p>
+				{canShare && (
+					<ShareSettlementActions
+						name={groupName}
+						people={people}
+						expenses={expenses}
+						currency={currency}
+						primary
+						source="dashboard"
+					/>
+				)}
 			</div>
 		);
 	}
 
 	return (
-		<div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/50 p-3 sm:p-4">
-			<div className="flex items-center justify-between gap-2 mb-3">
+		<div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/50 p-3 sm:p-4 space-y-4">
+			<div className="flex items-center justify-between gap-2">
 				<h3 className="text-sm sm:text-base font-bold text-gray-800">
 					Who pays whom
 				</h3>
-				<div className="flex gap-1 sm:gap-2">
-				<button
-					onClick={handleShare}
-					className="p-1.5 sm:p-2 text-gray-600 hover:text-indigo-600 active:text-indigo-700 transition-colors touch-manipulation rounded-lg hover:bg-indigo-50 active:bg-indigo-100"
-					title="Share settlements"
-				>
-					<Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
-				</button>
-				<button
-					onClick={handleWhatsAppShare}
-					className="p-1.5 sm:p-2 text-gray-600 hover:text-green-600 active:text-green-700 transition-colors touch-manipulation rounded-lg hover:bg-green-50 active:bg-green-100"
-					title="Share to WhatsApp"
-				>
-					<MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-				</button>
-				<button
-					onClick={handleCopy}
-					className="p-1.5 sm:p-2 text-gray-600 hover:text-indigo-600 active:text-indigo-700 transition-colors touch-manipulation rounded-lg hover:bg-indigo-50 active:bg-indigo-100"
-					title={copied ? "Copied!" : "Copy settlements"}
-				>
-					{copied ? (
-						<Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-					) : (
-						<Copy className="h-4 w-4 sm:h-5 sm:w-5" />
-					)}
-				</button>
-				</div>
+				{canShare && (
+					<ShareSettlementActions
+						name={groupName}
+						people={people}
+						expenses={expenses}
+						currency={currency}
+						source="dashboard"
+					/>
+				)}
 			</div>
+
 			<div className="space-y-2">
 				{settlements.map((settlement, index) => (
 					<div
@@ -154,7 +93,18 @@ export const SettlementList = ({
 					</div>
 				))}
 			</div>
-			<p className="text-xs text-gray-500 mt-3 sm:mt-4">
+
+			{canShare && (
+				<ShareSettlementActions
+					name={groupName}
+					people={people}
+					expenses={expenses}
+					currency={currency}
+					primary
+				/>
+			)}
+
+			<p className="text-xs text-gray-500">
 				Simplified to the fewest possible payments.
 			</p>
 		</div>
