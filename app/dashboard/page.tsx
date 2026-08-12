@@ -174,8 +174,8 @@ export default function Home() {
 	const viewingExpense = expenses.find((e) => e.id === viewingExpenseId);
 
 	return (
-				<main className="min-h-screen bg-gradient-to-br from-indigo-50 via-violet-50 to-fuchsia-50 pb-24 safe-pb">
-			<div className="max-w-lg sm:max-w-2xl mx-auto px-4 py-4 sm:py-5">
+		<main className="page-shell min-h-screen bg-gradient-to-br from-indigo-50 via-violet-50 to-fuchsia-50 pb-24 safe-pb">
+			<div className="w-full max-w-lg sm:max-w-2xl mx-auto px-4 py-4 sm:py-5 min-w-0">
 				<Header />
 
 				{groups.length === 0 ? (

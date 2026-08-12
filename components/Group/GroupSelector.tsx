@@ -55,22 +55,24 @@ export const GroupSelector = ({
 			)}
 
 			{groups.length > 1 && (
-				<div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2 -mx-3 sm:mx-0 px-3 sm:px-0">
-					{groups.map((group) => (
-						<button
-							key={group.id}
-							onClick={() => onSelectGroup(group.id)}
-							className={`flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full font-medium text-xs sm:text-sm whitespace-nowrap transition-all touch-manipulation shrink-0 ${
-								selectedGroupId === group.id
-									? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg"
-									: "bg-white text-gray-700 border-2 border-indigo-200 active:bg-indigo-50"
-							}`}
-						>
-							<span className="truncate max-w-[120px] sm:max-w-none">
-								{group.name}
-							</span>
-						</button>
-					))}
+				<div className="w-full max-w-full overflow-x-auto overscroll-x-contain pb-1">
+					<div className="flex gap-1.5 sm:gap-2 w-max max-w-none pr-1">
+						{groups.map((group) => (
+							<button
+								key={group.id}
+								onClick={() => onSelectGroup(group.id)}
+								className={`flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full font-medium text-xs sm:text-sm whitespace-nowrap transition-all touch-manipulation shrink-0 ${
+									selectedGroupId === group.id
+										? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg"
+										: "bg-white text-gray-700 border-2 border-indigo-200 active:bg-indigo-50"
+								}`}
+							>
+								<span className="truncate max-w-[120px] sm:max-w-[160px]">
+									{group.name}
+								</span>
+							</button>
+						))}
+					</div>
 				</div>
 			)}
 		</div>

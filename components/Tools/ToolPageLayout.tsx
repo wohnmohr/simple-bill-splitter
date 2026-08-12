@@ -49,11 +49,11 @@ export function ToolJsonLd({ config }: { config: ToolPageConfig }) {
 
 export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 	return (
-		<main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">
+		<main className="page-shell min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">
 			<ToolJsonLd config={config} />
 
 			<header className="px-4 sm:px-6 pt-5 pb-2">
-				<div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+				<div className="max-w-5xl mx-auto flex items-center justify-between gap-3 min-w-0">
 					<Link href="/" className="flex items-center gap-2 group">
 						<img
 							src="/logo.png"
@@ -89,7 +89,7 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 			</section>
 
 			<section className="px-4 sm:px-6 pb-10 sm:pb-14">
-				<div className="max-w-5xl mx-auto">
+				<div className="max-w-5xl mx-auto min-w-0 w-full">
 					<ToolCalculator kind={config.calculator} />
 				</div>
 			</section>
