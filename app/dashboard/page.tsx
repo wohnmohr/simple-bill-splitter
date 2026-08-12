@@ -52,7 +52,7 @@ export default function Home() {
 		setGroups,
 	} = useGroups();
 
-	const { addMember, deleteMember } = useGroupMembers(
+	const { addMember, updateMemberUpi, deleteMember } = useGroupMembers(
 		groups,
 		setGroups,
 		currentGroup
@@ -102,8 +102,8 @@ export default function Home() {
 		setShowExpenseForm(false);
 	};
 
-	const handleAddMember = (memberName: string) => {
-		const ok = addMember(memberName);
+	const handleAddMember = (memberName: string, upiId?: string) => {
+		const ok = addMember(memberName, upiId);
 		if (ok) track("dashboard_member_added");
 		return ok;
 	};
@@ -294,6 +294,7 @@ export default function Home() {
 						onClose={() => setShowMembersModal(false)}
 						group={currentGroup}
 						onAddMember={handleAddMember}
+						onUpdateMemberUpi={updateMemberUpi}
 						onDeleteMember={deleteMember}
 					/>
 				)}
