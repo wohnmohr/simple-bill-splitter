@@ -22,6 +22,7 @@ import { BalanceList } from "@/components/Balances/BalanceList";
 import { SettlementList } from "@/components/Settlements/SettlementList";
 import { FloatingActionButton } from "@/components/UI/FloatingActionButton";
 import { EmptyGroupState } from "@/components/EmptyStates/EmptyGroupState";
+import { track } from "@/lib/analytics";
 
 export default function Home() {
 	const router = useRouter();
@@ -70,7 +71,10 @@ export default function Home() {
 	const currency = currentGroup?.currency || CURRENCIES[0];
 
 	const handleCreateGroup = (name: string, currency: Currency) => {
-		createGroup(name, currency);
+		const ok = createGroup(name, currency);
+		if (ok) {
+			track("dashboard_group_created", { currency: currency.code });
+		}
 		setShowGroupForm(false);
 	};
 
@@ -90,7 +94,29 @@ export default function Home() {
 			splitMethod as any,
 			percentages
 		);
+		track("dashboard_expense_added", {
+			participant_count: participants.size,
+			split_method: splitMethod || "equally",
+			currency: currency.code,
+		});
 		setShowExpenseForm(false);
+	};
+
+	const handleAddMember = (memberName: string) => {
+		const ok = addMember(memberName);
+		if (ok) track("dashboard_member_added");
+		return ok;
+	};
+
+	const handleTabChange = (tab: Tab) => {
+		setActiveTab(tab);
+		if (tab === "settlements") {
+			track("dashboard_settlements_tab_viewed", {
+				settlement_count: settlements.length,
+				expense_count: expenses.length,
+				member_count: people.length,
+			});
+		}
 	};
 
 	const handleStartEditExpense = (expense: Expense) => {
@@ -212,7 +238,7 @@ export default function Home() {
 									<>
 										<TabNavigation
 											activeTab={activeTab}
-											onTabChange={setActiveTab}
+											onTabChange={handleTabChange}
 										/>
 
 										{activeTab === "transactions" && (
@@ -239,6 +265,8 @@ export default function Home() {
 												settlements={settlements}
 												people={people}
 												currency={currency}
+												groupName={currentGroup.name}
+												expenses={expenses}
 											/>
 										)}
 
@@ -265,7 +293,7 @@ export default function Home() {
 						isOpen={showMembersModal}
 						onClose={() => setShowMembersModal(false)}
 						group={currentGroup}
-						onAddMember={addMember}
+						onAddMember={handleAddMember}
 						onDeleteMember={deleteMember}
 					/>
 				)}

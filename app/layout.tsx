@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { MantineProvider } from "@/components/providers/MantineProvider";
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import "@mantine/core/styles.css";
 import "./globals.css";
 
@@ -81,10 +82,12 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className={poppins.className}>
-				<MantineProvider>
-					{children}
-					<Analytics />
-				</MantineProvider>
+				<PostHogProvider>
+					<MantineProvider>
+						{children}
+						<Analytics />
+					</MantineProvider>
+				</PostHogProvider>
 			</body>
 		</html>
 	);
