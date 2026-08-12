@@ -2,10 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ensure text is visible by default */
 @layer base {
+	html {
+		-webkit-tap-highlight-color: transparent;
+		text-size-adjust: 100%;
+		overflow-x: clip;
+		max-width: 100%;
+	}
+
 	body {
-		@apply text-gray-900;
+		@apply text-gray-900 bg-white;
+		font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+		padding-bottom: env(safe-area-inset-bottom);
+		overflow-x: clip;
+		max-width: 100%;
+		position: relative;
+	}
+
+	/* Prevent flex/grid children from forcing page-wide scroll */
+	main,
+	section,
+	header,
+	footer,
+	nav {
+		max-width: 100%;
+	}
+
+	h1,
+	h2,
+	.font-display {
+		font-family: var(--font-fraunces), var(--font-outfit), ui-serif, Georgia, serif;
+		overflow-wrap: anywhere;
+	}
+
+	p,
+	span,
+	li,
+	td,
+	th,
+	label {
+		overflow-wrap: break-word;
+	}
+
+	img,
+	svg,
+	video,
+	iframe {
+		max-width: 100%;
+	}
+
+	button,
+	a,
+	input,
+	select,
+	textarea {
+		touch-action: manipulation;
 	}
 }
 
+@layer utilities {
+	.safe-pb {
+		padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+	}
+
+	.tabular-nums {
+		font-variant-numeric: tabular-nums;
+	}
+
+	.page-shell {
+		@apply w-full max-w-full overflow-x-clip;
+	}
+}

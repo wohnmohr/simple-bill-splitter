@@ -16,12 +16,12 @@ export const GroupsHome = ({
 }: GroupsHomeProps) => {
 	return (
 		<div className="space-y-4 sm:space-y-6">
-			<div className="text-center mb-6 sm:mb-8">
-				<h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
-					Your Groups
+			<div className="text-center mb-5 sm:mb-6">
+				<h1 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+					Your groups
 				</h1>
-				<p className="text-sm sm:text-base text-gray-600 px-2">
-					Select a group to view expenses or create a new one
+				<p className="text-sm text-gray-600 px-2">
+					Open a group to add expenses and settle in ₹
 				</p>
 			</div>
 

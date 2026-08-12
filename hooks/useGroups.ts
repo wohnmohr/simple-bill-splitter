@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Group, Currency } from "@/types";
-import { MAX_GROUPS, CURRENCIES } from "@/constants";
+import { MAX_GROUPS, DEFAULT_CURRENCY } from "@/constants";
 import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
 import { consumePendingGroupSelection } from "@/utils/shareImport";
 
@@ -27,7 +27,10 @@ export const useGroups = () => {
     }
   }, [groups]);
 
-  const createGroup = (name: string, currency: Currency = CURRENCIES[0]): boolean => {
+  const createGroup = (
+    name: string,
+    currency: Currency = DEFAULT_CURRENCY
+  ): boolean => {
     if (!name.trim() || groups.length >= MAX_GROUPS) {
       return false;
     }

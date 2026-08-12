@@ -14,7 +14,7 @@ import {
 type Mode = "tip" | "tax";
 
 export const TipTaxCalculator = ({ mode }: { mode: Mode }) => {
-	const [currency, setCurrency] = useDefaultCurrency("USD");
+	const [currency, setCurrency] = useDefaultCurrency("INR");
 	const [subtotal, setSubtotal] = useState(mode === "tip" ? "86.40" : "120.00");
 	const [rate, setRate] = useState(mode === "tip" ? "18" : "8.875");
 	const [useFinal, setUseFinal] = useState(false);

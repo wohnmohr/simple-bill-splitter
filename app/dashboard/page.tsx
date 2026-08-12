@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users } from "lucide-react";
 import { Tab, Currency, Expense } from "@/types";
-import { CURRENCIES } from "@/constants";
+import { DEFAULT_CURRENCY } from "@/constants";
 import { calculateBalances, calculateSettlements } from "@/utils/calculations";
 import { useGroups } from "@/hooks/useGroups";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
@@ -68,7 +68,7 @@ export default function Home() {
 	const expenses = currentGroup?.expenses || [];
 	const balances = calculateBalances(people, expenses);
 	const settlements = calculateSettlements(people, expenses);
-	const currency = currentGroup?.currency || CURRENCIES[0];
+	const currency = currentGroup?.currency || DEFAULT_CURRENCY;
 
 	const handleCreateGroup = (name: string, currency: Currency) => {
 		const ok = createGroup(name, currency);
@@ -174,8 +174,8 @@ export default function Home() {
 	const viewingExpense = expenses.find((e) => e.id === viewingExpenseId);
 
 	return (
-		<main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-20 sm:pb-24">
-			<div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+		<main className="page-shell min-h-screen bg-gradient-to-br from-indigo-50 via-violet-50 to-fuchsia-50 pb-24 safe-pb">
+			<div className="w-full max-w-lg sm:max-w-2xl mx-auto px-4 py-4 sm:py-5 min-w-0">
 				<Header />
 
 				{groups.length === 0 ? (
@@ -220,16 +220,16 @@ export default function Home() {
 
 						{currentGroup && (
 							<>
-								<div className="mb-4 sm:mb-6">
+								<div className="mb-3 sm:mb-4">
 									<button
 										onClick={() => setShowMembersModal(true)}
-										className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 active:from-indigo-800 active:to-purple-800 shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation"
+										className="w-full min-h-12 px-4 py-3 bg-white border-2 border-indigo-200 text-indigo-800 rounded-2xl font-semibold hover:bg-indigo-50 active:bg-indigo-100 shadow-sm flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation"
 									>
-										<Users className="h-5 w-5 sm:h-6 sm:w-6" />
+										<Users className="h-5 w-5" />
 										<span>
 											{currentGroup.members.length === 0
-												? "Add Members"
-												: `Manage Members (${currentGroup.members.length})`}
+												? "Add members & UPI IDs"
+												: `Members (${currentGroup.members.length}) · UPI`}
 										</span>
 									</button>
 								</div>
@@ -267,6 +267,7 @@ export default function Home() {
 												currency={currency}
 												groupName={currentGroup.name}
 												expenses={expenses}
+												onUpdateMemberUpi={updateMemberUpi}
 											/>
 										)}
 

@@ -52,22 +52,25 @@ const TOOL_BLURBS: Record<ToolSlug, string> = {
 
 export const LandingPage = () => {
 	return (
-		<main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">
+		<main className="page-shell min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">
 			{/* Product Hunt Banner */}
 			<a
 				href="https://www.producthunt.com/products/split-biller?utm_source=banner&utm_medium=embed"
 				target="_blank"
 				rel="noopener noreferrer"
-				className="block bg-[#ff6154] text-white text-center text-sm sm:text-base font-semibold px-4 py-2.5 hover:bg-[#e0533f] transition-colors"
+				className="block bg-[#ff6154] text-white hover:bg-[#e0533f] transition-colors"
 			>
-				<span className="inline-flex items-center gap-2 flex-wrap justify-center">
+				<span className="mx-auto flex h-9 sm:h-10 max-w-5xl items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 text-xs sm:text-sm font-semibold whitespace-nowrap">
 					<img
 						src="https://ph-files.imgix.net/e82f50fe-9e12-48be-b029-948fa71563cd.png?auto=compress,format&codec=mozjpeg&cs=strip&fit=crop&h=32&w=32"
-						alt="split biller on Product Hunt"
-						className="w-5 h-5 rounded"
+						alt=""
+						className="h-4 w-4 sm:h-5 sm:w-5 rounded shrink-0"
 					/>
-					We&apos;re live on Product Hunt — support us with an upvote!
-					<ArrowRight className="h-4 w-4 !text-white" />
+					<span className="sm:hidden truncate">Live on Product Hunt — upvote</span>
+					<span className="hidden sm:inline">
+						We&apos;re live on Product Hunt — support us with an upvote!
+					</span>
+					<ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 !text-white shrink-0" />
 				</span>
 			</a>
 
@@ -110,13 +113,12 @@ export const LandingPage = () => {
 							className="w-24 h-24 sm:w-32 sm:h-32 object-contain"
 						/>
 					</div>
-					<h1 className="text-[clamp(1.25rem,6vw,3.25rem)] font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent leading-tight whitespace-nowrap">
-						Split Expenses Instantly
+					<h1 className="text-[clamp(1.35rem,5.5vw,3rem)] font-display font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent leading-tight">
+						Split bills in ₹, settle with UPI
 					</h1>
 					<p className="text-base sm:text-lg !text-gray-700 max-w-2xl mx-auto">
-						Calculate who owes whom in seconds — no sign-up, no app, no data
-						stored. Perfect for restaurants, trips, roommates, and office
-						lunches.
+						Who owes whom in seconds — share privately, pay via UPI. No signup,
+						no app download.
 					</p>
 					<div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
 						<Link
@@ -231,13 +233,12 @@ export const LandingPage = () => {
 					<h2 className="text-2xl sm:text-3xl font-bold !text-gray-900 mb-6 text-center">
 						See it in action
 					</h2>
-					<div className="rounded-2xl overflow-hidden shadow-xl border border-white/50 bg-white">
+					<div className="rounded-2xl overflow-hidden shadow-xl border border-white/50 bg-white w-full max-w-full">
 						<div
+							className="relative w-full max-w-full"
 							style={{
-								position: "relative",
 								paddingBottom: "calc(52.9688% + 41px)",
 								height: 0,
-								width: "100%",
 							}}
 						>
 							<iframe
@@ -359,17 +360,17 @@ export const LandingPage = () => {
 					<p className="text-center !text-gray-600 mb-6">
 						Unlike traditional expense apps:
 					</p>
-					<div className="overflow-x-auto">
-						<table className="w-full bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50">
+					<div className="w-full max-w-full overflow-x-auto overscroll-x-contain rounded-xl">
+						<table className="w-full min-w-[280px] bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/50">
 							<thead>
 								<tr className="border-b border-gray-200">
-									<th className="text-left p-4 font-bold !text-gray-800">
+									<th className="text-left p-2.5 sm:p-4 text-xs sm:text-base font-bold !text-gray-800">
 										Feature
 									</th>
-									<th className="text-center p-4 font-bold !text-gray-800">
+									<th className="text-center p-2.5 sm:p-4 text-xs sm:text-base font-bold !text-gray-800">
 										This Tool
 									</th>
-									<th className="text-center p-4 font-bold !text-gray-800">
+									<th className="text-center p-2.5 sm:p-4 text-xs sm:text-base font-bold !text-gray-800">
 										Other Apps
 									</th>
 								</tr>
