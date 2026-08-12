@@ -10,30 +10,28 @@ export const TabNavigation = ({
 	activeTab,
 	onTabChange,
 }: TabNavigationProps) => {
-	const tabs: { id: Tab; label: string; icon: LucideIcon }[] = [
-		{ id: "transactions", label: "Expenses", icon: Receipt },
-		{ id: "balances", label: "Balances", icon: Scale },
-		{ id: "settlements", label: "Payments", icon: ArrowRightLeft },
+	const tabs: { id: Tab; label: string; shortLabel: string; icon: LucideIcon }[] = [
+		{ id: "transactions", label: "Expenses", shortLabel: "Expenses", icon: Receipt },
+		{ id: "balances", label: "Balances", shortLabel: "Balances", icon: Scale },
+		{ id: "settlements", label: "Settle & UPI", shortLabel: "Settle", icon: ArrowRightLeft },
 	];
 
 	return (
-		<div className="mb-4 sm:mb-6">
-			<div className="flex gap-1 sm:gap-2 border-b-2 border-gray-200 overflow-x-auto">
+		<div className="mb-4 sm:mb-5">
+			<div className="flex gap-1 p-1 rounded-2xl bg-white/80 border border-indigo-100 shadow-sm">
 				{tabs.map((tab) => (
 					<button
 						key={tab.id}
 						onClick={() => onTabChange(tab.id)}
-						className={`relative flex flex-1 items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 font-semibold text-xs sm:text-sm transition-all whitespace-nowrap ${
+						className={`relative flex flex-1 items-center justify-center gap-1.5 px-2 py-2.5 sm:py-3 font-semibold text-xs sm:text-sm rounded-xl transition-all touch-manipulation min-h-11 ${
 							activeTab === tab.id
-								? "text-indigo-600"
-								: "text-gray-500 hover:text-gray-700"
+								? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md"
+								: "text-gray-600 hover:text-gray-900 hover:bg-indigo-50/60"
 						}`}
 					>
-						{tab.icon && <tab.icon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />}
-						<span>{tab.label}</span>
-						{activeTab === tab.id && (
-							<span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-t-full"></span>
-						)}
+						{tab.icon && <tab.icon className="h-4 w-4 shrink-0" />}
+						<span className="sm:hidden">{tab.shortLabel}</span>
+						<span className="hidden sm:inline">{tab.label}</span>
 					</button>
 				))}
 			</div>

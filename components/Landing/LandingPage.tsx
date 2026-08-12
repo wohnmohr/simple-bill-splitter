@@ -110,13 +110,12 @@ export const LandingPage = () => {
 							className="w-24 h-24 sm:w-32 sm:h-32 object-contain"
 						/>
 					</div>
-					<h1 className="text-[clamp(1.25rem,6vw,3.25rem)] font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent leading-tight whitespace-nowrap">
-						Split Expenses Instantly
+					<h1 className="text-[clamp(1.35rem,5.5vw,3rem)] font-display font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent leading-tight">
+						Split bills in ₹, settle with UPI
 					</h1>
 					<p className="text-base sm:text-lg !text-gray-700 max-w-2xl mx-auto">
-						Calculate who owes whom in seconds — no sign-up, no app, no data
-						stored. Perfect for restaurants, trips, roommates, and office
-						lunches.
+						Who owes whom in seconds — share privately, pay via UPI. No signup,
+						no app download.
 					</p>
 					<div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
 						<Link

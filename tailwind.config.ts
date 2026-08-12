@@ -9,6 +9,16 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-outfit)", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: [
+          "var(--font-fraunces)",
+          "var(--font-outfit)",
+          "ui-serif",
+          "Georgia",
+          "serif",
+        ],
+      },
       keyframes: {
         "fade-in-up": {
           "0%": {
@@ -29,4 +39,3 @@ const config: Config = {
   plugins: [],
 };
 export default config;
-

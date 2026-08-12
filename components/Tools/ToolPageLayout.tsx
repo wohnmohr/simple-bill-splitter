@@ -28,7 +28,7 @@ export function ToolJsonLd({ config }: { config: ToolPageConfig }) {
 		offers: {
 			"@type": "Offer",
 			price: "0",
-			priceCurrency: "USD",
+			priceCurrency: "INR",
 		},
 		description: config.metaDescription,
 	};
