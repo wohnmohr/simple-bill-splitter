@@ -68,7 +68,11 @@ function toCompact(snapshot: ShareSnapshot): CompactSharePayload {
 		v: 1,
 		n: snapshot.name,
 		c: snapshot.currency.code,
-		m: snapshot.members.map((m) => ({ i: m.id, n: m.name })),
+		m: snapshot.members.map((m) => {
+			const row: CompactSharePayload["m"][number] = { i: m.id, n: m.name };
+			if (m.upiId?.trim()) row.u = m.upiId.trim();
+			return row;
+		}),
 		e: snapshot.expenses.map((e) => {
 			const item: CompactSharePayload["e"][number] = {
 				a: e.amount,
@@ -94,6 +98,7 @@ function fromCompact(payload: CompactSharePayload): ShareSnapshot {
 	const members: Person[] = payload.m.map((m) => ({
 		id: m.i,
 		name: m.n,
+		...(m.u?.trim() ? { upiId: m.u.trim() } : {}),
 	}));
 
 	const expenses: Expense[] = payload.e.map((e, index) => ({

@@ -39,9 +39,16 @@ export const ShareSettlementActions = ({
 			settlements.length === 0
 				? ["Everyone is settled up!"]
 				: settlements.map((s, i) => {
-						const from = people.find((p) => p.id === s.from)?.name || "Unknown";
-						const to = people.find((p) => p.id === s.to)?.name || "Unknown";
-						return `${i + 1}. ${from} → ${to}: ${formatCurrency(s.amount, currency)}`;
+						const from = people.find((p) => p.id === s.from);
+						const to = people.find((p) => p.id === s.to);
+						const fromName = from?.name || "Unknown";
+						const toName = to?.name || "Unknown";
+						const amount = formatCurrency(s.amount, currency);
+						const upi =
+							currency.code === "INR" && to?.upiId
+								? ` (UPI: ${to.upiId})`
+								: "";
+						return `${i + 1}. ${fromName} → ${toName}: ${amount}${upi}`;
 					});
 
 		return [
