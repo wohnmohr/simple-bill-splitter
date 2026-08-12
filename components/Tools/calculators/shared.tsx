@@ -184,7 +184,7 @@ export function CurrencySelect({
 	);
 }
 
-export function useDefaultCurrency(code = "USD"): [Currency, (c: Currency) => void] {
+export function useDefaultCurrency(code = "INR"): [Currency, (c: Currency) => void] {
 	const initial = CURRENCIES.find((c) => c.code === code) || CURRENCIES[0];
 	return useState<Currency>(initial);
 }

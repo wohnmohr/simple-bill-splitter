@@ -14,22 +14,22 @@ export const metadata: Metadata = {
 
 export default function SharePage() {
 	return (
-		<main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">
-			<header className="px-4 pt-6 pb-2">
-				<div className="max-w-2xl mx-auto flex items-center gap-2">
-					<Link href="/" className="flex items-center gap-2 group">
+		<main className="min-h-screen bg-gradient-to-br from-indigo-50 via-violet-50 to-fuchsia-50 text-gray-900 safe-pb">
+			<header className="px-4 pt-4 pb-2">
+				<div className="max-w-lg sm:max-w-2xl mx-auto flex items-center gap-2.5">
+					<Link href="/" className="flex items-center gap-2.5 group">
 						<img
 							src="/logo.png"
 							alt="SplitBiller"
-							className="w-10 h-10 object-contain"
+							className="w-9 h-9 rounded-full object-cover ring-2 ring-indigo-100"
 						/>
-						<span className="font-bold text-lg bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent group-hover:opacity-80">
+						<span className="font-bold text-base bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
 							SplitBiller
 						</span>
 					</Link>
 				</div>
 			</header>
-			<div className="px-4 py-6 sm:py-8">
+			<div className="px-4 py-5 sm:py-8 max-w-lg sm:max-w-2xl mx-auto">
 				<ShareViewer />
 			</div>
 		</main>

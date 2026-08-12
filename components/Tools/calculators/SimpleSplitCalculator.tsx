@@ -17,7 +17,7 @@ export const SimpleSplitCalculator = ({
 }: {
 	emphasis: "privacy" | "alternative";
 }) => {
-	const [currency, setCurrency] = useDefaultCurrency("USD");
+	const [currency, setCurrency] = useDefaultCurrency("INR");
 	const [amount, setAmount] = useState("128.50");
 	const [names, setNames] = useState("You, Friend A, Friend B");
 	const [payerIndex, setPayerIndex] = useState(0);

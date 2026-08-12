@@ -33,7 +33,10 @@ const theme = createTheme({
 	},
 	defaultRadius: "md",
 	fontFamily:
-		"var(--font-poppins), -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+		"var(--font-outfit), ui-sans-serif, system-ui, sans-serif",
+	headings: {
+		fontFamily: "var(--font-fraunces), var(--font-outfit), ui-serif, Georgia, serif",
+	},
 });
 
 export function MantineProvider({ children }: { children: React.ReactNode }) {

@@ -1,39 +1,40 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Outfit, Fraunces } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { MantineProvider } from "@/components/providers/MantineProvider";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import "@mantine/core/styles.css";
 import "./globals.css";
 
-const poppins = Poppins({
-	weight: ["300", "400", "500", "600", "700"],
+const outfit = Outfit({
 	subsets: ["latin"],
-	variable: "--font-poppins",
+	variable: "--font-outfit",
+	display: "swap",
+});
+
+const fraunces = Fraunces({
+	subsets: ["latin"],
+	variable: "--font-fraunces",
+	display: "swap",
 });
 
 export const metadata: Metadata = {
 	metadataBase: new URL(
 		process.env.NEXT_PUBLIC_SITE_URL || "https://splitbiller.com"
 	),
-	title: "SplitBiller — Split Expenses Instantly | No Login, No App",
+	title: "SplitBiller — Split Bills in ₹ | No Login, UPI Ready",
 	description:
-		"Split group expenses online in seconds. Calculate who owes whom without signing up, downloading an app, or sharing personal data. Perfect for restaurants, trips, roommates, and office lunches. Privacy-first expense splitter.",
+		"Split group expenses in rupees instantly. Calculate who owes whom, share a private settlement link, and pay via UPI — no signup, no app download.",
 	keywords: [
 		"bill splitter",
-		"expense splitter",
+		"upi bill splitter",
+		"expense splitter india",
 		"split bills",
-		"split expenses",
 		"splitwise alternative",
 		"no login bill splitter",
-		"free expense calculator",
 		"split restaurant bills",
-		"split trip expenses",
 		"roommate expense splitter",
-		"group expense calculator",
 		"who owes whom",
-		"bill splitting calculator",
-		"expense sharing",
 		"privacy-first bill splitter",
 	],
 	icons: {
@@ -59,18 +60,18 @@ export const metadata: Metadata = {
 		title: "SplitBiller",
 	},
 	openGraph: {
-		title: "SplitBiller — Split Expenses Instantly | No Login, No App",
+		title: "SplitBiller — Split Bills in ₹ | No Login, UPI Ready",
 		description:
-			"Split group expenses online in seconds. No signup, no app, no data stored. Perfect for restaurants, trips, and roommates.",
+			"Split expenses in rupees, share privately, pay via UPI. No signup required.",
 		type: "website",
 		url: "/",
 		siteName: "SplitBiller",
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "SplitBiller — Split Expenses Instantly | No Login, No App",
+		title: "SplitBiller — Split Bills in ₹ | No Login, UPI Ready",
 		description:
-			"Split group expenses online in seconds. No signup, no app, no data stored.",
+			"Split expenses in rupees, share privately, pay via UPI. No signup required.",
 	},
 };
 
@@ -80,8 +81,8 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en">
-			<body className={poppins.className}>
+		<html lang="en-IN">
+			<body className={`${outfit.variable} ${fraunces.variable} font-sans antialiased`}>
 				<PostHogProvider>
 					<MantineProvider>
 						{children}

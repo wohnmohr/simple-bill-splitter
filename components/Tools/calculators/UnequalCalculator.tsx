@@ -15,7 +15,7 @@ type ShareMode = "amount" | "percent";
 
 /** Unequal split by exact amounts or percentages */
 export const UnequalCalculator = () => {
-	const [currency, setCurrency] = useDefaultCurrency("USD");
+	const [currency, setCurrency] = useDefaultCurrency("INR");
 	const [total, setTotal] = useState("240");
 	const [mode, setMode] = useState<ShareMode>("amount");
 	const [rows, setRows] = useState([

@@ -37,7 +37,7 @@ export const AddMembersModal = ({
 		onClose();
 	};
 
-	const showUpi = group.currency.code === "INR";
+	const showUpi = true; // India-first: always collect optional UPI IDs
 
 	return (
 		<Modal isOpen={isOpen} onClose={handleClose}>
@@ -89,24 +89,31 @@ export const AddMembersModal = ({
 							</ActionIcon>
 						</div>
 						{showUpi && (
-							<TextInput
-								value={memberUpi}
-								onChange={(e) => setMemberUpi(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === "Enter") {
-										handleSubmit();
-									}
-								}}
-								placeholder="UPI ID (name@upi) — optional"
-								radius="md"
-								data-ph-mask
-								styles={{
-									input: {
-										borderColor: "#c7d2fe",
-										borderWidth: 2,
-									},
-								}}
-							/>
+							<>
+								<TextInput
+									value={memberUpi}
+									onChange={(e) => setMemberUpi(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === "Enter") {
+											handleSubmit();
+										}
+									}}
+									placeholder="UPI ID (name@upi) — optional"
+									radius="md"
+									data-ph-mask
+									styles={{
+										input: {
+											borderColor: "#c7d2fe",
+											borderWidth: 2,
+											minHeight: 44,
+										},
+									}}
+								/>
+								<p className="text-xs text-gray-500">
+									Saved on this device and included in encrypted share links for
+									one-tap Pay.
+								</p>
+							</>
 						)}
 					</div>
 				</div>

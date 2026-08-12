@@ -23,9 +23,7 @@ export const MultiExpenseCalculator = ({
 }: {
 	variant: "trip" | "roommate";
 }) => {
-	const [currency, setCurrency] = useDefaultCurrency(
-		variant === "roommate" ? "USD" : "EUR"
-	);
+	const [currency, setCurrency] = useDefaultCurrency("INR");
 	const [memberNames, setMemberNames] = useState(
 		variant === "roommate"
 			? "Priya, Dev, Casey"
