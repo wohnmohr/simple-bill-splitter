@@ -153,40 +153,49 @@ export const ShareSettlementActions = ({
 
 	if (primary) {
 		return (
-			<div className={`space-y-2 ${className}`}>
-				<button
-					type="button"
-					onClick={handleShare}
-					disabled={busy || people.length === 0}
-					className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 active:from-indigo-800 active:to-purple-800 shadow-lg disabled:opacity-60 touch-manipulation transition-all"
-				>
-					<Share2 className="h-5 w-5" />
-					{busy ? "Preparing link…" : copiedLink ? "Link copied!" : "Share settlement"}
-				</button>
-				<div className="flex gap-2">
-					<button
-						type="button"
-						onClick={handleCopyLink}
-						disabled={busy}
-						className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 touch-manipulation"
-					>
-						{copiedLink ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
-						Copy link
-					</button>
+			<div className={`space-y-2.5 ${className}`}>
+				<div className="grid grid-cols-2 gap-2">
 					<button
 						type="button"
 						onClick={handleWhatsApp}
 						disabled={busy}
-						className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 touch-manipulation"
+						className="btn-primary !py-3"
 					>
 						<MessageCircle className="h-4 w-4" />
 						WhatsApp
 					</button>
+					<button
+						type="button"
+						onClick={handleShare}
+						disabled={busy || people.length === 0}
+						className="btn-secondary !py-3"
+					>
+						<Share2 className="h-4 w-4" />
+						{busy ? "Preparing…" : "Share…"}
+					</button>
 				</div>
-				<p className="text-xs text-gray-500 text-center">
-					Link is encrypted in your browser — we never see the expenses.
+				<button
+					type="button"
+					onClick={handleCopyLink}
+					disabled={busy}
+					className="btn-ghost w-full"
+					aria-live="polite"
+				>
+					{copiedLink ? (
+						<Check className="h-4 w-4 text-positive" />
+					) : (
+						<Link2 className="h-4 w-4" />
+					)}
+					{copiedLink ? "Link copied" : "Copy link"}
+				</button>
+				<p className="text-center text-xs text-ink-muted">
+					Encrypted in your browser. We never see the expenses.
 				</p>
-				{error && <p className="text-xs text-red-600 text-center">{error}</p>}
+				{error && (
+					<p className="text-center text-sm text-negative" role="alert">
+						{error}
+					</p>
+				)}
 			</div>
 		);
 	}
@@ -197,7 +206,7 @@ export const ShareSettlementActions = ({
 				type="button"
 				onClick={handleShare}
 				disabled={busy}
-				className="p-1.5 sm:p-2 text-gray-600 hover:text-indigo-600 active:text-indigo-700 transition-colors touch-manipulation rounded-lg hover:bg-indigo-50 active:bg-indigo-100"
+				className="icon-btn"
 				title="Share settlement"
 			>
 				<Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -206,7 +215,7 @@ export const ShareSettlementActions = ({
 				type="button"
 				onClick={handleWhatsApp}
 				disabled={busy}
-				className="p-1.5 sm:p-2 text-gray-600 hover:text-green-600 active:text-green-700 transition-colors touch-manipulation rounded-lg hover:bg-green-50 active:bg-green-100"
+				className="icon-btn"
 				title="Share to WhatsApp"
 			>
 				<MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -215,11 +224,11 @@ export const ShareSettlementActions = ({
 				type="button"
 				onClick={handleCopyLink}
 				disabled={busy}
-				className="p-1.5 sm:p-2 text-gray-600 hover:text-indigo-600 active:text-indigo-700 transition-colors touch-manipulation rounded-lg hover:bg-indigo-50 active:bg-indigo-100"
+				className="icon-btn"
 				title={copiedLink ? "Copied!" : "Copy share link"}
 			>
 				{copiedLink ? (
-					<Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+					<Check className="h-4 w-4 sm:h-5 sm:w-5 text-positive" />
 				) : (
 					<Copy className="h-4 w-4 sm:h-5 sm:w-5" />
 				)}

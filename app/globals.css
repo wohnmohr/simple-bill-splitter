@@ -3,20 +3,60 @@
 @tailwind utilities;
 
 @layer base {
+	:root {
+		--sb-paper: #f7f6f3;
+		--sb-ink: #1c1826;
+		--sb-brand: #53307b;
+		--sb-brand-soft: #ece3f5;
+		--sb-line: #e7e3ea;
+		color-scheme: light;
+	}
+
 	html {
 		-webkit-tap-highlight-color: transparent;
 		text-size-adjust: 100%;
 		overflow-x: clip;
 		max-width: 100%;
+		scroll-behavior: smooth;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		html {
+			scroll-behavior: auto;
+		}
+		*,
+		*::before,
+		*::after {
+			transition-duration: 0.01ms !important;
+			animation-duration: 0.01ms !important;
+		}
 	}
 
 	body {
-		@apply text-gray-900 bg-white;
+		@apply text-ink bg-paper;
 		font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
 		padding-bottom: env(safe-area-inset-bottom);
 		overflow-x: clip;
 		max-width: 100%;
 		position: relative;
+		caret-color: var(--sb-brand);
+	}
+
+	/* Placeholders are examples, but they still have to be readable (4.5:1). */
+	::placeholder,
+	.mantine-Input-input::placeholder {
+		color: #767080;
+		opacity: 1;
+	}
+
+	::selection {
+		background: var(--sb-brand-soft);
+		color: var(--sb-ink);
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--sb-brand);
+		outline-offset: 2px;
 	}
 
 	/* Prevent flex/grid children from forcing page-wide scroll */
@@ -33,6 +73,12 @@
 	.font-display {
 		font-family: var(--font-fraunces), var(--font-outfit), ui-serif, Georgia, serif;
 		overflow-wrap: anywhere;
+		text-wrap: balance;
+		letter-spacing: -0.015em;
+	}
+
+	p {
+		text-wrap: pretty;
 	}
 
 	p,
@@ -42,6 +88,10 @@
 	th,
 	label {
 		overflow-wrap: break-word;
+	}
+
+	a {
+		text-underline-offset: 3px;
 	}
 
 	img,
@@ -57,6 +107,38 @@
 	select,
 	textarea {
 		touch-action: manipulation;
+	}
+
+	* {
+		scrollbar-color: #d4cfd9 transparent;
+		scrollbar-width: thin;
+	}
+}
+
+@layer components {
+	/* Flat, bordered surface — the one container used across the app */
+	.surface {
+		@apply rounded-2xl border border-line bg-white shadow-card;
+	}
+
+	.btn-primary {
+		@apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-800 active:bg-brand-900 disabled:cursor-not-allowed disabled:bg-ink/10 disabled:text-ink-muted;
+	}
+
+	.btn-secondary {
+		@apply inline-flex items-center justify-center gap-2 rounded-xl border border-line-strong bg-white px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-paper active:bg-line disabled:cursor-not-allowed disabled:opacity-50;
+	}
+
+	.btn-ghost {
+		@apply inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/5 hover:text-ink;
+	}
+
+	.icon-btn {
+		@apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-ink/5 hover:text-ink;
+	}
+
+	.label-text {
+		@apply font-sans text-xs font-medium uppercase tracking-[0.06em] text-ink-muted;
 	}
 }
 

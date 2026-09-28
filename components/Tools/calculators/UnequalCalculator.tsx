@@ -77,7 +77,7 @@ export const UnequalCalculator = () => {
 
 	return (
 		<div className="grid lg:grid-cols-2 gap-6">
-			<div className="space-y-4 rounded-2xl bg-white/80 border border-white/60 shadow-md p-4 sm:p-5">
+			<div className="space-y-4 surface p-4 sm:p-5">
 				<div>
 					<label className={labelClass}>Bill total</label>
 					<div className="flex gap-2">

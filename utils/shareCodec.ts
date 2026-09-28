@@ -86,6 +86,8 @@ function toCompact(snapshot: ShareSnapshot): CompactSharePayload {
 			} else {
 				item.s = "e";
 			}
+			if (e.kind === "payment") item.k = "s";
+			if (e.createdAt) item.at = Math.round(e.createdAt / 1000);
 			return item;
 		}),
 	};
@@ -109,6 +111,8 @@ function fromCompact(payload: CompactSharePayload): ShareSnapshot {
 		description: e.d,
 		splitMethod: e.s === "p" ? "percentage" : "equally",
 		percentages: e.r,
+		...(e.k === "s" ? { kind: "payment" as const } : {}),
+		...(e.at ? { createdAt: e.at * 1000 } : {}),
 	}));
 
 	return {

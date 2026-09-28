@@ -12,6 +12,7 @@ interface DropdownProps {
 	options: DropdownOption[];
 	placeholder?: string;
 	className?: string;
+	label?: string;
 }
 
 export const Dropdown = ({
@@ -20,21 +21,19 @@ export const Dropdown = ({
 	options,
 	placeholder = "Select an option",
 	className = "",
+	label,
 }: DropdownProps) => {
 	return (
 		<Select
-			value={value}
+			label={label}
+			value={value || null}
 			onChange={(val) => onChange(val || "")}
-			data={options}
+			data={options.filter((o) => o.value !== "")}
 			placeholder={placeholder}
 			className={className}
+			allowDeselect={false}
+			checkIconPosition="right"
 			radius="md"
-			styles={{
-				input: {
-					borderColor: "#c7d2fe",
-					borderWidth: 2,
-				},
-			}}
 		/>
 	);
 };

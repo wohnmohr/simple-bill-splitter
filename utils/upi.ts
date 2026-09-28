@@ -20,7 +20,6 @@ export function buildUpiLink(opts: {
 	return `upi://pay?${params.toString()}`;
 }
 
-export function isValidUpiId(value: string): boolean {
-	const v = value.trim();
-	return v.length >= 3 && v.includes("@");
-}
+/** A UPI VPA is handle@provider, e.g. priya@okaxis or 98xxxxxx10@ybl. */
+export const isValidUpiId = (value: string): boolean =>
+	/^[\w.\-]{2,}@[a-zA-Z]{2,}$/.test(value.trim());
