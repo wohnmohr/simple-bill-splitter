@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Group, Currency } from "@/types";
-import { MAX_GROUPS, CURRENCIES } from "@/constants";
+import { MAX_GROUPS, DEFAULT_CURRENCY } from "@/constants";
 import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
+import { consumePendingGroupSelection } from "@/utils/shareImport";
 
 export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -13,7 +14,10 @@ export const useGroups = () => {
     const loadedGroups = loadGroupsFromStorage();
     setGroups(loadedGroups);
     hasLoadedRef.current = true;
-    // Don't auto-select a group on refresh - show groups home instead
+    const pendingId = consumePendingGroupSelection();
+    if (pendingId && loadedGroups.some((g) => g.id === pendingId)) {
+      setSelectedGroupId(pendingId);
+    }
   }, []);
 
   // Save groups to localStorage whenever groups change (after initial load)
@@ -23,7 +27,10 @@ export const useGroups = () => {
     }
   }, [groups]);
 
-  const createGroup = (name: string, currency: Currency = CURRENCIES[0]): boolean => {
+  const createGroup = (
+    name: string,
+    currency: Currency = DEFAULT_CURRENCY
+  ): boolean => {
     if (!name.trim() || groups.length >= MAX_GROUPS) {
       return false;
     }
@@ -56,6 +63,10 @@ export const useGroups = () => {
     setGroups(updatedGroups);
   };
 
+  const setGroupMe = (groupId: string, meId: string | null | undefined): void => {
+    setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, meId } : g)));
+  };
+
   const currentGroup = groups.find((g) => g.id === selectedGroupId);
 
   return {
@@ -66,6 +77,7 @@ export const useGroups = () => {
     createGroup,
     deleteGroup,
     updateGroupCurrency,
+    setGroupMe,
     setGroups,
   };
 };

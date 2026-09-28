@@ -1,6 +1,8 @@
 export type Person = {
   id: string;
   name: string;
+  /** Optional UPI VPA (e.g. name@upi) for INR settlements */
+  upiId?: string;
 };
 
 export type SplitMethod = "equally" | "percentage";
@@ -13,6 +15,10 @@ export type Expense = {
   description?: string; // optional description for the expense
   splitMethod: SplitMethod; // how the expense is split
   percentages?: Record<string, number>; // person id -> percentage (only for percentage split)
+  /** "payment" = a recorded settlement: paidBy paid participants[0] back. */
+  kind?: "payment";
+  /** Epoch ms when the entry was created. Missing on older data. */
+  createdAt?: number;
 };
 
 export type Group = {
@@ -21,6 +27,11 @@ export type Group = {
   members: Person[];
   expenses: Expense[];
   currency: Currency;
+  /**
+   * Who is using this device, for this group. Stays on the device and is
+   * never included in share links. undefined = not asked yet; null = just viewing.
+   */
+  meId?: string | null;
 };
 
 export type Balance = {

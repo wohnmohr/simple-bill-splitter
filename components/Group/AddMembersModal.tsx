@@ -1,13 +1,16 @@
 import React from "react";
-import { TextInput, ActionIcon } from "@mantine/core";
+import { TextInput } from "@mantine/core";
+import { Plus, Trash2 } from "lucide-react";
 import { Modal } from "@/components/UI/Modal";
 import { Group, Person } from "@/types";
+import { isValidUpiId } from "@/utils/upi";
 
 interface AddMembersModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	group: Group;
-	onAddMember: (name: string) => void;
+	onAddMember: (name: string, upiId?: string) => void;
+	onUpdateMemberUpi?: (personId: string, upiId: string) => void;
 	onDeleteMember: (personId: string) => void;
 }
 
@@ -16,105 +19,136 @@ export const AddMembersModal = ({
 	onClose,
 	group,
 	onAddMember,
+	onUpdateMemberUpi,
 	onDeleteMember,
 }: AddMembersModalProps) => {
 	const [memberName, setMemberName] = React.useState("");
+	const [memberUpi, setMemberUpi] = React.useState("");
+	const nameRef = React.useRef<HTMLInputElement>(null);
 
 	const handleSubmit = () => {
-		if (memberName.trim()) {
-			onAddMember(memberName);
+		if (memberName.trim() && !upiError(memberUpi)) {
+			onAddMember(memberName.trim(), memberUpi.trim() || undefined);
 			setMemberName("");
+			setMemberUpi("");
+			// Keep the flow fast: ready for the next name.
+			nameRef.current?.focus();
 		}
 	};
 
 	const handleClose = () => {
 		setMemberName("");
+		setMemberUpi("");
 		onClose();
 	};
 
+	const isInr = group.currency.code === "INR";
+	// Same rule as Settle up: a UPI ID is handle@bank.
+	const upiError = (value: string) =>
+		value.trim() && !isValidUpiId(value)
+			? "UPI IDs look like name@okaxis"
+			: undefined;
+	const newUpiError = upiError(memberUpi);
+
 	return (
-		<Modal isOpen={isOpen} onClose={handleClose}>
-			<div className="p-4 sm:p-6 h-[85vh] sm:h-auto sm:max-h-[80vh] flex flex-col overflow-hidden">
-				<div className="flex-shrink-0">
-					<h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">
-						Members of {group.name}
-						<span className="ml-2 text-sm font-normal text-gray-500">
-							({group.members.length})
-						</span>
-					</h2>
+		<Modal isOpen={isOpen} onClose={handleClose} title="Members">
+			<div className="flex flex-col gap-5 pb-2">
+				<form
+					className="rounded-xl border border-line bg-paper p-3 space-y-2"
+					onSubmit={(e) => {
+						e.preventDefault();
+						handleSubmit();
+					}}
+				>
+					<TextInput
+						ref={nameRef}
+						aria-label="Name"
+						value={memberName}
+						onChange={(e) => setMemberName(e.target.value)}
+						placeholder="Name"
+						data-autofocus
+						maxLength={40}
+					/>
+					{isInr && (
+						<TextInput
+							aria-label="UPI ID (optional)"
+							value={memberUpi}
+							onChange={(e) => setMemberUpi(e.target.value)}
+							placeholder="UPI ID, e.g. priya@okaxis (optional)"
+							error={newUpiError}
+							autoCapitalize="none"
+							spellCheck={false}
+							data-ph-mask
+						/>
+					)}
+					<button
+						type="submit"
+						disabled={!memberName.trim() || !!newUpiError}
+						className="btn-primary w-full"
+					>
+						<Plus className="h-4 w-4" />
+						Add member
+					</button>
+				</form>
 
-					{/* Add Member Form */}
-					<div className="border-b border-gray-200 pb-3 sm:pb-4 mb-4 sm:mb-6">
-						<label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
-							Add New Member
-						</label>
-						<div className="flex gap-2">
-							<TextInput
-								value={memberName}
-								onChange={(e) => setMemberName(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === "Enter") {
-										handleSubmit();
-									}
-								}}
-								placeholder="Enter member name"
-								className="flex-1"
-								autoFocus
-								radius="md"
-								styles={{
-									input: {
-										borderColor: "#c7d2fe",
-										borderWidth: 2,
-									},
-								}}
-							/>
-							<ActionIcon
-								onClick={handleSubmit}
-								disabled={!memberName.trim()}
-								size="lg"
-								radius="md"
-								aria-label="Add member"
-								style={{
-									background: "linear-gradient(to right, #4f46e5, #9333ea)",
-									color: "#ffffff",
-								}}
-							>
-								+
-							</ActionIcon>
-						</div>
-					</div>
-				</div>
-
-				{/* Members List - Scrollable */}
-				<div className="flex-1 overflow-y-auto min-h-0 -mx-4 sm:-mx-6 px-4 sm:px-6">
+				<div>
+					<p className="label-text mb-2">
+						{group.members.length === 0
+							? "No one yet"
+							: `${group.members.length} in ${group.name}`}
+					</p>
 					{group.members.length === 0 ? (
-						<p className="text-xs sm:text-sm text-gray-500 text-center py-4">
-							No members yet. Add at least one member to start tracking
-							expenses.
+						<p className="text-sm text-ink-muted">
+							Add everyone who shares expenses — including yourself.
 						</p>
 					) : (
-						<div className="space-y-2">
+						<ul className="divide-y divide-line rounded-xl border border-line">
 							{group.members.map((member: Person) => (
-								<div
-									key={member.id}
-									className="flex items-center justify-between p-2.5 sm:p-3 bg-gray-50 rounded-xl border border-gray-200"
-								>
-									<span className="font-medium text-gray-800 text-sm sm:text-base truncate flex-1">
-										{member.name}
-									</span>
-									<ActionIcon
-										onClick={() => onDeleteMember(member.id)}
-										color="red"
-										variant="subtle"
-										aria-label={`Delete ${member.name}`}
-									>
-										×
-									</ActionIcon>
-								</div>
+								<li key={member.id} className="px-3.5 py-3 space-y-2">
+									<div className="flex items-center justify-between gap-2">
+										<span className="truncate font-medium text-ink">
+											{member.name}
+										</span>
+										<button
+											type="button"
+											onClick={() => onDeleteMember(member.id)}
+											className="icon-btn !h-8 !w-8 hover:!text-negative"
+											aria-label={`Remove ${member.name}`}
+										>
+											<Trash2 className="h-4 w-4" />
+										</button>
+									</div>
+									{isInr && onUpdateMemberUpi && (
+										<TextInput
+											aria-label={`${member.name}'s UPI ID`}
+											value={member.upiId || ""}
+											onChange={(e) =>
+												onUpdateMemberUpi(member.id, e.target.value)
+											}
+											placeholder="Add UPI ID"
+											error={upiError(member.upiId || "")}
+											size="sm"
+											autoCapitalize="none"
+											spellCheck={false}
+											styles={{ input: { minHeight: 38, fontSize: 15 } }}
+											data-ph-mask
+										/>
+									)}
+								</li>
 							))}
-						</div>
+						</ul>
+					)}
+					{isInr && group.members.length > 0 && (
+						<p className="mt-2 text-xs text-ink-muted">
+							UPI IDs stay on this device and travel only inside encrypted share
+							links.
+						</p>
 					)}
 				</div>
+
+				<button type="button" onClick={handleClose} className="btn-secondary w-full">
+					Done
+				</button>
 			</div>
 		</Modal>
 	);

@@ -34,3 +34,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+
+# local feedback database (dev fallback when TURSO_DATABASE_URL is unset)
+.turso-dev.db*

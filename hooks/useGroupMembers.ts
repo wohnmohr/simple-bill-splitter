@@ -6,7 +6,7 @@ export const useGroupMembers = (
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>,
   currentGroup: Group | undefined
 ) => {
-  const addMember = (name: string): boolean => {
+  const addMember = (name: string, upiId?: string): boolean => {
     if (!name.trim() || !currentGroup) {
       return false;
     }
@@ -14,6 +14,7 @@ export const useGroupMembers = (
     const newPerson: Person = {
       id: `person-${Date.now()}`,
       name: name.trim(),
+      ...(upiId?.trim() ? { upiId: upiId.trim() } : {}),
     };
 
     const updatedGroups = groups.map((g) =>
@@ -24,6 +25,27 @@ export const useGroupMembers = (
 
     setGroups(updatedGroups);
     return true;
+  };
+
+  const updateMemberUpi = (personId: string, upiId: string): void => {
+    if (!currentGroup) return;
+
+    const trimmed = upiId.trim();
+    const updatedGroups = groups.map((g) =>
+      g.id === currentGroup.id
+        ? {
+            ...g,
+            members: g.members.map((m) => {
+              if (m.id !== personId) return m;
+              const next: Person = { id: m.id, name: m.name };
+              if (trimmed) next.upiId = trimmed;
+              return next;
+            }),
+          }
+        : g
+    );
+
+    setGroups(updatedGroups);
   };
 
   const deleteMember = (personId: string): void => {
@@ -46,7 +68,7 @@ export const useGroupMembers = (
 
   return {
     addMember,
+    updateMemberUpi,
     deleteMember,
   };
 };
-

@@ -1,77 +1,165 @@
+import { Menu } from "@mantine/core";
+import { MoreHorizontal, Trash2, UserRound, Users } from "lucide-react";
 import { Group } from "@/types";
+import { formatCurrency } from "@/utils/formatting";
+import { calculateBalances, totalSpent } from "@/utils/calculations";
 
 interface GroupSelectorProps {
 	groups: Group[];
 	selectedGroupId: string | null;
 	onSelectGroup: (groupId: string) => void;
 	onDeleteGroup: (groupId: string) => void;
+	onManageMembers?: () => void;
+	onChangeMe?: () => void;
 }
+
+/** The viewer's net position in a group, or null when we don't know who they are. */
+export const myBalance = (group: Group): number | null => {
+	if (!group.meId) return null;
+	const mine = calculateBalances(group.members, group.expenses).find(
+		(b) => b.personId === group.meId
+	);
+	return mine ? mine.balance : null;
+};
+
+export const BalanceHeadline = ({
+	balance,
+	group,
+	size = "lg",
+}: {
+	balance: number;
+	group: Group;
+	size?: "lg" | "sm";
+}) => {
+	const amount = formatCurrency(Math.abs(balance), group.currency);
+	const big = size === "lg";
+	if (Math.abs(balance) < 0.01) {
+		return (
+			<span className={big ? "text-2xl font-semibold text-ink" : "text-sm font-medium text-ink-muted"}>
+				You&apos;re all square
+			</span>
+		);
+	}
+	const owed = balance > 0;
+	return (
+		<span className={big ? "text-2xl font-semibold" : "text-sm font-medium"}>
+			<span className={big ? "text-ink" : "text-ink-muted"}>
+				{owed ? "You get back " : "You owe "}
+			</span>
+			<span className={`tabular-nums ${owed ? "text-positive" : "text-negative"}`}>
+				{amount}
+			</span>
+		</span>
+	);
+};
 
 export const GroupSelector = ({
 	groups,
 	selectedGroupId,
 	onSelectGroup,
 	onDeleteGroup,
+	onManageMembers,
+	onChangeMe,
 }: GroupSelectorProps) => {
 	if (groups.length === 0) return null;
 
 	const selectedGroup = groups.find((g) => g.id === selectedGroupId);
+	const mine = selectedGroup ? myBalance(selectedGroup) : null;
+	const spent = selectedGroup ? totalSpent(selectedGroup.expenses) : 0;
 
 	return (
-		<div className="mb-4 sm:mb-6">
-			{selectedGroup && (
-				<div className="mb-3 sm:mb-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-xl p-4 sm:p-6 text-white">
-					<div className="flex items-center justify-between">
-						<div className="flex-1 min-w-0">
-							<h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate mb-1">
-								{selectedGroup.name}
-							</h1>
-							<p className="text-indigo-100 text-sm sm:text-base">
-								{selectedGroup.currency.symbol} {selectedGroup.currency.name}
-							</p>
-						</div>
-						<button
-							onClick={() => onDeleteGroup(selectedGroup.id)}
-							className="ml-4 p-2 hover:bg-white/20 active:bg-white/30 rounded-full transition-colors shrink-0"
-							aria-label="Delete group"
-						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								className="h-5 w-5 sm:h-6 sm:w-6"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-								strokeWidth={2.5}
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-								/>
-							</svg>
-						</button>
-					</div>
-				</div>
+		<div className="mb-4">
+			{groups.length > 1 && (
+				<nav className="mb-3 w-full max-w-full overflow-x-auto overscroll-x-contain" aria-label="Switch group">
+					<ul className="flex gap-1.5 w-max pr-1">
+						{groups.map((group) => {
+							const active = selectedGroupId === group.id;
+							return (
+								<li key={group.id}>
+									<button
+										aria-current={active ? "page" : undefined}
+										onClick={() => onSelectGroup(group.id)}
+										className={`rounded-full px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
+											active
+												? "bg-ink text-white"
+												: "border border-line-strong bg-white text-ink-soft hover:text-ink"
+										}`}
+									>
+										<span className="block truncate max-w-[140px] sm:max-w-[180px]">
+											{group.name}
+										</span>
+									</button>
+								</li>
+							);
+						})}
+					</ul>
+				</nav>
 			)}
 
-			{groups.length > 1 && (
-				<div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2 -mx-3 sm:mx-0 px-3 sm:px-0">
-					{groups.map((group) => (
-						<button
-							key={group.id}
-							onClick={() => onSelectGroup(group.id)}
-							className={`flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full font-medium text-xs sm:text-sm whitespace-nowrap transition-all touch-manipulation shrink-0 ${
-								selectedGroupId === group.id
-									? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg"
-									: "bg-white text-gray-700 border-2 border-indigo-200 active:bg-indigo-50"
-							}`}
-						>
-							<span className="truncate max-w-[120px] sm:max-w-none">
-								{group.name}
-							</span>
-						</button>
-					))}
-				</div>
+			{selectedGroup && (
+				<section className="surface p-4 sm:p-5">
+					<div className="flex items-start justify-between gap-3">
+						<h1 className="min-w-0 truncate font-display text-2xl sm:text-3xl font-semibold text-ink">
+							{selectedGroup.name}
+						</h1>
+						<Menu position="bottom-end" shadow="md" radius="md" width={200}>
+							<Menu.Target>
+								<button className="icon-btn -mr-1 -mt-0.5" aria-label="Group options">
+									<MoreHorizontal className="h-5 w-5" />
+								</button>
+							</Menu.Target>
+							<Menu.Dropdown>
+								{onManageMembers && (
+									<Menu.Item leftSection={<Users className="h-4 w-4" />} onClick={onManageMembers}>
+										Members & UPI IDs
+									</Menu.Item>
+								)}
+								{onChangeMe && selectedGroup.members.length > 0 && (
+									<Menu.Item leftSection={<UserRound className="h-4 w-4" />} onClick={onChangeMe}>
+										Change who you are
+									</Menu.Item>
+								)}
+								<Menu.Divider />
+								<Menu.Item
+									color="red"
+									leftSection={<Trash2 className="h-4 w-4" />}
+									onClick={() => onDeleteGroup(selectedGroup.id)}
+								>
+									Delete group
+								</Menu.Item>
+							</Menu.Dropdown>
+						</Menu>
+					</div>
+
+					<div className="mt-3 flex items-end justify-between gap-3">
+						<div className="min-w-0">
+							{mine !== null ? (
+								<BalanceHeadline balance={mine} group={selectedGroup} />
+							) : (
+								<span className="text-2xl font-semibold tabular-nums text-ink">
+									{formatCurrency(spent, selectedGroup.currency)}
+									<span className="ml-1.5 text-base font-normal text-ink-muted">spent</span>
+								</span>
+							)}
+							{mine !== null && (
+								<p className="mt-0.5 text-sm tabular-nums text-ink-muted">
+									{formatCurrency(spent, selectedGroup.currency)} spent by the group
+								</p>
+							)}
+						</div>
+						{onManageMembers && (
+							<button onClick={onManageMembers} className="btn-secondary shrink-0 !py-2">
+								<Users className="h-4 w-4" />
+								{selectedGroup.members.length === 0
+									? "Add members"
+									: selectedGroup.members.length}
+								<span className="sr-only">
+									{selectedGroup.members.length === 1 ? " member" : " members"}
+								</span>
+							</button>
+						)}
+					</div>
+				</section>
 			)}
 		</div>
 	);

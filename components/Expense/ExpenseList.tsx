@@ -1,4 +1,3 @@
-import { Wallet } from "lucide-react";
 import { Expense, Person, Currency } from "@/types";
 import { ExpenseCard } from "./ExpenseCard";
 
@@ -9,6 +8,7 @@ interface ExpenseListProps {
 	onExpenseClick: (expenseId: string) => void;
 	onExpenseEdit: (expense: Expense) => void;
 	onExpenseDelete: (expenseId: string) => void;
+	onAddExpense?: () => void;
 }
 
 export const ExpenseList = ({
@@ -18,6 +18,7 @@ export const ExpenseList = ({
 	onExpenseClick,
 	onExpenseEdit,
 	onExpenseDelete,
+	onAddExpense,
 }: ExpenseListProps) => {
 	const getPersonName = (personId: string) => {
 		return people.find((p) => p.id === personId)?.name || "Unknown";
@@ -25,23 +26,28 @@ export const ExpenseList = ({
 
 	if (expenses.length === 0) {
 		return (
-			<div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/50 p-6 sm:p-8 text-center">
-				<Wallet className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-2 text-indigo-500" />
-				<p className="text-xs sm:text-sm text-gray-500 px-2">
-					No expenses yet. Tap the + button to add one!
+			<div className="surface px-6 py-10 text-center">
+				<p className="font-semibold text-ink">No expenses yet</p>
+				<p className="mx-auto mt-1 max-w-xs text-sm text-ink-muted">
+					Tap <span className="font-medium text-ink-soft">Add expense</span> to log
+					the first bill. Balances update as you go.
 				</p>
 			</div>
 		);
 	}
 
+	// Newest first: the most recent bill is the one people look for.
+	const ordered = [...expenses].reverse();
+
 	return (
-		<div className="space-y-2">
-			{expenses.map((expense) => (
+		<ul className="surface divide-y divide-line overflow-hidden">
+			{ordered.map((expense) => (
 				<ExpenseCard
 					key={expense.id}
 					expense={expense}
 					currency={currency}
 					paidByName={getPersonName(expense.paidBy)}
+					toName={getPersonName(expense.participants[0])}
 					onClick={() => onExpenseClick(expense.id)}
 					onEdit={(e) => {
 						e.stopPropagation();
@@ -53,6 +59,6 @@ export const ExpenseList = ({
 					}}
 				/>
 			))}
-		</div>
+		</ul>
 	);
 };

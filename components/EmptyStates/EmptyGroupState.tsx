@@ -1,25 +1,46 @@
-import { Users } from "lucide-react";
+import { Plus } from "lucide-react";
 
 interface EmptyGroupStateProps {
 	onCreateGroup: () => void;
 }
 
+const STEPS = [
+	["Create a group", "A trip, a flat, a dinner — anything shared."],
+	["Add who paid what", "Split equally or by percentage."],
+	["Settle in fewest payments", "One-tap UPI links for every transfer."],
+] as const;
+
 export const EmptyGroupState = ({ onCreateGroup }: EmptyGroupStateProps) => {
 	return (
-		<div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/50 p-6 sm:p-8 text-center">
-			<Users className="h-16 w-16 sm:h-20 sm:w-20 mx-auto mb-3 text-indigo-500" />
-			<p className="text-base sm:text-lg font-semibold text-gray-700 mb-2">
-				Create Your First Group
+		<section className="surface p-6 sm:p-8">
+			<h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink">
+				Split your first bill
+			</h1>
+			<p className="mt-2 max-w-md text-ink-soft">
+				No signup. Everything stays on this device until you choose to share it.
 			</p>
-			<p className="text-xs sm:text-sm text-gray-500 mb-4 px-2">
-				Start by creating a group and adding members
-			</p>
+
+			<ol className="mt-6 space-y-4">
+				{STEPS.map(([title, body], i) => (
+					<li key={title} className="flex gap-3">
+						<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line-strong text-sm font-semibold tabular-nums text-ink-soft">
+							{i + 1}
+						</span>
+						<span>
+							<span className="block font-semibold text-ink">{title}</span>
+							<span className="block text-sm text-ink-muted">{body}</span>
+						</span>
+					</li>
+				))}
+			</ol>
+
 			<button
 				onClick={onCreateGroup}
-				className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 active:from-indigo-800 active:to-purple-800 font-semibold shadow-lg text-sm sm:text-base touch-manipulation"
+				className="btn-primary mt-7 w-full sm:w-auto !px-6 !py-3 !text-base"
 			>
-				Create Group
+				<Plus className="h-4 w-4" />
+				Create a group
 			</button>
-		</div>
+		</section>
 	);
 };

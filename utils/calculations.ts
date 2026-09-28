@@ -119,3 +119,7 @@ export const calculateSettlements = (
   return settlements;
 };
 
+
+/** Money actually spent by the group — recorded payments are transfers, not spending. */
+export const totalSpent = (expenses: Expense[]): number =>
+  expenses.reduce((sum, e) => (e.kind === "payment" ? sum : sum + e.amount), 0);

@@ -1,16 +1,34 @@
-interface HeaderProps {}
+import Link from "next/link";
+import { LayoutGrid, MessageSquare } from "lucide-react";
 
-export const Header = ({}: HeaderProps) => {
+export const Header = ({ onFeedback }: { onFeedback?: () => void }) => {
 	return (
-		<div className="mb-3 sm:mb-4 flex items-center gap-2">
-			<img
-				src="/logo.png"
-				alt="SplitBiller Logo"
-				className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover"
-			/>
-			<h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent leading-none">
-				SplitBiller
-			</h1>
-		</div>
+		<header className="mb-5 sm:mb-6 flex h-12 items-center justify-between gap-3">
+			<Link
+				href="/"
+				className="flex items-center gap-2 min-w-0 rounded-lg -ml-1 pl-1 pr-2 py-1"
+			>
+				<img
+					src="/logo.png"
+					alt=""
+					className="h-9 w-9 object-contain shrink-0 scale-[1.6]"
+				/>
+				<span className="font-display text-lg font-semibold text-ink leading-none">
+					SplitBiller
+				</span>
+			</Link>
+			<div className="flex shrink-0 items-center gap-1">
+				{onFeedback && (
+					<button type="button" onClick={onFeedback} className="btn-ghost">
+						<MessageSquare className="h-4 w-4" />
+						Feedback
+					</button>
+				)}
+				<Link href="/#tools" className="btn-ghost" aria-label="Calculators">
+					<LayoutGrid className="h-4 w-4" />
+					<span className="hidden sm:inline">Calculators</span>
+				</Link>
+			</div>
+		</header>
 	);
 };

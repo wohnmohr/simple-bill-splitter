@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ActionIcon, Tooltip } from "@mantine/core";
+import { Plus } from "lucide-react";
 
 interface FloatingActionButtonProps {
 	onClick: () => void;
@@ -14,43 +13,19 @@ export const FloatingActionButton = ({
 	label = "Add expense",
 	showTooltip = false,
 }: FloatingActionButtonProps) => {
-	const [isTooltipVisible, setIsTooltipVisible] = useState(false);
-
-	useEffect(() => {
-		if (showTooltip) {
-			const timer = setTimeout(() => {
-				setIsTooltipVisible(true);
-			}, 500);
-			return () => clearTimeout(timer);
-		} else {
-			setIsTooltipVisible(false);
-		}
-	}, [showTooltip]);
-
 	return (
-		<div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40">
-			<Tooltip
-				label="Add expenses here"
-				opened={isTooltipVisible}
-				position="top"
-				withArrow
-				zIndex={100}
-			>
-				<ActionIcon
+		<div className="fixed inset-x-0 bottom-0 z-40 pointer-events-none pb-[max(1rem,env(safe-area-inset-bottom))]">
+			<div className="mx-auto flex max-w-2xl justify-end px-4 lg:max-w-5xl lg:px-6">
+				<button
 					onClick={onClick}
-					size={56}
-					radius="xl"
-					variant="filled"
-					aria-label={label}
-					style={{
-						background: "linear-gradient(to right, #4f46e5, #9333ea)",
-						transition: "all 0.2s",
-					}}
-					className="hover:opacity-90 active:opacity-80 hover:scale-110 active:scale-95 shadow-2xl"
+					className={`pointer-events-auto inline-flex h-14 items-center gap-2 rounded-full bg-brand-700 pl-5 pr-6 text-base font-semibold text-white shadow-raised transition-[background-color,transform] hover:bg-brand-800 active:scale-[0.97] ${
+						showTooltip ? "ring-4 ring-brand-200" : ""
+					}`}
 				>
-					<span className="text-2xl font-bold">+</span>
-				</ActionIcon>
-			</Tooltip>
+					<Plus className="h-5 w-5" strokeWidth={2.5} />
+					{label}
+				</button>
+			</div>
 		</div>
 	);
 };
