@@ -9,6 +9,7 @@ interface ModalProps {
 	onClose: () => void;
 	children: ReactNode;
 	className?: string;
+	title?: ReactNode;
 }
 
 export const Modal = ({
@@ -16,8 +17,9 @@ export const Modal = ({
 	onClose,
 	children,
 	className = "",
+	title,
 }: ModalProps) => {
-	const isMobile = useMediaQuery("(max-width: 768px)", true, {
+	const isMobile = useMediaQuery("(max-width: 640px)", true, {
 		getInitialValueInEffect: false,
 	});
 	return (
@@ -25,15 +27,16 @@ export const Modal = ({
 			opened={isOpen}
 			onClose={onClose}
 			centered
-			overlayProps={{
-				backgroundOpacity: 0.5,
-				blur: 4,
-			}}
-			radius={isMobile ? 0 : "md"}
-			size={isMobile ? "100%" : "sm"}
+			title={title}
+			radius={isMobile ? 0 : "lg"}
+			size={isMobile ? "100%" : 440}
 			fullScreen={isMobile}
+			closeButtonProps={{ "aria-label": "Close" }}
+			transitionProps={{ transition: isMobile ? "slide-up" : "pop", duration: 180 }}
 			classNames={{
 				content: className,
+				title: "!font-display !text-xl !font-semibold !text-ink",
+				header: "!pb-1",
 			}}
 		>
 			{children}

@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Lock, ChevronDown } from "lucide-react";
 import { ToolPageConfig, TOOL_PAGES } from "@/content/tools";
-import { Button } from "@/components/UI/Button";
 import { ToolCalculator } from "@/components/Tools/ToolCalculator";
 
 export function ToolJsonLd({ config }: { config: ToolPageConfig }) {
@@ -49,39 +48,36 @@ export function ToolJsonLd({ config }: { config: ToolPageConfig }) {
 
 export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 	return (
-		<main className="page-shell min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">
+		<main className="page-shell min-h-screen bg-paper text-ink">
 			<ToolJsonLd config={config} />
 
-			<header className="px-4 sm:px-6 pt-5 pb-2">
-				<div className="max-w-5xl mx-auto flex items-center justify-between gap-3 min-w-0">
+			<header className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md px-4 sm:px-6">
+				<div className="max-w-5xl mx-auto flex h-14 items-center justify-between gap-3 min-w-0">
 					<Link href="/" className="flex items-center gap-2 group">
 						<img
 							src="/logo.png"
-							alt="SplitBiller"
-							className="w-9 h-9 sm:w-10 sm:h-10 object-contain"
+							alt=""
+							className="h-8 w-8 object-contain scale-[1.6]"
 						/>
-						<span className="font-bold text-base sm:text-lg bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+						<span className="font-display text-lg font-semibold text-ink">
 							SplitBiller
 						</span>
 					</Link>
-					<Link href="/dashboard">
-						<Button variant="primary" size="sm">
-							Open app
-						</Button>
+					<Link href="/dashboard" className="btn-primary !py-2">
+						Open app
 					</Link>
 				</div>
 			</header>
 
-			<section className="px-4 sm:px-6 pt-6 sm:pt-10 pb-8">
+			<section className="px-4 sm:px-6 pt-10 sm:pt-14 pb-8">
 				<div className="max-w-5xl mx-auto text-center space-y-3 sm:space-y-4">
-					<p className="text-sm font-semibold text-indigo-600">{config.title}</p>
-					<h1 className="text-[clamp(1.5rem,4.5vw,2.75rem)] font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent leading-tight">
+										<h1 className="font-display text-[clamp(1.875rem,5vw,3.25rem)] font-semibold text-ink leading-[1.08]">
 						{config.headline}
 					</h1>
-					<p className="text-base sm:text-lg text-gray-700 max-w-2xl mx-auto">
+					<p className="text-base sm:text-lg text-ink-soft max-w-2xl mx-auto">
 						{config.subhead}
 					</p>
-					<p className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-800 bg-indigo-50 px-3 py-1 rounded-full">
+					<p className="inline-flex items-center gap-1.5 text-sm text-ink-muted">
 						<Lock className="h-3.5 w-3.5" />
 						Share links encrypt in your browser — we never store the split
 					</p>
@@ -97,27 +93,27 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 			<section className="px-4 sm:px-6 py-8 sm:py-10">
 				<div className="max-w-3xl mx-auto space-y-4">
 					{config.intro.map((p, i) => (
-						<p key={i} className="text-base text-gray-700 leading-relaxed">
+						<p key={i} className="text-base text-ink-soft leading-relaxed">
 							{p}
 						</p>
 					))}
 				</div>
 			</section>
 
-			<section className="px-4 sm:px-6 py-8 sm:py-10 bg-white/40">
+			<section className="px-4 sm:px-6 py-12 sm:py-16 bg-white border-y border-line">
 				<div className="max-w-3xl mx-auto">
-					<h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 text-center">
+					<h2 className="text-xl sm:text-2xl font-bold text-ink mb-6 text-center">
 						How it works
 					</h2>
 					<ol className="space-y-5">
 						{config.howTo.map((step, i) => (
 							<li key={i} className="flex gap-4">
-								<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-sm font-bold text-white">
+								<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-semibold tabular-nums text-brand-700">
 									{i + 1}
 								</span>
 								<div>
-									<h3 className="font-semibold text-gray-900">{step.title}</h3>
-									<p className="text-sm text-gray-600 mt-0.5">{step.body}</p>
+									<h3 className="font-semibold text-ink">{step.title}</h3>
+									<p className="text-sm text-ink-muted mt-0.5">{step.body}</p>
 								</div>
 							</li>
 						))}
@@ -127,22 +123,20 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 
 			<section className="px-4 sm:px-6 py-8 sm:py-10">
 				<div className="max-w-3xl mx-auto">
-					<h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 text-center">
+					<h2 className="text-xl sm:text-2xl font-bold text-ink mb-6 text-center">
 						FAQ
 					</h2>
-					<div className="space-y-4">
+					<div className="border-t border-line">
 						{config.faqs.map((faq, i) => (
 							<details
 								key={i}
-								className="group rounded-xl bg-white/80 border border-white/60 px-4 py-3 open:shadow-md"
+								className="group border-b border-line py-4"
 							>
-								<summary className="cursor-pointer font-semibold text-gray-900 list-none flex justify-between gap-2">
+								<summary className="cursor-pointer font-semibold text-ink list-none flex items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
 									{faq.q}
-									<span className="text-indigo-500 group-open:rotate-45 transition-transform">
-										+
-									</span>
+									<ChevronDown className="h-5 w-5 shrink-0 text-ink-muted transition-transform group-open:rotate-180" />
 								</summary>
-								<p className="mt-2 text-sm text-gray-600 leading-relaxed">
+								<p className="mt-2 text-sm text-ink-muted leading-relaxed">
 									{faq.a}
 								</p>
 							</details>
@@ -153,25 +147,21 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 
 			<section className="px-4 sm:px-6 py-8 sm:py-10">
 				<div className="max-w-3xl mx-auto text-center space-y-4">
-					<h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+					<h2 className="text-xl sm:text-2xl font-bold text-ink">
 						Need more than a quick calc?
 					</h2>
-					<p className="text-gray-600 text-sm sm:text-base">
+					<p className="text-ink-muted text-sm sm:text-base">
 						Track multiple expenses, unequal splits, and ongoing groups in the
 						full SplitBiller app — still no signup.
 					</p>
-					<Link href="/dashboard">
-						<Button variant="primary" size="lg">
-							<span className="inline-flex items-center gap-2">
-								{config.ctaLabel}
-								<ArrowRight className="h-5 w-5 !text-white" />
-							</span>
-						</Button>
+					<Link href="/dashboard" className="btn-primary !px-6 !py-3 !text-base">
+						{config.ctaLabel}
+						<ArrowRight className="h-4 w-4" />
 					</Link>
 				</div>
 			</section>
 
-			<section className="px-4 sm:px-6 py-8 border-t border-indigo-100/80">
+			<section className="px-4 sm:px-6 py-8 border-t border-line">
 				<div className="max-w-3xl mx-auto">
 					<h2 className="text-sm font-semibold text-gray-500 mb-3 text-center">
 						Related tools
@@ -181,7 +171,7 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 							<li key={slug}>
 								<Link
 									href={`/${slug}`}
-									className="inline-block rounded-lg bg-white/80 border border-indigo-100 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
+									className="inline-block rounded-lg border border-line bg-white px-3 py-1.5 text-sm font-medium text-ink-soft hover:text-brand-700 hover:border-line-strong"
 								>
 									{TOOL_PAGES[slug].title}
 								</Link>

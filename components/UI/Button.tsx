@@ -6,6 +6,7 @@ interface ButtonProps
 	variant?: "primary" | "secondary" | "danger";
 	size?: "xs" | "sm" | "md" | "lg" | "xl";
 	children: ReactNode;
+	leftSection?: ReactNode;
 }
 
 export const Button = ({
@@ -16,42 +17,17 @@ export const Button = ({
 	...props
 }: ButtonProps) => {
 	const mantineVariant =
-		variant === "primary"
-			? "filled"
-			: variant === "secondary"
-			? "light"
-			: "filled";
+		variant === "primary" ? "filled" : variant === "secondary" ? "default" : "light";
 
-	const mantineColor =
-		variant === "danger" ? "red" : variant === "secondary" ? "gray" : undefined;
+	const mantineColor = variant === "danger" ? "red" : "brand";
 
 	return (
 		<MantineButton
 			variant={mantineVariant}
 			color={mantineColor}
 			size={size}
-			className={`${className} ${variant === "primary" ? "!text-white" : ""}`}
-			style={
-				variant === "primary"
-					? {
-							background: "linear-gradient(to right, #4f46e5, #9333ea)",
-							color: "#ffffff",
-							transition: "all 0.2s",
-					  }
-					: undefined
-			}
-			styles={
-				variant === "primary"
-					? {
-							label: {
-								color: "#ffffff",
-							},
-							root: {
-								color: "#ffffff",
-							},
-					  }
-					: undefined
-			}
+			radius="md"
+			className={`${className} !font-semibold`}
 			{...props}
 		>
 			{children}

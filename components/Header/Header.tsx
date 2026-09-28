@@ -1,29 +1,34 @@
 import Link from "next/link";
+import { LayoutGrid, MessageSquare } from "lucide-react";
 
-export const Header = () => {
+export const Header = ({ onFeedback }: { onFeedback?: () => void }) => {
 	return (
-		<header className="mb-4 sm:mb-5 flex items-center justify-between gap-3">
-			<Link href="/" className="flex items-center gap-2.5 min-w-0 group">
+		<header className="mb-5 sm:mb-6 flex h-12 items-center justify-between gap-3">
+			<Link
+				href="/"
+				className="flex items-center gap-2 min-w-0 rounded-lg -ml-1 pl-1 pr-2 py-1"
+			>
 				<img
 					src="/logo.png"
-					alt="SplitBiller"
-					className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover shrink-0 ring-2 ring-indigo-100 group-hover:ring-indigo-200 transition-all"
+					alt=""
+					className="h-9 w-9 object-contain shrink-0 scale-[1.6]"
 				/>
-				<div className="min-w-0">
-					<h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent leading-tight">
-						SplitBiller
-					</h1>
-					<p className="text-[11px] sm:text-xs text-gray-500 leading-none mt-0.5">
-						Split & settle in ₹
-					</p>
-				</div>
+				<span className="font-display text-lg font-semibold text-ink leading-none">
+					SplitBiller
+				</span>
 			</Link>
-			<Link
-				href="/#tools"
-				className="shrink-0 text-xs sm:text-sm font-medium text-indigo-700 hover:text-indigo-900 px-2 py-1.5"
-			>
-				Tools
-			</Link>
+			<div className="flex shrink-0 items-center gap-1">
+				{onFeedback && (
+					<button type="button" onClick={onFeedback} className="btn-ghost">
+						<MessageSquare className="h-4 w-4" />
+						Feedback
+					</button>
+				)}
+				<Link href="/#tools" className="btn-ghost" aria-label="Calculators">
+					<LayoutGrid className="h-4 w-4" />
+					<span className="hidden sm:inline">Calculators</span>
+				</Link>
+			</div>
 		</header>
 	);
 };

@@ -22,10 +22,11 @@ export const CreateGroupModal = ({
 	const [groupName, setGroupName] = React.useState("");
 	const [selectedCurrency, setSelectedCurrency] =
 		React.useState<Currency>(DEFAULT_CURRENCY);
+	const atLimit = groupCount >= MAX_GROUPS;
 
 	const handleSubmit = () => {
-		if (groupName.trim()) {
-			onCreate(groupName, selectedCurrency);
+		if (groupName.trim() && !atLimit) {
+			onCreate(groupName.trim(), selectedCurrency);
 			setGroupName("");
 			setSelectedCurrency(DEFAULT_CURRENCY);
 			onClose();
@@ -39,81 +40,61 @@ export const CreateGroupModal = ({
 	};
 
 	return (
-		<Modal isOpen={isOpen} onClose={handleClose}>
-			<div className="p-4 sm:p-5">
-				<h2 className="font-display text-xl font-bold text-gray-900 mb-1">
-					Create a group
-				</h2>
-				<p className="text-sm text-gray-500 mb-4">
-					Defaults to Indian Rupees (₹) — change anytime.
-				</p>
-				<div className="space-y-3 sm:space-y-4">
-					<TextInput
-						label="Group name"
-						value={groupName}
-						onChange={(e) => setGroupName(e.target.value)}
-						onKeyDown={(e) => {
-							if (e.key === "Enter") {
-								handleSubmit();
-							}
+		<Modal isOpen={isOpen} onClose={handleClose} title="New group">
+			<form
+				className="flex flex-col gap-4 pb-2"
+				onSubmit={(e) => {
+					e.preventDefault();
+					handleSubmit();
+				}}
+			>
+				<TextInput
+					label="Group name"
+					value={groupName}
+					onChange={(e) => setGroupName(e.target.value)}
+					placeholder="Goa trip, Flat 4B, Office lunch"
+					data-autofocus
+					maxLength={60}
+				/>
+				<div>
+					<Dropdown
+						label="Currency"
+						value={selectedCurrency.code}
+						onChange={(code) => {
+							const currency = CURRENCIES.find((c) => c.code === code);
+							if (currency) setSelectedCurrency(currency);
 						}}
-						placeholder="e.g. Goa trip, Flat 4B, Office lunch"
-						autoFocus
-						radius="md"
-						styles={{
-							input: {
-								borderColor: "#c7d2fe",
-								borderWidth: 2,
-								minHeight: 44,
-							},
-						}}
+						options={CURRENCIES.map((currency) => ({
+							value: currency.code,
+							label: `${currency.symbol} ${currency.name} (${currency.code})`,
+						}))}
+						placeholder="Select currency"
 					/>
-					<div>
-						<label className="block text-sm font-semibold text-gray-700 mb-1.5">
-							Currency
-						</label>
-						<Dropdown
-							value={selectedCurrency.code}
-							onChange={(code) => {
-								const currency = CURRENCIES.find((c) => c.code === code);
-								if (currency) setSelectedCurrency(currency);
-							}}
-							options={CURRENCIES.map((currency) => ({
-								value: currency.code,
-								label: `${currency.symbol} ${currency.name} (${currency.code})`,
-							}))}
-							placeholder="Select currency"
-						/>
-						{selectedCurrency.code === "INR" && (
-							<p className="text-xs text-gray-500 mt-1.5">
-								UPI pay links will be available on settlements.
-							</p>
-						)}
-					</div>
-					<div className="flex gap-2 sm:gap-3 pt-1">
-						<Button
-							variant="secondary"
-							onClick={handleClose}
-							className="flex-1 !min-h-11"
-						>
-							Cancel
-						</Button>
-						<Button
-							variant="primary"
-							onClick={handleSubmit}
-							disabled={!groupName.trim() || groupCount >= MAX_GROUPS}
-							className="flex-1 !min-h-11"
-						>
-							Create
-						</Button>
-					</div>
-					{groupCount >= MAX_GROUPS && (
-						<p className="text-xs text-red-500 text-center">
-							Maximum {MAX_GROUPS} groups allowed
-						</p>
-					)}
+					<p className="mt-1.5 text-sm text-ink-muted">
+						{selectedCurrency.code === "INR"
+							? "Settlements will include one-tap UPI pay links."
+							: "UPI pay links are only available for rupee groups."}
+					</p>
 				</div>
-			</div>
+				{atLimit && (
+					<p className="text-sm text-negative" role="alert">
+						You already have {MAX_GROUPS} groups. Delete one to create another.
+					</p>
+				)}
+				<div className="flex gap-2 pt-1">
+					<Button variant="secondary" type="button" onClick={handleClose} className="flex-1">
+						Cancel
+					</Button>
+					<Button
+						variant="primary"
+						type="submit"
+						disabled={!groupName.trim() || atLimit}
+						className="flex-[2]"
+					>
+						Create group
+					</Button>
+				</div>
+			</form>
 		</Modal>
 	);
 };

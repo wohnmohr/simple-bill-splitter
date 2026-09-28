@@ -13,6 +13,8 @@ export type CompactSharePayload = {
 		d?: string; // description
 		s?: "e" | "p"; // equally | percentage
 		r?: Record<string, number>; // percentages
+		k?: "s"; // settlement payment
+		at?: number; // created at (epoch seconds)
 	}[];
 };
 

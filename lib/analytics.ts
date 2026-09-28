@@ -17,12 +17,27 @@ export type AnalyticsEvent =
 	| "dashboard_member_added"
 	| "dashboard_expense_added"
 	| "dashboard_settlements_tab_viewed"
-	| "upi_pay_link_clicked";
+	| "upi_pay_link_clicked"
+	| "settlement_marked_paid"
+	| "settlement_remind_clicked"
+	| "feedback_opened"
+	| "feedback_submitted"
+	| "feature_request_submitted";
 
 type EventProps = Record<string, string | number | boolean | undefined | null>;
 
+// Last few product actions, kept in memory only, so feedback can say what
+// someone was doing. Event names only — never amounts, names or UPI IDs.
+const recentActions: string[] = [];
+
+export function getRecentActions(): string[] {
+	return [...recentActions];
+}
+
 export function track(event: AnalyticsEvent, properties?: EventProps): void {
 	if (typeof window === "undefined") return;
+	recentActions.push(event);
+	if (recentActions.length > 15) recentActions.shift();
 	if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) return;
 	try {
 		posthog.capture(event, properties);

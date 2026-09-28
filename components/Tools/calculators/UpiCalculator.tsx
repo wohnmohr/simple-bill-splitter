@@ -62,7 +62,7 @@ export const UpiCalculator = () => {
 	const upiExtra =
 		settlements.length > 0 ? (
 			<div className="space-y-3 border-t border-indigo-50 pt-3">
-				<p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+				<p className="label-text">
 					Pay via UPI
 				</p>
 				<p className="text-xs text-gray-500">
@@ -116,7 +116,7 @@ export const UpiCalculator = () => {
 
 	return (
 		<div className="grid lg:grid-cols-2 gap-6">
-			<div className="space-y-4 rounded-2xl bg-white/80 border border-white/60 shadow-md p-4 sm:p-5">
+			<div className="space-y-4 surface p-4 sm:p-5">
 				<div>
 					<label className={labelClass}>Bill amount (₹)</label>
 					<input

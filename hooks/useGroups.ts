@@ -63,6 +63,10 @@ export const useGroups = () => {
     setGroups(updatedGroups);
   };
 
+  const setGroupMe = (groupId: string, meId: string | null | undefined): void => {
+    setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, meId } : g)));
+  };
+
   const currentGroup = groups.find((g) => g.id === selectedGroupId);
 
   return {
@@ -73,6 +77,7 @@ export const useGroups = () => {
     createGroup,
     deleteGroup,
     updateGroupCurrency,
+    setGroupMe,
     setGroups,
   };
 };

@@ -16,58 +16,49 @@ export const BalanceList = ({
 		return people.find((p) => p.id === personId)?.name || "Unknown";
 	};
 
+	// Largest creditors first, then debtors, so the list reads top-down.
+	const ordered = [...balances].sort((a, b) => b.balance - a.balance);
+	const maxAbs = Math.max(1, ...ordered.map((b) => Math.abs(b.balance)));
+
 	return (
-		<div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-white/50 p-3 sm:p-4">
-			<div className="space-y-2">
-				{balances.map((balance) => {
-					const isOwed = balance.balance > 0;
-					const owes = balance.balance < 0;
-					const statusLabel = isOwed
-						? "gets back"
-						: owes
-						? "owes"
-						: "settled up";
+		<div className="surface overflow-hidden">
+			<ul className="divide-y divide-line">
+				{ordered.map((balance) => {
+					const isOwed = balance.balance > 0.004;
+					const owes = balance.balance < -0.004;
+					const width = `${(Math.abs(balance.balance) / maxAbs) * 100}%`;
 					return (
-						<div
-							key={balance.personId}
-							className="flex justify-between items-center gap-2 py-2.5 sm:py-3 px-2.5 sm:px-3 rounded-lg border-2 border-gray-200"
-						>
-							<span className="text-xs sm:text-sm font-medium text-gray-800 truncate flex-1 min-w-0">
-								{getPersonName(balance.personId)}
-							</span>
-							<div className="flex flex-col items-end shrink-0">
-								<span
-									className={`text-[10px] sm:text-xs font-medium ${
-										isOwed
-											? "text-indigo-500"
-											: owes
-											? "text-red-500"
-											: "text-gray-400"
-									}`}
-								>
-									{statusLabel}
+						<li key={balance.personId} className="px-4 py-3.5">
+							<div className="flex items-baseline justify-between gap-3">
+								<span className="min-w-0 truncate font-semibold text-ink">
+									{getPersonName(balance.personId)}
 								</span>
-								<span
-									className={`font-bold text-xs sm:text-sm ${
-										isOwed
-											? "text-indigo-600"
-											: owes
-											? "text-red-600"
-											: "text-gray-600"
-									}`}
-								>
-									{formatCurrency(Math.abs(balance.balance), currency)}
+								<span className="shrink-0 text-right">
+									<span
+										className={`font-semibold tabular-nums ${
+											isOwed ? "text-positive" : owes ? "text-negative" : "text-ink-muted"
+										}`}
+									>
+										{isOwed ? "+" : owes ? "−" : ""}
+										{formatCurrency(Math.abs(balance.balance), currency)}
+									</span>
+									<span className="ml-2 text-sm text-ink-muted">
+										{isOwed ? "gets back" : owes ? "owes" : "settled"}
+									</span>
 								</span>
 							</div>
-						</div>
+							<div className="mt-2 h-1 rounded-full bg-ink/[0.05]" aria-hidden>
+								<div
+									className={`h-1 rounded-full ${
+										isOwed ? "bg-positive/70" : owes ? "bg-negative/70" : ""
+									}`}
+									style={{ width: isOwed || owes ? width : 0 }}
+								/>
+							</div>
+						</li>
 					);
 				})}
-			</div>
-			<p className="text-xs text-gray-500 mt-3 sm:mt-4">
-				<span className="text-indigo-600 font-semibold">Gets back</span> = others
-				owe them •{" "}
-				<span className="text-red-600 font-semibold">Owes</span> = they owe others
-			</p>
+			</ul>
 		</div>
 	);
 };

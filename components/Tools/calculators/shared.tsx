@@ -83,13 +83,13 @@ export const CalculatorResult = ({
 	const total = expenses.reduce((s, e) => s + e.amount, 0);
 
 	return (
-		<div className="rounded-2xl border border-indigo-100 bg-white/90 shadow-lg p-4 sm:p-5 space-y-4 animate-[fade-in-up_0.4s_ease-out]">
+		<div className="surface shadow-raised p-4 sm:p-5 space-y-4 animate-[fade-in-up_0.4s_ease-out]">
 			<div className="flex items-start justify-between gap-3">
 				<div>
-					<p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+					<p className="label-text">
 						Result
 					</p>
-					<h3 className="text-lg font-bold text-gray-900">{title}</h3>
+					<h3 className="font-display text-xl font-semibold text-ink">{title}</h3>
 					<p className="text-sm text-gray-500">
 						Total {formatCurrency(total, currency)} · {people.length} people
 					</p>
@@ -97,7 +97,7 @@ export const CalculatorResult = ({
 			</div>
 
 			{settlements.length === 0 ? (
-				<div className="flex items-center gap-2 text-green-700 bg-green-50 rounded-xl px-3 py-2 text-sm">
+				<div className="flex items-center gap-2 text-positive bg-positive-soft rounded-xl px-3 py-2 text-sm">
 					<Check className="h-4 w-4" />
 					Everyone is settled up
 				</div>
@@ -109,14 +109,14 @@ export const CalculatorResult = ({
 						return (
 							<li
 								key={i}
-								className="flex items-center justify-between gap-2 rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50 px-3 py-2.5"
+								className="flex items-center justify-between gap-2 rounded-xl border border-line bg-white px-3 py-2.5"
 							>
 								<span className="text-sm font-semibold text-gray-800 flex items-center gap-1.5 min-w-0">
 									<span className="truncate">{from}</span>
 									<ArrowRight className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
 									<span className="truncate">{to}</span>
 								</span>
-								<span className="font-bold text-indigo-700 shrink-0">
+								<span className="font-semibold tabular-nums text-ink shrink-0">
 									{formatCurrency(s.amount, currency)}
 								</span>
 							</li>

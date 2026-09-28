@@ -1,5 +1,9 @@
+import { ChevronRight, Plus, Trash2 } from "lucide-react";
 import { Group } from "@/types";
 import { MAX_GROUPS } from "@/constants";
+import { formatCurrency } from "@/utils/formatting";
+import { totalSpent } from "@/utils/calculations";
+import { BalanceHeadline, myBalance } from "@/components/Group/GroupSelector";
 
 interface GroupsHomeProps {
 	groups: Group[];
@@ -8,104 +12,88 @@ interface GroupsHomeProps {
 	onCreateGroup: () => void;
 }
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
 export const GroupsHome = ({
 	groups,
 	onSelectGroup,
 	onDeleteGroup,
 	onCreateGroup,
 }: GroupsHomeProps) => {
+	const canCreate = groups.length < MAX_GROUPS;
+
 	return (
-		<div className="space-y-4 sm:space-y-6">
-			<div className="text-center mb-5 sm:mb-6">
-				<h1 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
-					Your groups
-				</h1>
-				<p className="text-sm text-gray-600 px-2">
-					Open a group to add expenses and settle in ₹
-				</p>
+		<div>
+			<div className="mb-4 flex items-end justify-between gap-3">
+				<div>
+					<h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink">
+						Your groups
+					</h1>
+					<p className="mt-1 text-sm text-ink-muted">
+						Saved on this device. Open one to add expenses.
+					</p>
+				</div>
+				{canCreate && (
+					<button onClick={onCreateGroup} className="btn-primary shrink-0">
+						<Plus className="h-4 w-4" />
+						New group
+					</button>
+				)}
 			</div>
 
-			{groups.length === 0 ? (
-				<div className="text-center py-8 sm:py-12">
-					<p className="text-sm sm:text-base text-gray-500 mb-4 px-2">
-						No groups yet. Create your first group to get started!
-					</p>
-					<button
-						onClick={onCreateGroup}
-						className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 active:from-indigo-800 active:to-purple-800 shadow-lg text-sm sm:text-base touch-manipulation"
-					>
-						Create Your First Group
-					</button>
-				</div>
-			) : (
-				<div className="flex flex-col gap-2 sm:gap-3">
-					{groups.map((group) => {
-						return (
-							<div
-								key={group.id}
-								className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg border-2 border-indigo-200 p-3 sm:p-4 hover:shadow-xl active:shadow-lg transition-all cursor-pointer touch-manipulation group"
+			<ul className="surface divide-y divide-line overflow-hidden">
+				{groups.map((group) => {
+					const total = totalSpent(group.expenses);
+					const mine = myBalance(group);
+					return (
+						<li key={group.id} className="group/row relative flex items-center">
+							<button
 								onClick={() => onSelectGroup(group.id)}
+								className="flex flex-1 min-w-0 items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-paper"
 							>
-								<div className="flex items-center justify-between gap-3 sm:gap-4">
-									<div className="flex-1 min-w-0 flex items-center gap-3 sm:gap-4">
-										{/* Color accent bar */}
-										<div
-											className={`w-1.5 sm:w-2 h-12 sm:h-14 rounded-full bg-white/40 group-hover:bg-white/60 transition-colors shrink-0`}
-										/>
-										<div className="flex-1 min-w-0">
-											<h3 className="text-base sm:text-lg font-bold text-white truncate drop-shadow-sm">
-												{group.name}
-											</h3>
-											<div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-white/90 mt-1">
-												<div className="flex items-center gap-1">
-													<span className="font-semibold">
-														{group.members.length}
-													</span>
-													<span>
-														{group.members.length === 1 ? "member" : "members"}
-													</span>
-												</div>
-												<div className="w-1 h-1 rounded-full bg-white/60" />
-												<div className="flex items-center gap-1">
-													<span className="font-semibold">
-														{group.expenses.length}
-													</span>
-													<span>
-														{group.expenses.length === 1
-															? "expense"
-															: "expenses"}
-													</span>
-												</div>
-											</div>
-										</div>
-									</div>
-									<button
-										onClick={(e) => {
-											e.stopPropagation();
-											onDeleteGroup(group.id);
-										}}
-										className="text-white/90 hover:text-white active:text-white/80 text-xl font-bold px-2 shrink-0 touch-manipulation hover:bg-white/20 rounded-lg transition-colors"
-										aria-label="Delete group"
-									>
-										×
-									</button>
-								</div>
-							</div>
-						);
-					})}
-					{groups.length < MAX_GROUPS && (
-						<button
-							onClick={onCreateGroup}
-							className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border-2 border-dashed border-indigo-300 p-3 sm:p-4 hover:bg-indigo-50 active:bg-indigo-100 transition-colors flex items-center justify-center gap-2 touch-manipulation"
-						>
-							<div className="text-xl sm:text-2xl text-indigo-600">+</div>
-							<div className="text-sm sm:text-base text-indigo-600 font-semibold">
-								New Group
-							</div>
-						</button>
-					)}
-				</div>
-			)}
+								<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 font-display text-lg font-semibold text-brand-700">
+									{group.name.trim().charAt(0).toUpperCase() || "G"}
+								</span>
+								<span className="min-w-0 flex-1">
+									<span className="block truncate font-semibold text-ink">
+										{group.name}
+									</span>
+									<span className="mt-0.5 block text-sm text-ink-muted">
+										{mine !== null ? (
+											<BalanceHeadline balance={mine} group={group} size="sm" />
+										) : (
+											<>
+												{plural(group.members.length, "member")} ·{" "}
+												{plural(group.expenses.filter((e) => e.kind !== "payment").length, "expense")}
+											</>
+										)}
+									</span>
+								</span>
+								<span className="hidden sm:block text-right shrink-0 pr-10">
+									<span className="block font-semibold tabular-nums text-ink">
+										{formatCurrency(total, group.currency)}
+									</span>
+									<span className="block text-xs text-ink-muted">spent</span>
+								</span>
+								<ChevronRight className="h-5 w-5 shrink-0 text-ink-muted sm:hidden" />
+							</button>
+							<button
+								onClick={() => onDeleteGroup(group.id)}
+								className="icon-btn hidden sm:inline-flex absolute right-3 hover:!text-negative"
+								aria-label={`Delete ${group.name}`}
+							>
+								<Trash2 className="h-4 w-4" />
+							</button>
+						</li>
+					);
+				})}
+			</ul>
+
+			<p className="mt-3 text-xs text-ink-muted">
+				{canCreate
+					? `You can keep up to ${MAX_GROUPS} groups.`
+					: `You've reached the ${MAX_GROUPS}-group limit. Delete one to start another.`}
+			</p>
 		</div>
 	);
 };
