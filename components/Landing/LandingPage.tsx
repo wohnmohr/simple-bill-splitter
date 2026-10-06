@@ -21,6 +21,7 @@ import {
 	ChevronDown,
 } from "lucide-react";
 import { track } from "@/lib/analytics";
+import { StickyCta } from "@/components/Landing/StickyCta";
 import { ALL_TOOL_SLUGS, TOOL_PAGES, ToolSlug } from "@/content/tools";
 
 const TOOL_ICONS: Record<ToolSlug, typeof Receipt> = {
@@ -55,7 +56,7 @@ const WHY = [
 	{ icon: Receipt, label: "Split bills online instantly" },
 	{ icon: UserX, label: "No account, no app, no signup" },
 	{ icon: Globe, label: "Works entirely in your browser" },
-	{ icon: Lock, label: "Privacy-first — nothing is stored" },
+	{ icon: Lock, label: "Privacy-first — your splits stay on your device" },
 	{ icon: ArrowRightLeft, label: 'Simple "who owes whom" result' },
 	{ icon: Zap, label: "Lightweight & fast" },
 ];
@@ -70,7 +71,7 @@ const STEPS = [
 const COMPARISON: { feature: string; us: boolean | string; them: boolean | string }[] = [
 	{ feature: "Login required", us: false, them: true },
 	{ feature: "App download", us: false, them: true },
-	{ feature: "Data stored", us: false, them: true },
+	{ feature: "Account data stored", us: false, them: true },
 	{ feature: "One-time use", us: true, them: false },
 	{ feature: "Instant results", us: true, them: "Often slow" },
 ];
@@ -168,24 +169,7 @@ const SettlementPreview = () => (
 
 export const LandingPage = () => {
 	return (
-		<main className="page-shell min-h-screen bg-paper text-ink">
-			{/* Product Hunt Banner */}
-			<a
-				href="https://www.producthunt.com/products/split-biller?utm_source=banner&utm_medium=embed"
-				target="_blank"
-				rel="noopener noreferrer"
-				className="block bg-ink text-white/90 hover:text-white transition-colors"
-			>
-				<span className="mx-auto flex h-9 max-w-6xl items-center justify-center gap-2 px-4 text-xs sm:text-sm font-medium whitespace-nowrap">
-					<img src={PH_ICON} alt="" className="h-4 w-4 rounded shrink-0" />
-					<span className="sm:hidden truncate">We&apos;re live on Product Hunt</span>
-					<span className="hidden sm:inline">
-						We&apos;re live on Product Hunt — support us with an upvote
-					</span>
-					<ArrowRight className="h-3.5 w-3.5 shrink-0" />
-				</span>
-			</a>
-
+		<main className="page-shell min-h-screen bg-paper text-ink pb-20 sm:pb-0">
 			{/* Site nav */}
 			<nav className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md">
 				<div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
@@ -226,19 +210,20 @@ export const LandingPage = () => {
 						</p>
 						<div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
 							<Link
+								id="hero-cta"
 								href="/dashboard"
 								onClick={() => track("landing_cta_clicked", { location: "hero" })}
 								className="btn-primary w-full sm:w-auto !px-6 !py-3.5 !text-base"
 							>
-								Start splitting bills now
+								Split a bill now — free
 								<ArrowRight className="h-4 w-4" />
 							</Link>
 							<a href="#tools" className="btn-secondary w-full sm:w-auto !px-6 !py-3.5 !text-base">
-								Browse quick calculators
+								Try a quick calculator
 							</a>
 						</div>
 						<ul className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-ink-muted lg:justify-start">
-							{["Free forever", "No sign-up", "Works on any device"].map((t) => (
+							{["Free forever", "No sign-up", "Takes ~30 seconds"].map((t) => (
 								<li key={t} className="inline-flex items-center gap-1.5">
 									<Check className="h-4 w-4 text-positive" />
 									{t}
@@ -421,8 +406,8 @@ export const LandingPage = () => {
 						<ul className="mt-5 space-y-2.5 text-brand-100">
 							{[
 								"All calculations run locally in your browser",
-								"No servers, no databases, no tracking",
-								"Refresh the page and everything resets",
+								"Your expenses are never sent to our servers",
+								"Share links are encrypted — only people with the link can read them",
 							].map((item) => (
 								<li key={item} className="flex items-start gap-2.5">
 									<Check className="mt-1 h-4 w-4 shrink-0 text-brand-300" />
@@ -502,7 +487,7 @@ export const LandingPage = () => {
 							</a>
 							<Link
 								href="/feature-requests"
-								className="mt-3 block text-sm font-medium text-brand-700 hover:underline"
+								className="mt-1 block py-2 text-sm font-medium text-brand-700 hover:underline"
 							>
 								Missing something? Request a feature
 							</Link>
@@ -514,7 +499,7 @@ export const LandingPage = () => {
 									<li key={slug}>
 										<Link
 											href={`/${slug}`}
-											className="text-sm text-ink-soft hover:text-brand-700 hover:underline"
+											className="block py-1.5 text-sm text-ink-soft hover:text-brand-700 hover:underline"
 										>
 											{TOOL_PAGES[slug].title}
 										</Link>
@@ -531,7 +516,7 @@ export const LandingPage = () => {
 								href="https://www.wohnmohr.com"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="font-medium text-ink-soft underline hover:text-brand-700"
+								className="inline-block py-1.5 font-medium text-ink-soft underline hover:text-brand-700"
 							>
 								wohnmohr
 							</a>
@@ -539,6 +524,7 @@ export const LandingPage = () => {
 					</div>
 				</div>
 			</footer>
+			<StickyCta targetId="hero-cta" />
 		</main>
 	);
 };

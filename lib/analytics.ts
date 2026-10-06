@@ -1,4 +1,5 @@
 import posthog from "posthog-js";
+import { noteFeedbackMoment } from "@/lib/feedbackNudge";
 
 /** High-level product events only — never send names, amounts, or expense details. */
 export type AnalyticsEvent =
@@ -20,6 +21,8 @@ export type AnalyticsEvent =
 	| "upi_pay_link_clicked"
 	| "settlement_marked_paid"
 	| "settlement_remind_clicked"
+	| "feedback_nudge_shown"
+	| "feedback_nudge_dismissed"
 	| "feedback_opened"
 	| "feedback_submitted"
 	| "feature_request_submitted";
@@ -38,6 +41,7 @@ export function track(event: AnalyticsEvent, properties?: EventProps): void {
 	if (typeof window === "undefined") return;
 	recentActions.push(event);
 	if (recentActions.length > 15) recentActions.shift();
+	noteFeedbackMoment(event);
 	if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) return;
 	try {
 		posthog.capture(event, properties);

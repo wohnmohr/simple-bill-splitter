@@ -118,7 +118,7 @@ export const UnequalCalculator = () => {
 				<div className="space-y-2">
 					<label className={labelClass}>Each person’s share</label>
 					{rows.map((row, i) => (
-						<div key={i} className="flex gap-2">
+						<div key={i} className="flex items-center gap-2">
 							<input
 								className={fieldClass}
 								value={row.name}
@@ -126,7 +126,7 @@ export const UnequalCalculator = () => {
 								placeholder="Name"
 							/>
 							<input
-								className={`${fieldClass} w-28 shrink-0`}
+								className={`${fieldClass} !w-24 shrink-0`}
 								inputMode="decimal"
 								value={row.share}
 								onChange={(e) => updateRow(i, { share: e.target.value })}
@@ -136,7 +136,7 @@ export const UnequalCalculator = () => {
 								<button
 									type="button"
 									onClick={() => setRows((r) => r.filter((_, j) => j !== i))}
-									className="px-2 text-gray-400 hover:text-red-600 text-sm"
+									className="icon-btn hover:!text-red-600"
 									aria-label="Remove"
 								>
 									✕
