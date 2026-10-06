@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Lock, ChevronDown } from "lucide-react";
 import { ToolPageConfig, TOOL_PAGES } from "@/content/tools";
 import { ToolCalculator } from "@/components/Tools/ToolCalculator";
+import { TrackedLink } from "@/components/UI/TrackedLink";
 
 export function ToolJsonLd({ config }: { config: ToolPageConfig }) {
 	const site = process.env.NEXT_PUBLIC_SITE_URL || "https://splitbiller.com";
@@ -63,9 +64,13 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 							SplitBiller
 						</span>
 					</Link>
-					<Link href="/dashboard" className="btn-primary !py-2">
+					<TrackedLink
+						href="/dashboard"
+						location="tool_page_nav"
+						className="btn-primary !py-2"
+					>
 						Open app
-					</Link>
+					</TrackedLink>
 				</div>
 			</header>
 
@@ -154,10 +159,14 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 						Track multiple expenses, unequal splits, and ongoing groups in the
 						full SplitBiller app — still no signup.
 					</p>
-					<Link href="/dashboard" className="btn-primary !px-6 !py-3 !text-base">
+					<TrackedLink
+						href="/dashboard"
+						location="tool_page_footer"
+						className="btn-primary !px-6 !py-3 !text-base"
+					>
 						{config.ctaLabel}
 						<ArrowRight className="h-4 w-4" />
-					</Link>
+					</TrackedLink>
 				</div>
 			</section>
 
@@ -171,7 +180,7 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 							<li key={slug}>
 								<Link
 									href={`/${slug}`}
-									className="inline-block rounded-lg border border-line bg-white px-3 py-1.5 text-sm font-medium text-ink-soft hover:text-brand-700 hover:border-line-strong"
+									className="inline-block rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-medium text-ink-soft hover:text-brand-700 hover:border-line-strong"
 								>
 									{TOOL_PAGES[slug].title}
 								</Link>
@@ -182,7 +191,7 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 			</section>
 
 			<footer className="px-4 py-8 text-center text-xs text-gray-500">
-				<Link href="/" className="text-indigo-600 hover:underline">
+				<Link href="/" className="inline-block py-2 text-indigo-600 hover:underline">
 					SplitBiller
 				</Link>
 				{" · "}

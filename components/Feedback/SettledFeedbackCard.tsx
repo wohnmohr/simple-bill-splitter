@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { FeedbackForm } from "@/components/Feedback/FeedbackForm";
 import { FeedbackContext } from "@/lib/feedbackContext";
+import { recordFeedbackOutcome } from "@/lib/feedbackNudge";
 
 const storageKey = (groupId: string) => `splitbiller-feedback-${groupId}`;
 
@@ -29,6 +30,8 @@ export const SettledFeedbackCard = ({
 	}, [groupId]);
 
 	const remember = (reason: "dismissed" | "answered") => {
+		// One shared cooldown, so the floating nudge doesn't ask again right after.
+		recordFeedbackOutcome(reason);
 		try {
 			localStorage.setItem(storageKey(groupId), reason);
 		} catch {
@@ -44,7 +47,7 @@ export const SettledFeedbackCard = ({
 	if (hidden) return null;
 
 	return (
-		<section className="surface relative p-4 sm:p-5" aria-label="Feedback">
+		<section className="surface relative p-4 sm:p-5" aria-label="Feedback" data-feedback-inline>
 			<button
 				type="button"
 				onClick={() => hide("dismissed")}
