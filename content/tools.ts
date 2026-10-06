@@ -7,7 +7,11 @@ export type ToolSlug =
 	| "roommate-expense-splitter"
 	| "split-bill-without-signup"
 	| "splitwise-alternative"
-	| "upi-bill-splitter";
+	| "upi-bill-splitter"
+	| "upi-charges-above-2000"
+	| "upi-mdr-calculator"
+	| "split-electricity-bill"
+	| "split-swiggy-zomato-bill";
 
 export type CalculatorKind =
 	| "restaurant"
@@ -18,7 +22,9 @@ export type CalculatorKind =
 	| "roommate"
 	| "simple"
 	| "upi"
-	| "splitwise";
+	| "splitwise"
+	| "upi-fee-customer"
+	| "upi-fee-merchant";
 
 export type ToolFaq = { q: string; a: string };
 
@@ -84,6 +90,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			"split-bill-with-tip",
 			"split-bill-with-tax",
 			"upi-bill-splitter",
+			"split-swiggy-zomato-bill",
 		],
 		ctaLabel: "Open full SplitBiller",
 	},
@@ -309,6 +316,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			"split-bill-unequally",
 			"splitwise-alternative",
 			"split-bill-without-signup",
+			"split-electricity-bill",
 		],
 		ctaLabel: "Manage monthly splits in SplitBiller",
 	},
@@ -448,8 +456,209 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			"restaurant-bill-splitter",
 			"split-bill-without-signup",
 			"roommate-expense-splitter",
+			"upi-charges-above-2000",
 		],
 		ctaLabel: "Open SplitBiller (₹)",
+	},
+	"upi-charges-above-2000": {
+		slug: "upi-charges-above-2000",
+		calculator: "upi-fee-customer",
+		title: "UPI Charges Above ₹2,000",
+		metaTitle: "UPI Charges Above ₹2,000 — Do You Pay? (15 Oct 2026 MDR Explained)",
+		metaDescription:
+			"From 15 Oct 2026 a 0.4% MDR applies to some merchant UPI payments above ₹2,000 — charged to the merchant, not you. Check what you pay, and split bills with friends free.",
+		headline: "Do you pay UPI charges above ₹2,000?",
+		subhead:
+			"Short answer: no. The new fee is charged to merchants — you still pay only the listed price.",
+		intro: [
+			"From 15 October 2026, NPCI’s merchant discount rate (MDR) framework applies a 0.4% fee, capped at ₹300, to certain person-to-merchant (P2M) UPI payments above ₹2,000. The fee sits on the merchant’s side, so as a customer you still pay only the price shown.",
+			"Paying friends is unaffected. Person-to-person (P2P) UPI transfers stay free at any amount — including splitting a dinner or trip bill by sending your share to whoever paid. Use the checker below to see who bears what, then split your next bill free.",
+		],
+		howTo: [
+			{
+				title: "Pick who you’re paying",
+				body: "A friend or family member (P2P) or a shop or business (P2M). The fee only ever applies to the second case.",
+			},
+			{
+				title: "Enter the amount",
+				body: "Payments up to ₹2,000 are free either way. Above that, see roughly what the merchant’s side may pay.",
+			},
+			{
+				title: "Split the bill the free way",
+				body: "For group bills, one person pays the merchant and everyone else sends them their share by UPI — a free P2P transfer.",
+			},
+		],
+		faqs: [
+			{
+				q: "Will I be charged extra for UPI payments above ₹2,000?",
+				a: "No. The MDR is a merchant-side fee. You should pay only the listed price, and UPI remains free for consumers.",
+			},
+			{
+				q: "Does it apply when I send money to a friend?",
+				a: "No. Person-to-person UPI transfers are free at any amount, so settling a split bill with friends costs nothing.",
+			},
+			{
+				q: "Which merchants pay, and how much?",
+				a: "As reported: 0.4% of the payment (capped at ₹300) for most merchants; a flat ₹5 for railways, telecom, insurance, fuel, utilities and agri inputs; and 0.02% (capped at ₹300) for capital-markets payments. Merchants receiving up to ₹1 lakh a month over UPI pay nothing.",
+			},
+			{
+				q: "What about payments up to ₹2,000?",
+				a: "They stay free for both the customer and the merchant.",
+			},
+			{
+				q: "Is this the same as the 2023 wallet fee?",
+				a: "No. In April 2023 NPCI introduced a 1.1% interchange fee on UPI payments above ₹2,000 made through prepaid wallets (PPIs). That was also paid on the merchant side, not by customers. The October 2026 MDR framework is separate.",
+			},
+			{
+				q: "When does it start, and could it change?",
+				a: "15 October 2026. Rules like this can be revised, so confirm the latest on npci.org.in or with your bank. This page is for general information, not financial advice.",
+			},
+		],
+		related: ["upi-mdr-calculator", "upi-bill-splitter", "restaurant-bill-splitter"],
+		ctaLabel: "Split a bill & settle via UPI",
+	},
+	"upi-mdr-calculator": {
+		slug: "upi-mdr-calculator",
+		calculator: "upi-fee-merchant",
+		title: "UPI MDR Calculator",
+		metaTitle: "UPI MDR Calculator — Fee on Payments Above ₹2,000 (0.4%, ₹300 cap)",
+		metaDescription:
+			"Calculate the UPI MDR on a merchant payment above ₹2,000: 0.4% capped at ₹300, flat ₹5 for essential sectors, ₹1 lakh/month exemption. Free, instant, no signup.",
+		headline: "UPI MDR calculator for merchants",
+		subhead:
+			"See the fee on a UPI payment above ₹2,000, what you receive, and your monthly cost.",
+		intro: [
+			"NPCI’s MDR framework, effective 15 October 2026, charges merchants a fee on certain UPI payments above ₹2,000. For most merchants it is 0.4% of the payment, capped at ₹300 — the cap is reached at a ₹75,000 payment.",
+			"Enter an amount, choose your merchant type, and see the fee per payment, the effective rate, what lands in your account, and what it adds up to over a month. Small merchants receiving up to ₹1 lakh a month over UPI are exempt.",
+		],
+		howTo: [
+			{
+				title: "Enter the payment amount",
+				body: "Fees apply only above ₹2,000. At or below that, the result is ₹0.",
+			},
+			{
+				title: "Choose your merchant type",
+				body: "Most merchants pay 0.4% (max ₹300). Railways, telecom, insurance, fuel, utilities and agri inputs pay a flat ₹5. Capital-markets payments pay 0.02% (max ₹300).",
+			},
+			{
+				title: "Check the monthly impact",
+				body: "Enter how many payments like this you get per month to see the total cost.",
+			},
+		],
+		faqs: [
+			{
+				q: "How is the UPI MDR calculated?",
+				a: "For most merchants: payment × 0.4%, up to a maximum of ₹300. For example ₹5,000 → ₹20; ₹50,000 → ₹200; ₹75,000 or more → ₹300.",
+			},
+			{
+				q: "Who is exempt?",
+				a: "As reported, merchants receiving up to ₹1 lakh a month over UPI pay no MDR, and so do payments up to ₹2,000 and all person-to-person transfers. UPI AutoPay mandates are also reported as exempt.",
+			},
+			{
+				q: "Can I pass the MDR on to customers?",
+				a: "Reports on the framework say it is not meant to be passed on to customers as an extra charge. Check your payment provider’s terms and price the cost in instead.",
+			},
+			{
+				q: "Does the result include GST?",
+				a: "No. It shows the MDR only. Any GST on the fee and any payment-provider charges are separate — check with your bank or provider.",
+			},
+			{
+				q: "Is this official?",
+				a: "It is an independent calculator based on the publicly reported NPCI framework. Rules can be revised, so confirm with NPCI or your payment provider before relying on it.",
+			},
+		],
+		related: ["upi-charges-above-2000", "upi-bill-splitter", "split-bill-with-tax"],
+		ctaLabel: "Try the free bill splitter",
+	},
+	"split-electricity-bill": {
+		slug: "split-electricity-bill",
+		calculator: "unequal",
+		title: "Split Electricity Bill",
+		metaTitle: "Split Electricity Bill Between Roommates — Fair by Usage or Equal",
+		metaDescription:
+			"Split an electricity bill fairly between roommates or flatmates — equally, by room, or by AC and meter usage. Instant ₹ shares and a UPI-ready settlement link.",
+		headline: "Split the electricity bill fairly",
+		subhead:
+			"Equal, by usage, or by room — enter each person’s share and see who owes whom.",
+		intro: [
+			"An equal split is simplest, but it feels unfair when one room runs an AC all night. A common fair method: split the fixed charges equally and the energy charges by usage (sub-meter units or AC hours).",
+			"Use the calculator to enter each person’s share as an amount or a percentage, mark who paid the bill, and get the exact amounts to send. Settle by UPI and share one link so everyone sees the same numbers.",
+		],
+		howTo: [
+			{
+				title: "Enter the bill total",
+				body: "Use the amount on the electricity bill, or the amount you’re splitting after any common-area share.",
+			},
+			{
+				title: "Assign each person’s share",
+				body: "By amount (from sub-meter readings) or by percentage (for example, by AC hours or room size).",
+			},
+			{
+				title: "Settle up",
+				body: "Mark who paid the bill, then everyone sends their share. Share the link so nobody has to recalculate.",
+			},
+		],
+		faqs: [
+			{
+				q: "What is the fairest way to split electricity between roommates?",
+				a: "Split fixed charges equally and energy charges by usage — sub-meter units if you have them, otherwise AC or heater hours. If usage is similar, an equal split is fine.",
+			},
+			{
+				q: "How do I split a bill when one person uses the AC more?",
+				a: "Use the percentage mode: give the heavier user a larger percentage, for example 40/30/30, and the calculator works out the amounts.",
+			},
+			{
+				q: "How do I split it every month?",
+				a: "Reuse the same percentages each month. For rent, groceries and the bill together, use the roommate expense splitter.",
+			},
+		],
+		related: ["roommate-expense-splitter", "split-bill-unequally", "upi-bill-splitter"],
+		ctaLabel: "Track monthly bills in SplitBiller",
+	},
+	"split-swiggy-zomato-bill": {
+		slug: "split-swiggy-zomato-bill",
+		calculator: "restaurant",
+		title: "Split Swiggy / Zomato Bill",
+		metaTitle: "Split a Swiggy or Zomato Group Order — Delivery Fee, GST & Discounts",
+		metaDescription:
+			"Split a Swiggy or Zomato group order fairly including delivery fee, platform fee and GST. Instant per-person ₹ amounts and a UPI-ready settlement link.",
+		headline: "Split a Swiggy or Zomato order fairly",
+		subhead:
+			"Add the final amount you paid, count the people, and get each person’s share in seconds.",
+		intro: [
+			"Group food orders get messy: item prices, delivery fee, platform fee, GST and discounts all land on one person’s card. The simplest fair method is to split the final amount you actually paid — everything included.",
+			"Enter that amount, add any extra fixed charge, choose how many people ordered, and share the result. If orders differ a lot, use the unequal splitter so each person pays for their own items. SplitBiller isn’t affiliated with Swiggy or Zomato.",
+		],
+		howTo: [
+			{
+				title: "Enter what you paid",
+				body: "Use the final total from the order summary, after discounts, taxes and fees.",
+			},
+			{
+				title: "Add anything extra",
+				body: "A tip for the delivery partner can be added as a fixed amount or a percentage.",
+			},
+			{
+				title: "Share and settle",
+				body: "Send the link in your group chat and everyone pays you their share by UPI.",
+			},
+		],
+		faqs: [
+			{
+				q: "How do I split delivery fee and GST?",
+				a: "If everyone ordered similar amounts, split the final total equally. If not, split items by person and share fees and GST in proportion, or use the unequal splitter.",
+			},
+			{
+				q: "What about a coupon or discount?",
+				a: "Use the final amount after the discount, so everyone benefits from it equally.",
+			},
+			{
+				q: "How do friends pay me back?",
+				a: "Share the settlement link and have them send their share by UPI. Person-to-person UPI transfers are free.",
+			},
+		],
+		related: ["restaurant-bill-splitter", "split-bill-unequally", "upi-bill-splitter"],
+		ctaLabel: "Open full SplitBiller",
 	},
 };
 
