@@ -53,3 +53,56 @@ export function upiMdr(
 	const fee = (amount * (rule.rate ?? 0)) / 100;
 	return { fee: round2(rule.cap ? Math.min(fee, rule.cap) : fee), reason: "charged" };
 }
+
+/* ---------- Splitting a large amount into payments ---------- */
+
+/** Most a single payment can be before MDR applies. */
+export const MAX_FREE_PAYMENT = MDR_FREE_LIMIT;
+
+export type PaymentGroup = { count: number; amount: number };
+
+export type SplitPlan = {
+	payments: number;
+	/** Compact description, e.g. [{count: 499, amount: 2000}, {count: 1, amount: 1500}]. */
+	groups: PaymentGroup[];
+	fee: number;
+};
+
+/** Fewest payments that keep every payment within the MDR-free limit. */
+export const minFreePayments = (total: number) =>
+	total > 0 ? Math.ceil(total / MAX_FREE_PAYMENT) : 0;
+
+/**
+ * Cheapest way to take `total` in `payments` payments: fill payments with the
+ * free maximum and put whatever is left in one payment. Once `payments` is
+ * enough for every payment to be within the free limit, spread the total evenly
+ * instead so no payment is a lopsided remainder.
+ *
+ * Groups, not rows: ₹10 lakh is 500 payments but only two groups.
+ */
+export function planPayments(
+	total: number,
+	payments: number,
+	type: MerchantType,
+	smallMerchant: boolean
+): SplitPlan {
+	const whole = Math.round(total);
+	const k = Math.max(1, Math.min(Math.floor(payments), Math.max(whole, 1)));
+	const groups: PaymentGroup[] = [];
+
+	if (k >= minFreePayments(whole)) {
+		const base = Math.floor(whole / k);
+		const extra = whole - base * k; // `extra` payments carry one more rupee
+		if (extra) groups.push({ count: extra, amount: base + 1 });
+		if (k - extra) groups.push({ count: k - extra, amount: base });
+	} else {
+		groups.push({ count: k - 1, amount: MAX_FREE_PAYMENT });
+		groups.push({ count: 1, amount: whole - MAX_FREE_PAYMENT * (k - 1) });
+	}
+
+	const clean = groups.filter((g) => g.count > 0);
+	const fee = round2(
+		clean.reduce((sum, g) => sum + g.count * upiMdr(g.amount, type, smallMerchant).fee, 0)
+	);
+	return { payments: k, groups: clean, fee };
+}

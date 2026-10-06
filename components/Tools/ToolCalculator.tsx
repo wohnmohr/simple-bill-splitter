@@ -7,6 +7,7 @@ import { UnequalCalculator } from "@/components/Tools/calculators/UnequalCalcula
 import { MultiExpenseCalculator } from "@/components/Tools/calculators/MultiExpenseCalculator";
 import { SimpleSplitCalculator } from "@/components/Tools/calculators/SimpleSplitCalculator";
 import { UpiCalculator } from "@/components/Tools/calculators/UpiCalculator";
+import { UpiPaymentPlanner } from "@/components/Tools/calculators/UpiPaymentPlanner";
 import { UpiFeeCalculator } from "@/components/Tools/calculators/UpiFeeCalculator";
 
 export const ToolCalculator = ({ kind }: { kind: CalculatorKind }) => {
@@ -33,6 +34,8 @@ export const ToolCalculator = ({ kind }: { kind: CalculatorKind }) => {
 			return <UpiFeeCalculator audience="customer" />;
 		case "upi-fee-merchant":
 			return <UpiFeeCalculator audience="merchant" />;
+		case "upi-split-planner":
+			return <UpiPaymentPlanner />;
 		default:
 			return <RestaurantCalculator />;
 	}

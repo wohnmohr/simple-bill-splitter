@@ -254,6 +254,15 @@ const MerchantCalculator = () => {
 						</div>
 					))}
 				</dl>
+				{fee > 0 && (
+					<Link
+						href="/upi-payment-split-planner"
+						className="flex items-center justify-between gap-2 rounded-xl bg-paper px-3 py-2.5 text-sm font-medium text-brand-700 hover:underline"
+					>
+						Plan this as payments of ₹2,000 or less
+						<ArrowRight className="h-4 w-4 shrink-0" />
+					</Link>
+				)}
 			</div>
 		</div>
 	);

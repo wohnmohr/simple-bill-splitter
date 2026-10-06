@@ -10,6 +10,7 @@ export type ToolSlug =
 	| "upi-bill-splitter"
 	| "upi-charges-above-2000"
 	| "upi-mdr-calculator"
+	| "upi-payment-split-planner"
 	| "split-electricity-bill"
 	| "split-swiggy-zomato-bill";
 
@@ -24,7 +25,8 @@ export type CalculatorKind =
 	| "upi"
 	| "splitwise"
 	| "upi-fee-customer"
-	| "upi-fee-merchant";
+	| "upi-fee-merchant"
+	| "upi-split-planner";
 
 export type ToolFaq = { q: string; a: string };
 
@@ -514,7 +516,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 				a: "15 October 2026. Rules like this can be revised, so confirm the latest on npci.org.in or with your bank. This page is for general information, not financial advice.",
 			},
 		],
-		related: ["upi-mdr-calculator", "upi-bill-splitter", "restaurant-bill-splitter"],
+		related: ["upi-mdr-calculator", "upi-payment-split-planner", "upi-bill-splitter"],
 		ctaLabel: "Split a bill & settle via UPI",
 	},
 	"upi-mdr-calculator": {
@@ -567,7 +569,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 				a: "It is an independent calculator based on the publicly reported NPCI framework. Rules can be revised, so confirm with NPCI or your payment provider before relying on it.",
 			},
 		],
-		related: ["upi-charges-above-2000", "upi-bill-splitter", "split-bill-with-tax"],
+		related: ["upi-payment-split-planner", "upi-charges-above-2000", "upi-bill-splitter"],
 		ctaLabel: "Try the free bill splitter",
 	},
 	"split-electricity-bill": {
@@ -659,6 +661,59 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		],
 		related: ["restaurant-bill-splitter", "split-bill-unequally", "upi-bill-splitter"],
 		ctaLabel: "Open full SplitBiller",
+	},
+	"upi-payment-split-planner": {
+		slug: "upi-payment-split-planner",
+		calculator: "upi-split-planner",
+		title: "UPI Payment Split Planner",
+		metaTitle: "UPI Payment Split Planner — Keep Payments Under ₹2,000 & Save MDR",
+		metaDescription:
+			"Plan a large UPI amount as payments of ₹2,000 or less to avoid the 0.4% MDR. See the fee saved, whether it’s worth it, daily limits, and track payments received.",
+		headline: "Plan a large UPI payment in ₹2,000 chunks",
+		subhead:
+			"Enter the amount you need to collect. See the fewest payments that keep each at ₹2,000 or less — and whether splitting is actually worth it.",
+		intro: [
+			"The MDR framework effective 15 October 2026 charges merchants 0.4% on UPI payments above ₹2,000, capped at ₹300. Payments of ₹2,000 or less carry no MDR, so some merchants ask: how many ₹2,000 payments make up ₹10 lakh?",
+			"This planner answers that — 500 — without listing 500 rows. It shows the plan as a few groups, compares the fee against a single payment, and tells you honestly when it isn’t worth it: because the fee is capped at ₹300, splitting ₹10 lakh into 500 payments saves at most ₹300. Use the slider to find your own trade-off, then track what you’ve received.",
+		],
+		howTo: [
+			{
+				title: "Enter the amount and merchant type",
+				body: "Pick a quick amount or type your own, up to ₹1 crore. Choose your merchant type so the right fee rule is used.",
+			},
+			{
+				title: "Choose the number of payments",
+				body: "Drag the slider or type a number. The chart shows where splitting starts to save money; the fee only drops once the remaining single payment is small.",
+			},
+			{
+				title: "Collect and track",
+				body: "Copy the plan or download a CSV, then tap +1 / +10 as payments arrive. Progress is saved on your device.",
+			},
+		],
+		faqs: [
+			{
+				q: "How many ₹2,000 payments make ₹10 lakh?",
+				a: "500. For any amount, divide by ₹2,000 and round up — the planner does this and spreads the amount evenly if it doesn’t divide exactly.",
+			},
+			{
+				q: "Is splitting a payment worth it?",
+				a: "Usually only for mid-sized amounts. At 0.4%, a ₹10,000 payment costs ₹40, so five ₹2,000 payments save ₹40. But a ₹10 lakh payment costs just ₹300 because of the cap, so 500 payments save ₹300 — about ₹0.60 each.",
+			},
+			{
+				q: "Will my bank or payment provider allow it?",
+				a: "This tool can’t confirm that. Providers may limit or flag repeated payments from one payer, and customers have daily UPI limits (often around ₹1 lakh). Check with your provider before asking customers to pay in many parts.",
+			},
+			{
+				q: "What are the alternatives for large amounts?",
+				a: "Bank transfers (NEFT, RTGS or IMPS), cards or payment links may suit big payments better than hundreds of UPI payments. Check the charges with your bank.",
+			},
+			{
+				q: "Who is exempt from MDR altogether?",
+				a: "As reported, merchants receiving up to ₹1 lakh a month over UPI, all person-to-person transfers, and payments up to ₹2,000.",
+			},
+		],
+		related: ["upi-mdr-calculator", "upi-charges-above-2000", "upi-bill-splitter"],
+		ctaLabel: "Try the free bill splitter",
 	},
 };
 
