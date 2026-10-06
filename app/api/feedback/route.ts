@@ -11,7 +11,7 @@ import {
 
 export const runtime = "nodejs";
 
-const TRIGGERS = new Set(["group_settled", "manual", "share_viewed"]);
+const TRIGGERS = new Set(["group_settled", "manual", "share_viewed", "moment"]);
 
 export async function POST(req: Request) {
 	let body: Record<string, unknown>;

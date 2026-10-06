@@ -3,6 +3,7 @@ import { Outfit, Fraunces } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { MantineProvider } from "@/components/providers/MantineProvider";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { FeedbackNudge } from "@/components/Feedback/FeedbackNudge";
 import "@mantine/core/styles.css";
 import "./globals.css";
 
@@ -86,6 +87,7 @@ export default function RootLayout({
 				<PostHogProvider>
 					<MantineProvider>
 						{children}
+						<FeedbackNudge />
 						<Analytics />
 					</MantineProvider>
 				</PostHogProvider>

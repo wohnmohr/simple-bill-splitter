@@ -7,7 +7,7 @@ import { track } from "@/lib/analytics";
 import { FeedbackContext, describeContext } from "@/lib/feedbackContext";
 
 interface FeedbackFormProps {
-	trigger: "group_settled" | "manual" | "share_viewed";
+	trigger: "group_settled" | "manual" | "share_viewed" | "moment";
 	/** Collected lazily at submit time so it reflects the latest state. */
 	getContext: () => FeedbackContext;
 	question?: string;
