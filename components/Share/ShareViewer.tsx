@@ -19,6 +19,7 @@ import { formatCurrency } from "@/utils/formatting";
 import { BalanceList } from "@/components/Balances/BalanceList";
 import { SettlementList } from "@/components/Settlements/SettlementList";
 import { Button } from "@/components/UI/Button";
+import { TrackedLink } from "@/components/UI/TrackedLink";
 import { track } from "@/lib/analytics";
 
 type LoadState =
@@ -254,14 +255,29 @@ export const ShareViewer = () => {
 				</div>
 			</section>
 
-			<div className="text-center pb-8">
-				<Link
-					href="/"
-					className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+			<section className="surface space-y-3 p-5 text-center sm:p-6" aria-label="Start your own split">
+				<h2 className="font-display text-xl font-semibold text-ink">
+					Got a bill of your own to split?
+				</h2>
+				<p className="mx-auto max-w-sm text-sm text-ink-muted">
+					SplitBiller is free — no signup, no app. Add everyone, see who owes whom,
+					and pay by UPI.
+				</p>
+				<TrackedLink
+					href="/dashboard"
+					location="share_viewer"
+					className="btn-secondary w-full sm:w-auto !px-6 !py-3"
 				>
-					What is SplitBiller?
-				</Link>
-			</div>
+					Split your own bill free
+					<ArrowRight className="h-4 w-4" />
+				</TrackedLink>
+				<p>
+					<Link href="/" className="text-sm font-medium text-brand-700 hover:underline">
+						What is SplitBiller?
+					</Link>
+				</p>
+			</section>
+			<div className="pb-6" />
 		</div>
 	);
 };

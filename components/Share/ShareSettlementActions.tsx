@@ -59,6 +59,8 @@ export const ShareSettlementActions = ({
 			"",
 			"View the full split (encrypted in your browser, nothing stored on our servers):",
 			url,
+			"",
+			`Split your own bills free, no signup: ${window.location.origin}`,
 		].join("\n");
 	};
 

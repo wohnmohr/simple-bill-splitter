@@ -2,7 +2,8 @@
 export function buildUpiLink(opts: {
 	pa: string;
 	pn: string;
-	am: number;
+	/** Omit to let the payer type the amount. */
+	am?: number;
 	tn?: string;
 }): string | null {
 	const pa = opts.pa.trim();
@@ -11,9 +12,9 @@ export function buildUpiLink(opts: {
 	const params = new URLSearchParams({
 		pa,
 		pn: opts.pn.trim() || "SplitBiller",
-		am: opts.am.toFixed(2),
 		cu: "INR",
 	});
+	if (opts.am !== undefined && opts.am > 0) params.set("am", opts.am.toFixed(2));
 	if (opts.tn) {
 		params.set("tn", opts.tn.slice(0, 50));
 	}
