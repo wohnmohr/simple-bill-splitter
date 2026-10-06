@@ -170,8 +170,12 @@ export async function encodeShareUrl(
  */
 export async function decodeShareUrl(urlOrHash: string): Promise<ShareSnapshot> {
 	const hashIndex = urlOrHash.indexOf("#");
-	const fragment =
+	let fragment =
 		hashIndex >= 0 ? urlOrHash.slice(hashIndex + 1) : urlOrHash.replace(/^#/, "");
+	// Links are often pasted twice or glued to another URL; the payload is
+	// base64url, which never contains "#" or "://", so cut at the first one.
+	const cut = fragment.search(/https?:\/\/|#/);
+	if (cut >= 0) fragment = fragment.slice(0, cut);
 
 	const parts = fragment.split(".");
 	if (parts.length !== 3 || parts[0] !== SHARE_PREFIX) {

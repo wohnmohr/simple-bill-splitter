@@ -4,7 +4,6 @@ import { useEffect, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { PostHogProvider as PHProvider, PostHogErrorBoundary } from "@posthog/react";
-import { trackError } from "@/lib/analytics";
 
 function PostHogPageView() {
 	const pathname = usePathname();
@@ -58,6 +57,16 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 				maskTextSelector: "[data-ph-mask], input, textarea",
 				recordCrossOriginIframes: false,
 			},
+			// Browsers mask errors from cross-origin scripts (extensions, in-app
+			// browsers, ad blockers) as "Script error." with no stack — nothing
+			// to act on, and it floods the exception feed.
+			before_send: (event) => {
+				if (event?.event !== "$exception") return event;
+				const props = event.properties ?? {};
+				const message: unknown =
+					props.$exception_list?.[0]?.value ?? props.$exception_message;
+				return message === "Script error." ? null : event;
+			},
 			loaded: (client) => {
 				client.startExceptionAutocapture?.();
 				client.startSessionRecording?.();
@@ -66,26 +75,6 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 				}
 			},
 		});
-
-		const onError = (event: ErrorEvent) => {
-			trackError(event.error || event.message, {
-				source: "window.onerror",
-				filename: event.filename,
-				lineno: event.lineno,
-			});
-		};
-
-		const onRejection = (event: PromiseRejectionEvent) => {
-			trackError(event.reason, { source: "unhandledrejection" });
-		};
-
-		window.addEventListener("error", onError);
-		window.addEventListener("unhandledrejection", onRejection);
-
-		return () => {
-			window.removeEventListener("error", onError);
-			window.removeEventListener("unhandledrejection", onRejection);
-		};
 	}, []);
 
 	return (

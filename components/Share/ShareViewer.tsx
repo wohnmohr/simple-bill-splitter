@@ -19,7 +19,7 @@ import { formatCurrency } from "@/utils/formatting";
 import { BalanceList } from "@/components/Balances/BalanceList";
 import { SettlementList } from "@/components/Settlements/SettlementList";
 import { Button } from "@/components/UI/Button";
-import { track, trackError } from "@/lib/analytics";
+import { track } from "@/lib/analytics";
 
 type LoadState =
 	| { status: "loading" }
@@ -53,10 +53,9 @@ export const ShareViewer = () => {
 						currency: snapshot.currency.code,
 					});
 				}
-			} catch (err) {
+			} catch {
 				if (!cancelled) {
 					track("share_link_decode_failed");
-					trackError(err, { source: "share_decode" });
 					setState({
 						status: "error",
 						message:
