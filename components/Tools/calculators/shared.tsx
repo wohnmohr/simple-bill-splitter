@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Currency, Expense, Person } from "@/types";
 import { CURRENCIES } from "@/constants";
 import { calculateSettlements } from "@/utils/calculations";
@@ -187,4 +187,29 @@ export function CurrencySelect({
 export function useDefaultCurrency(code = "INR"): [Currency, (c: Currency) => void] {
 	const initial = CURRENCIES.find((c) => c.code === code) || CURRENCIES[0];
 	return useState<Currency>(initial);
+}
+
+/** Copy text to the clipboard and flash a "copied" state. */
+export function useCopy(): [boolean, (text: string) => Promise<void>] {
+	const [copied, setCopied] = useState(false);
+	const copy = useCallback(async (text: string) => {
+		try {
+			await navigator.clipboard.writeText(text);
+			setCopied(true);
+			setTimeout(() => setCopied(false), 2000);
+		} catch {
+			/* clipboard unavailable */
+		}
+	}, []);
+	return [copied, copy];
+}
+
+/** Reports that a tool produced a result, once per page view. */
+export function useTrackResult(tool: string, ready: boolean) {
+	const sent = useRef(false);
+	useEffect(() => {
+		if (!ready || sent.current) return;
+		sent.current = true;
+		track("calculator_result_viewed", { tool });
+	}, [ready, tool]);
 }

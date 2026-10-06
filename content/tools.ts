@@ -11,6 +11,10 @@ export type ToolSlug =
 	| "upi-charges-above-2000"
 	| "upi-mdr-calculator"
 	| "upi-payment-split-planner"
+	| "upi-qr-code-generator"
+	| "road-trip-cost-splitter"
+	| "group-contribution-collector"
+	| "secret-santa-generator"
 	| "split-electricity-bill"
 	| "split-swiggy-zomato-bill";
 
@@ -26,7 +30,11 @@ export type CalculatorKind =
 	| "splitwise"
 	| "upi-fee-customer"
 	| "upi-fee-merchant"
-	| "upi-split-planner";
+	| "upi-split-planner"
+	| "upi-qr"
+	| "road-trip"
+	| "contribution"
+	| "secret-santa";
 
 export type ToolFaq = { q: string; a: string };
 
@@ -43,6 +51,10 @@ export type ToolPageConfig = {
 	faqs: ToolFaq[];
 	related: ToolSlug[];
 	ctaLabel: string;
+	/** Replaces the default "share links encrypt…" line under the headline. */
+	privacyNote?: string;
+	/** Replaces the default "Need more than a quick calc?" block. */
+	cta?: { heading: string; body: string };
 };
 
 export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
@@ -93,6 +105,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			"split-bill-with-tax",
 			"upi-bill-splitter",
 			"split-swiggy-zomato-bill",
+			"group-contribution-collector",
 		],
 		ctaLabel: "Open full SplitBiller",
 	},
@@ -138,6 +151,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			"roommate-expense-splitter",
 			"split-bill-unequally",
 			"splitwise-alternative",
+			"road-trip-cost-splitter",
 		],
 		ctaLabel: "Track the whole trip in SplitBiller",
 	},
@@ -459,6 +473,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			"split-bill-without-signup",
 			"roommate-expense-splitter",
 			"upi-charges-above-2000",
+			"upi-qr-code-generator",
 		],
 		ctaLabel: "Open SplitBiller (₹)",
 	},
@@ -718,6 +733,229 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		],
 		related: ["upi-mdr-calculator", "upi-charges-above-2000", "upi-bill-splitter"],
 		ctaLabel: "Try the free bill splitter",
+	},
+	"upi-qr-code-generator": {
+		slug: "upi-qr-code-generator",
+		calculator: "upi-qr",
+		title: "UPI QR Code Generator",
+		metaTitle: "UPI QR Code Generator — Free QR & Payment Link with Amount",
+		metaDescription:
+			"Create a UPI QR code and payment link from your UPI ID, with an optional amount and note. Download the PNG and scan with any UPI app. Free, no signup, nothing uploaded.",
+		headline: "Make a UPI QR code in seconds",
+		subhead:
+			"Enter your UPI ID, add an amount and note if you like, and get a QR and pay link anyone can use.",
+		privacyNote: "Generated in your browser — your UPI ID is never uploaded.",
+		intro: [
+			"A UPI QR code is a upi://pay link drawn as a picture. Any UPI app — GPay, PhonePe, Paytm, BHIM — can scan it and fill in who to pay, plus the amount and note if you set them.",
+			"Leave the amount blank to let the payer type it, or fix it for a bill, a rent share or a collection. Download the PNG to print or send in a chat, or copy the link for your own messages.",
+		],
+		howTo: [
+			{
+				title: "Enter your UPI ID",
+				body: "It looks like name@bank — for example priya@okaxis or 9876543210@ybl. Add the name you want payers to see.",
+			},
+			{
+				title: "Add an amount and note (optional)",
+				body: "Fix the amount for a specific bill, or leave it open. A note like “Rent for October” helps both sides.",
+			},
+			{
+				title: "Download or share",
+				body: "Save the QR as a PNG, or copy the pay link. Payers scan it with any UPI app.",
+			},
+		],
+		faqs: [
+			{
+				q: "Is this a merchant QR?",
+				a: "No. It is a standard UPI payment link for the UPI ID you enter. Businesses that accept customer payments should use the QR from their bank or payment provider; which fee rules apply depends on the type of the receiving account.",
+			},
+			{
+				q: "Is my UPI ID stored or uploaded?",
+				a: "No. The QR is generated in your browser and nothing is sent to our servers.",
+			},
+			{
+				q: "Can I set a fixed amount?",
+				a: "Yes. Apps differ in whether the payer can edit a preset amount, so don’t rely on it as a lock.",
+			},
+			{
+				q: "Does it work with every UPI app?",
+				a: "Any app that scans UPI QR codes should read it. If a payer’s app can’t, they can type your UPI ID instead.",
+			},
+			{
+				q: "What if I change my UPI ID?",
+				a: "Generate a new QR. The old one points at the old ID.",
+			},
+		],
+		related: ["group-contribution-collector", "upi-bill-splitter", "upi-mdr-calculator"],
+		ctaLabel: "Split a bill & pay via UPI",
+	},
+	"road-trip-cost-splitter": {
+		slug: "road-trip-cost-splitter",
+		calculator: "road-trip",
+		title: "Road Trip Cost Splitter",
+		metaTitle: "Road Trip Cost Calculator — Split Fuel, Tolls & Parking Per Person",
+		metaDescription:
+			"Work out the fuel, toll and parking cost of a road trip or daily carpool and split it per person. Enter distance, mileage and fuel price. Free, no signup.",
+		headline: "Split the cost of a road trip",
+		subhead:
+			"Distance, mileage, fuel price and tolls — get the cost per person and who owes the driver.",
+		intro: [
+			"Fuel cost is distance ÷ mileage × fuel price. Add tolls, parking and, if you like, a per-km allowance for wear and tear, then divide by the people sharing the car.",
+			"Switch to Daily carpool to see the cost per day and per month for an office commute. Share the result so everyone sees the same numbers.",
+		],
+		howTo: [
+			{
+				title: "Enter the route and the car",
+				body: "Distance in km, whether it’s a round trip, and your real-world mileage (km per litre, or per kg for CNG).",
+			},
+			{
+				title: "Add the extras",
+				body: "Fuel price near you, tolls, parking, and an optional wear-and-tear rate per km.",
+			},
+			{
+				title: "Split and share",
+				body: "Name everyone (driver first) and see who owes the driver. Share the link in your group chat.",
+			},
+		],
+		faqs: [
+			{
+				q: "How is the fuel cost calculated?",
+				a: "Total distance ÷ mileage gives litres (or kg) used; multiply by the fuel price. A round trip counts the distance twice.",
+			},
+			{
+				q: "Should the driver pay a share?",
+				a: "Most groups split the car’s cost equally among everyone in it, including the driver. Turn the option off if riders cover the whole cost.",
+			},
+			{
+				q: "What mileage should I use?",
+				a: "Your real-world figure, not the brochure number — highway, AC and load all change it. Check the trip meter if your car shows it.",
+			},
+			{
+				q: "What about wear and tear?",
+				a: "It’s optional. If your group wants to cover tyres, servicing and depreciation, add a per-km rate; otherwise leave it at 0.",
+			},
+			{
+				q: "Does it work for CNG or EVs?",
+				a: "For CNG enter mileage in km per kg and the price per kg. For an EV, use km per unit and the price per unit of electricity.",
+			},
+		],
+		related: ["trip-expense-splitter", "split-bill-unequally", "upi-bill-splitter"],
+		ctaLabel: "Track the whole trip in SplitBiller",
+	},
+	"group-contribution-collector": {
+		slug: "group-contribution-collector",
+		calculator: "contribution",
+		title: "Group Contribution Collector",
+		metaTitle: "Group Contribution Collector — Collect Equal Amounts for Gifts, Chanda & Events",
+		metaDescription:
+			"Collect equal contributions for a gift, festival or event: the per-person amount, a UPI QR, a WhatsApp message and a tick-list of who has paid. Free, no signup.",
+		headline: "Collect contributions without the chasing",
+		subhead:
+			"Set the target and the people, share one UPI QR, and tick off who has paid.",
+		privacyNote: "Nothing is uploaded — payments go straight to your UPI ID.",
+		cta: {
+			heading: "Splitting real expenses, not just collecting?",
+			body: "Track who paid what and settle up with the fewest payments in the full SplitBiller app — still no signup.",
+		},
+		intro: [
+			"Farewell gift, Ganesh puja chanda, society event, team lunch — someone always ends up collecting the money and keeping score. This tool works out an equal share, rounded up so you don’t fall short, makes a UPI QR for that amount, and keeps a tick-list.",
+			"Copy the ready-made message for your group chat, then use the reminder to nudge only the people who haven’t paid. The list stays on your device.",
+		],
+		howTo: [
+			{
+				title: "Set the target and the people",
+				body: "Enter the amount you need and list who’s contributing, one name per line.",
+			},
+			{
+				title: "Share the amount and QR",
+				body: "Each person’s share is rounded up to the nearest ₹1, ₹10, ₹50 or ₹100. Add your UPI ID to get a QR for that exact amount.",
+			},
+			{
+				title: "Tick off payments",
+				body: "Mark each person as they pay. The progress bar and the pending list update, and you can copy a reminder.",
+			},
+		],
+		faqs: [
+			{
+				q: "How is each person’s share calculated?",
+				a: "Target ÷ number of people, rounded up to the step you choose. Rounding up means you never fall short; any surplus is shown.",
+			},
+			{
+				q: "Does the money pass through SplitBiller?",
+				a: "No. People pay directly to your UPI ID. This tool only does the maths and keeps the tick-list.",
+			},
+			{
+				q: "Is it safe to share my UPI ID?",
+				a: "A UPI ID is meant to be shared so people can pay you, like a phone number. Share it with the group rather than posting it publicly.",
+			},
+			{
+				q: "What if some people pay more or less?",
+				a: "The list assumes equal shares. For unequal amounts, use the unequal bill splitter.",
+			},
+			{
+				q: "Will my ticks be saved?",
+				a: "Yes, on this device, for the same group, amount and target. Change any of them and the list starts fresh.",
+			},
+		],
+		related: ["upi-qr-code-generator", "upi-bill-splitter", "split-bill-unequally"],
+		ctaLabel: "Open full SplitBiller",
+	},
+	"secret-santa-generator": {
+		slug: "secret-santa-generator",
+		calculator: "secret-santa",
+		title: "Secret Santa Generator",
+		metaTitle: "Secret Santa Generator — Free Draw with Private Links, No Signup",
+		metaDescription:
+			"Draw Secret Santa for your group in seconds. Everyone gets a private link showing only their match. Set a budget and exclude couples. No signup, no emails.",
+		headline: "Draw Secret Santa without the hat",
+		subhead:
+			"Add names, set a budget, and send each person their own private link.",
+		privacyNote: "The draw runs in your browser — we never see the names.",
+		cta: {
+			heading: "Planning the party too?",
+			body: "Split the venue, food and gift costs with the free SplitBiller bill splitter — no signup.",
+		},
+		intro: [
+			"Add everyone, set a budget and an optional exchange date, and mark pairs who shouldn’t draw each other — couples, siblings, flatmates. Nobody draws themselves, and every name is drawn exactly once.",
+			"Each person gets a private link that shows only who they’re buying for. The matches are never displayed to you, so the organiser can play too. Send the links on WhatsApp and you’re done.",
+		],
+		howTo: [
+			{
+				title: "Add the players",
+				body: "One name per line. Set the budget and date so everyone knows the rules.",
+			},
+			{
+				title: "Add exclusions",
+				body: "Pick pairs who shouldn’t get each other. The draw respects them in both directions.",
+			},
+			{
+				title: "Draw and send links",
+				body: "Tap Draw, then send each person their own link by WhatsApp or copy it. They tap to reveal their match.",
+			},
+		],
+		faqs: [
+			{
+				q: "How private is it?",
+				a: "Each link contains that person’s match, so anyone who opens it can see it — send each link only to its owner. We don’t store the draw or the names.",
+			},
+			{
+				q: "Can I play if I run the draw?",
+				a: "Yes. Matches are never shown on screen, so just don’t open anyone else’s link.",
+			},
+			{
+				q: "Can couples be kept from drawing each other?",
+				a: "Yes — add them as an exclusion pair. If the exclusions make a draw impossible, the tool tells you.",
+			},
+			{
+				q: "Do players need an account?",
+				a: "No. They open the link and tap Reveal. Nothing to install or sign up for.",
+			},
+			{
+				q: "What if I draw again?",
+				a: "You get a new set of links, and the old ones no longer match the new draw. Tell everyone to use the new ones.",
+			},
+		],
+		related: ["group-contribution-collector", "restaurant-bill-splitter", "split-bill-unequally"],
+		ctaLabel: "Split the party costs",
 	},
 };
 

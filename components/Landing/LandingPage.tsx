@@ -24,6 +24,10 @@ import {
 	Lightbulb,
 	Bike,
 	Split,
+	QrCode,
+	Car,
+	HandCoins,
+	Gift,
 } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { StickyCta } from "@/components/Landing/StickyCta";
@@ -42,6 +46,10 @@ const TOOL_ICONS: Record<ToolSlug, typeof Receipt> = {
 	"upi-charges-above-2000": ShieldCheck,
 	"upi-mdr-calculator": Calculator,
 	"upi-payment-split-planner": Split,
+	"upi-qr-code-generator": QrCode,
+	"road-trip-cost-splitter": Car,
+	"group-contribution-collector": HandCoins,
+	"secret-santa-generator": Gift,
 	"split-electricity-bill": Lightbulb,
 	"split-swiggy-zomato-bill": Bike,
 };
@@ -60,6 +68,10 @@ const TOOL_BLURBS: Record<ToolSlug, string> = {
 	"upi-charges-above-2000": "New 0.4% UPI fee above ₹2,000 — who actually pays?",
 	"upi-mdr-calculator": "Merchant fee on UPI payments above ₹2,000, instantly.",
 	"upi-payment-split-planner": "Split up to ₹20,000 into ₹2,000 payments — see if it pays off.",
+	"upi-qr-code-generator": "A UPI QR and pay link with your amount — free.",
+	"road-trip-cost-splitter": "Fuel, tolls and parking, split per person.",
+	"group-contribution-collector": "Collect equal shares for gifts and festivals.",
+	"secret-santa-generator": "Private draw links — nobody sees who got whom.",
 	"split-electricity-bill": "Fair shares by usage, AC hours or room.",
 	"split-swiggy-zomato-bill": "Delivery fee, GST and discounts, split fairly.",
 };

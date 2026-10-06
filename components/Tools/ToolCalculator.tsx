@@ -7,6 +7,10 @@ import { UnequalCalculator } from "@/components/Tools/calculators/UnequalCalcula
 import { MultiExpenseCalculator } from "@/components/Tools/calculators/MultiExpenseCalculator";
 import { SimpleSplitCalculator } from "@/components/Tools/calculators/SimpleSplitCalculator";
 import { UpiCalculator } from "@/components/Tools/calculators/UpiCalculator";
+import { UpiQrGenerator } from "@/components/Tools/calculators/UpiQrGenerator";
+import { RoadTripCalculator } from "@/components/Tools/calculators/RoadTripCalculator";
+import { ContributionCollector } from "@/components/Tools/calculators/ContributionCollector";
+import { SecretSantaGenerator } from "@/components/Tools/calculators/SecretSantaGenerator";
 import { UpiPaymentPlanner } from "@/components/Tools/calculators/UpiPaymentPlanner";
 import { UpiFeeCalculator } from "@/components/Tools/calculators/UpiFeeCalculator";
 
@@ -36,6 +40,14 @@ export const ToolCalculator = ({ kind }: { kind: CalculatorKind }) => {
 			return <UpiFeeCalculator audience="merchant" />;
 		case "upi-split-planner":
 			return <UpiPaymentPlanner />;
+		case "upi-qr":
+			return <UpiQrGenerator />;
+		case "road-trip":
+			return <RoadTripCalculator />;
+		case "contribution":
+			return <ContributionCollector />;
+		case "secret-santa":
+			return <SecretSantaGenerator />;
 		default:
 			return <RestaurantCalculator />;
 	}
