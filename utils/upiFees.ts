@@ -58,6 +58,11 @@ export function upiMdr(
 
 /** Most a single payment can be before MDR applies. */
 export const MAX_FREE_PAYMENT = MDR_FREE_LIMIT;
+/**
+ * Largest amount the planner will split (10 payments of ₹2,000). Beyond this a
+ * split is not something a sane person does — and the fee is capped at ₹300.
+ */
+export const MAX_SPLIT_TOTAL = 20_000;
 
 export type PaymentGroup = { count: number; amount: number };
 

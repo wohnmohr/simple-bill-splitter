@@ -668,40 +668,44 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		title: "UPI Payment Split Planner",
 		metaTitle: "UPI Payment Split Planner — Keep Payments Under ₹2,000 & Save MDR",
 		metaDescription:
-			"Plan a large UPI amount as payments of ₹2,000 or less to avoid the 0.4% MDR. See the fee saved, whether it’s worth it, daily limits, and track payments received.",
-		headline: "Plan a large UPI payment in ₹2,000 chunks",
+			"Split up to ₹20,000 into UPI payments of ₹2,000 or less to avoid the 0.4% MDR. See the fee saved, whether it’s worth it, and tick off payments as they arrive.",
+		headline: "Split a UPI payment into ₹2,000 chunks",
 		subhead:
-			"Enter the amount you need to collect. See the fewest payments that keep each at ₹2,000 or less — and whether splitting is actually worth it.",
+			"Enter an amount up to ₹20,000. See the fewest payments that keep each at ₹2,000 or less — and whether splitting is actually worth it.",
 		intro: [
-			"The MDR framework effective 15 October 2026 charges merchants 0.4% on UPI payments above ₹2,000, capped at ₹300. Payments of ₹2,000 or less carry no MDR, so some merchants ask: how many ₹2,000 payments make up ₹10 lakh?",
-			"This planner answers that — 500 — without listing 500 rows. It shows the plan as a few groups, compares the fee against a single payment, and tells you honestly when it isn’t worth it: because the fee is capped at ₹300, splitting ₹10 lakh into 500 payments saves at most ₹300. Use the slider to find your own trade-off, then track what you’ve received.",
+			"The MDR framework effective 15 October 2026 charges merchants 0.4% on UPI payments above ₹2,000, capped at ₹300. Payments of ₹2,000 or less carry no MDR, so some merchants ask how many ₹2,000 payments make up an amount — ₹10,000 is five.",
+			"This planner works that out for amounts up to ₹20,000 (ten payments), compares the fee against a single payment, and tells you honestly when it isn’t worth it. Beyond ₹20,000 it won’t generate a plan: the fee is capped at ₹300, so splitting ₹10 lakh into 500 payments would save at most ₹300 — about ₹0.60 each.",
 		],
 		howTo: [
 			{
 				title: "Enter the amount and merchant type",
-				body: "Pick a quick amount or type your own, up to ₹1 crore. Choose your merchant type so the right fee rule is used.",
+				body: "Pick a quick amount or type your own, up to ₹20,000. Choose your merchant type so the right fee rule is used.",
 			},
 			{
 				title: "Choose the number of payments",
-				body: "Drag the slider or type a number. The chart shows where splitting starts to save money; the fee only drops once the remaining single payment is small.",
+				body: "Use + and − to try different splits. The fewest payments that avoid the fee is shown by default.",
 			},
 			{
-				title: "Collect and track",
-				body: "Copy the plan or download a CSV, then tap +1 / +10 as payments arrive. Progress is saved on your device.",
+				title: "Collect and tick off",
+				body: "Copy the plan, then tick each payment as it arrives. Progress is saved on your device.",
 			},
 		],
 		faqs: [
 			{
-				q: "How many ₹2,000 payments make ₹10 lakh?",
-				a: "500. For any amount, divide by ₹2,000 and round up — the planner does this and spreads the amount evenly if it doesn’t divide exactly.",
+				q: "How many ₹2,000 payments make ₹10,000?",
+				a: "Five. For any amount, divide by ₹2,000 and round up — the planner does this and spreads the amount evenly if it doesn’t divide exactly.",
+			},
+			{
+				q: "Why does the planner stop at ₹20,000?",
+				a: "Because beyond that, nobody sensibly splits. The MDR is capped at ₹300 per payment, so ₹10 lakh costs ₹300 as one payment but would take 500 payments to avoid. For big amounts, take one UPI payment or use a bank transfer.",
 			},
 			{
 				q: "Is splitting a payment worth it?",
-				a: "Usually only for mid-sized amounts. At 0.4%, a ₹10,000 payment costs ₹40, so five ₹2,000 payments save ₹40. But a ₹10 lakh payment costs just ₹300 because of the cap, so 500 payments save ₹300 — about ₹0.60 each.",
+				a: "Usually only for smaller amounts. At 0.4%, a ₹10,000 payment costs ₹40, so five ₹2,000 payments save ₹40 — ₹10 for each extra payment. A ₹10 lakh payment costs just ₹300 because of the cap, so 500 payments would save ₹300 — about ₹0.60 each.",
 			},
 			{
 				q: "Will my bank or payment provider allow it?",
-				a: "This tool can’t confirm that. Providers may limit or flag repeated payments from one payer, and customers have daily UPI limits (often around ₹1 lakh). Check with your provider before asking customers to pay in many parts.",
+				a: "This tool can’t confirm that. Providers may limit or flag repeated payments from one payer, and customers have daily UPI limits. Check with your provider before asking customers to pay in several parts.",
 			},
 			{
 				q: "What are the alternatives for large amounts?",

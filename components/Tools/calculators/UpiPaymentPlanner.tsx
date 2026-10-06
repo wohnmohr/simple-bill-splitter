@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Copy, Download, Info } from "lucide-react";
+import { Check, Copy, Info, Minus, Plus } from "lucide-react";
 import { CURRENCIES } from "@/constants";
 import { formatCurrency } from "@/utils/formatting";
 import {
 	MAX_FREE_PAYMENT,
+	MAX_SPLIT_TOTAL,
 	MDR_RULES,
 	MerchantType,
-	PaymentGroup,
 	SMALL_MERCHANT_MONTHLY_LIMIT,
 	minFreePayments,
 	planPayments,
@@ -20,93 +20,34 @@ import { track } from "@/lib/analytics";
 const INR = CURRENCIES.find((c) => c.code === "INR")!;
 const inr = (n: number) => formatCurrency(n, INR);
 const num = (n: number) => n.toLocaleString("en-IN");
-
-/** Keeps the page, the slider and the CSV bounded. */
-const MAX_TOTAL = 10_000_000; // ₹1 crore
-const PRESETS = [10_000, 50_000, 100_000, 500_000, 1_000_000] as const;
-const PREVIEW_ROWS = 5;
-const EXPANDED_ROWS = 50;
+const PRESETS = [5_000, 10_000, 20_000, 100_000] as const;
 const STORAGE_KEY = "splitbiller-upi-plan";
 
 /** Saved per extra payment, in ₹, below which splitting is not worth the effort. */
 const WORTH_IT = 5;
 const MARGINAL = 1;
 
-const inWords = (n: number) => {
-	if (n >= 10_000_000) return `${+(n / 10_000_000).toFixed(2)} crore`;
-	if (n >= 100_000) return `${+(n / 100_000).toFixed(2)} lakh`;
-	if (n >= 1_000) return `${+(n / 1_000).toFixed(1)} thousand`;
-	return "";
-};
+const TONE = {
+	good: "bg-positive-soft text-positive",
+	mid: "bg-brand-50 text-brand-800",
+	bad: "bg-negative-soft text-negative",
+} as const;
 
-/** First `limit` payments of a plan, without ever building all of them. */
-const expandGroups = (groups: PaymentGroup[], limit: number): number[] => {
-	const rows: number[] = [];
-	for (const g of groups) {
-		for (let i = 0; i < g.count && rows.length < limit; i++) rows.push(g.amount);
-		if (rows.length >= limit) break;
-	}
-	return rows;
-};
-
-const describeGroups = (groups: PaymentGroup[]) =>
-	groups.map((g) => `${num(g.count)} × ${inr(g.amount)}`).join("  +  ");
-
-/** Fee as the number of payments grows — shows at a glance where splitting starts to pay. */
-const FeeChart = ({
-	points,
-	current,
-	max,
-	feeMax,
-}: {
-	points: { k: number; fee: number }[];
-	current: number;
-	max: number;
-	feeMax: number;
-}) => {
-	const W = 300;
-	const H = 72;
-	const x = (k: number) => (max <= 1 ? 0 : ((k - 1) / (max - 1)) * W);
-	const y = (fee: number) => 6 + (feeMax ? (1 - fee / feeMax) * (H - 12) : H - 12);
-	return (
-		<svg
-			viewBox={`0 0 ${W} ${H}`}
-			className="h-20 w-full"
-			role="img"
-			aria-label={`Fee falls from ${inr(feeMax)} with one payment to ${inr(0)} with ${num(max)} payments`}
-		>
-			<line x1="0" x2={W} y1={H - 6} y2={H - 6} className="stroke-line-strong" strokeWidth="1" />
-			<polyline
-				fill="none"
-				className="stroke-brand-700"
-				strokeWidth="2"
-				strokeLinejoin="round"
-				points={points.map((p) => `${x(p.k)},${y(p.fee)}`).join(" ")}
-			/>
-			<line x1={x(current)} x2={x(current)} y1="0" y2={H} className="stroke-ink" strokeWidth="1" strokeDasharray="3 3" />
-			<circle
-				cx={x(current)}
-				cy={y(points.reduce((best, p) => (Math.abs(p.k - current) < Math.abs(best.k - current) ? p : best)).fee)}
-				r="4"
-				className="fill-ink"
-			/>
-		</svg>
-	);
-};
+/** Payment amounts, one per payment, in plan order. Bounded by MAX_SPLIT_TOTAL / ₹2,000. */
+const expand = (groups: { count: number; amount: number }[]) =>
+	groups.flatMap((g) => Array<number>(g.count).fill(g.amount));
 
 /**
- * Plans taking a large UPI amount in payments of ₹2,000 or less. The plan is
- * always shown as a handful of groups — never one row per payment — so ₹10 lakh
- * stays as readable as ₹10,000.
+ * Plans taking an amount in payments of ₹2,000 or less. Only amounts up to
+ * ₹20,000 (at most 10 payments) get a plan; anything larger is explained, not
+ * generated — the MDR is capped at ₹300, so hundreds of payments never pay off.
  */
 export const UpiPaymentPlanner = () => {
-	const [totalStr, setTotalStr] = useState("1000000");
+	const [totalStr, setTotalStr] = useState("10000");
 	const [type, setType] = useState<MerchantType>("standard");
 	const [small, setSmall] = useState(false);
-	const [dailyLimit, setDailyLimit] = useState("100000");
 	const [pick, setPick] = useState<number | null>(null);
-	const [received, setReceived] = useState(0);
-	const [showRows, setShowRows] = useState(false);
+	const [done, setDone] = useState<number[]>([]);
 	const [copied, setCopied] = useState(false);
 	const engagedRef = useRef(false);
 
@@ -116,81 +57,51 @@ export const UpiPaymentPlanner = () => {
 		track("tool_calculator_engaged", { tool: "upi-payment-split-planner" });
 	};
 
-	const total = Math.min(MAX_TOTAL, Math.max(0, Math.round(parseFloat(totalStr) || 0)));
+	const total = Math.max(0, Math.round(parseFloat(totalStr) || 0));
+	const tooLarge = total > MAX_SPLIT_TOTAL;
 	const kmin = minFreePayments(total);
 	const k = Math.min(Math.max(pick ?? kmin, 1), Math.max(kmin, 1));
 
 	const single = useMemo(() => planPayments(total, 1, type, small), [total, type, small]);
 	const plan = useMemo(() => planPayments(total, k, type, small), [total, k, type, small]);
+	const payments = useMemo(() => expand(plan.groups), [plan.groups]);
 	const saved = Math.round((single.fee - plan.fee) * 100) / 100;
 
-	const chartPoints = useMemo(() => {
-		if (kmin <= 1) return [];
-		const steps = Math.min(60, kmin);
-		return Array.from({ length: steps }, (_, i) => {
-			const kk = 1 + Math.round((i * (kmin - 1)) / Math.max(steps - 1, 1));
-			return { k: kk, fee: planPayments(total, kk, type, small).fee };
-		});
-	}, [total, kmin, type, small]);
-
-	useEffect(() => setShowRows(false), [total, k, type, small]);
-
-	// Resume where the merchant left off if this is the same plan.
+	// Tick-off progress survives a refresh, but only for the same plan.
 	const signature = `${total}:${k}:${type}`;
 	useEffect(() => {
 		try {
 			const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-			setReceived(stored?.sig === signature ? Math.min(stored.received, k) : 0);
+			setDone(stored?.sig === signature ? stored.done : []);
 		} catch {
-			setReceived(0);
+			setDone([]);
 		}
-	}, [signature, k]);
+	}, [signature]);
 
-	const updateReceived = (next: number) => {
-		const value = Math.max(0, Math.min(k, next));
-		setReceived(value);
+	const toggle = (i: number) => {
+		const next = done.includes(i) ? done.filter((d) => d !== i) : [...done, i];
+		setDone(next);
 		try {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify({ sig: signature, received: value }));
+			localStorage.setItem(STORAGE_KEY, JSON.stringify({ sig: signature, done: next }));
 		} catch {
 			/* works without storage; progress just isn't remembered */
 		}
 	};
 
-	const receivedAmount = useMemo(() => {
-		let left = received;
-		let sum = 0;
-		for (const g of plan.groups) {
-			const take = Math.min(left, g.count);
-			sum += take * g.amount;
-			left -= take;
-		}
-		return sum;
-	}, [plan.groups, received]);
-
-	const limit = Math.max(MAX_FREE_PAYMENT, parseFloat(dailyLimit) || 0);
-	const days = total > 0 ? Math.ceil(total / limit) : 0;
-	const largest = plan.groups.reduce((m, g) => Math.max(m, g.amount), 0);
-	const perDay = largest > 0 ? Math.floor(limit / largest) : 0;
-
+	const doneAmount = done.reduce((sum, i) => sum + (payments[i] ?? 0), 0);
 	const perExtra = kmin > 1 ? single.fee / (kmin - 1) : 0;
 	const verdict =
-		single.fee === 0
-			? null
-			: perExtra >= WORTH_IT
+		perExtra >= WORTH_IT
 			? { tone: "good", label: "Worth considering" }
 			: perExtra >= MARGINAL
 			? { tone: "mid", label: "Marginal" }
 			: { tone: "bad", label: "Probably not worth it" };
 
-	const rows = expandGroups(plan.groups, showRows ? EXPANDED_ROWS : PREVIEW_ROWS);
 	const planText = [
-		`UPI plan for ${inr(total)}`,
-		`${num(plan.payments)} payments: ${describeGroups(plan.groups)}`,
+		`UPI plan for ${inr(total)} — ${plan.payments} payment${plan.payments === 1 ? "" : "s"}:`,
+		...payments.map((a, i) => `${i + 1}. ${inr(a)}`),
 		`MDR: ${inr(plan.fee)} (one payment: ${inr(single.fee)})`,
-		days > 1 ? `About ${days} days at ${inr(limit)}/day` : "",
-	]
-		.filter(Boolean)
-		.join("\n");
+	].join("\n");
 
 	const copyPlan = async () => {
 		try {
@@ -202,22 +113,9 @@ export const UpiPaymentPlanner = () => {
 		}
 	};
 
-	const downloadCsv = () => {
-		const lines = ["payment,amount"];
-		let n = 1;
-		for (const g of plan.groups) for (let i = 0; i < g.count; i++) lines.push(`${n++},${g.amount}`);
-		const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
-		const a = document.createElement("a");
-		a.href = url;
-		a.download = `upi-plan-${total}.csv`;
-		a.click();
-		URL.revokeObjectURL(url);
-	};
-
-	const tone = {
-		good: "bg-positive-soft text-positive",
-		mid: "bg-brand-50 text-brand-800",
-		bad: "bg-negative-soft text-negative",
+	const step = (delta: number) => {
+		engaged();
+		setPick(Math.min(Math.max(k + delta, 1), kmin));
 	};
 
 	return (
@@ -239,10 +137,6 @@ export const UpiPaymentPlanner = () => {
 							setPick(null);
 						}}
 					/>
-					<p className="mt-1 h-4 text-xs text-ink-muted">
-						{total > 0 ? `${inr(total)}${inWords(total) ? ` · ${inWords(total)}` : ""}` : ""}
-						{parseFloat(totalStr) > MAX_TOTAL && ` · capped at ${inr(MAX_TOTAL)}`}
-					</p>
 					<div className="mt-2 flex flex-wrap gap-1.5">
 						{PRESETS.map((p) => (
 							<button
@@ -259,6 +153,10 @@ export const UpiPaymentPlanner = () => {
 							</button>
 						))}
 					</div>
+					<p className="mt-2 text-xs text-ink-muted">
+						Plans up to {inr(MAX_SPLIT_TOTAL)} ({MAX_SPLIT_TOTAL / MAX_FREE_PAYMENT} payments).
+						Beyond that, splitting stops making sense — you’ll see why.
+					</p>
 				</div>
 
 				<div>
@@ -296,28 +194,12 @@ export const UpiPaymentPlanner = () => {
 					My UPI receipts are {inr(SMALL_MERCHANT_MONTHLY_LIMIT)} a month or less
 				</label>
 
-				<div>
-					<label className={labelClass} htmlFor="plan-daily">
-						Payer’s daily UPI limit (₹)
-					</label>
-					<input
-						id="plan-daily"
-						className={fieldClass}
-						inputMode="numeric"
-						value={dailyLimit}
-						onChange={(e) => setDailyLimit(e.target.value.replace(/[^\d]/g, ""))}
-					/>
-					<p className="mt-1 text-xs text-ink-muted">
-						Banks cap how much one person can send per day — often around ₹1 lakh.
-					</p>
-				</div>
-
 				<p className="flex items-start gap-2 text-xs text-ink-muted">
 					<Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
 					<span>
 						Based on the publicly reported NPCI MDR framework (from 15 Oct 2026). Your bank
-						or payment provider may flag repeated payments from one payer — confirm what is
-						allowed before relying on a split.
+						or payment provider may flag repeated payments from one payer, and payers have
+						daily UPI limits — confirm what is allowed before relying on a split.
 					</span>
 				</p>
 			</div>
@@ -327,6 +209,36 @@ export const UpiPaymentPlanner = () => {
 				{total <= 0 ? (
 					<div className="surface p-6 text-center text-sm text-ink-muted">
 						Enter an amount to plan the payments.
+					</div>
+				) : tooLarge ? (
+					<div className="surface shadow-raised space-y-3 p-5">
+						<p className="label-text">Over the planner’s limit</p>
+						<p className="font-display text-2xl font-semibold text-ink">
+							{num(kmin)} payments is too many to plan
+						</p>
+						<p className="text-sm text-ink-soft">
+							The planner covers up to {inr(MAX_SPLIT_TOTAL)} ({MAX_SPLIT_TOTAL / MAX_FREE_PAYMENT}{" "}
+							payments). Keeping {inr(total)} within {inr(MAX_FREE_PAYMENT)} each would take{" "}
+							<span className="font-semibold text-ink">{num(kmin)} payments</span> to save at
+							most {inr(single.fee)} — about{" "}
+							{inr(Math.round((single.fee / Math.max(kmin - 1, 1)) * 100) / 100)} each. As one
+							payment it costs {inr(single.fee)} ({((single.fee / total) * 100).toFixed(2)}% of
+							the amount){single.fee >= MDR_RULES.standard.cap! && type === "standard" ? ", because the MDR is capped" : ""}.
+						</p>
+						<p className="text-sm text-ink-soft">
+							For an amount this size, consider one UPI payment, or a bank transfer (NEFT,
+							RTGS or IMPS), card or payment link — check the charges with your bank.
+						</p>
+						<button
+							type="button"
+							onClick={() => {
+								setTotalStr(String(MAX_SPLIT_TOTAL));
+								setPick(null);
+							}}
+							className="btn-secondary w-full sm:w-auto"
+						>
+							Plan {inr(MAX_SPLIT_TOTAL)} instead
+						</button>
 					</div>
 				) : single.fee === 0 ? (
 					<div className="surface shadow-raised space-y-2 p-5">
@@ -343,22 +255,11 @@ export const UpiPaymentPlanner = () => {
 						<div className="surface shadow-raised space-y-4 p-4 sm:p-5">
 							<div className="flex flex-wrap items-center justify-between gap-2">
 								<p className="label-text">Your plan</p>
-								{verdict && (
-									<span
-										className={`rounded-full px-2.5 py-1 text-xs font-semibold ${tone[verdict.tone as keyof typeof tone]}`}
-									>
-										{verdict.label}
-									</span>
-								)}
-							</div>
-
-							<div>
-								<p className="font-display text-3xl font-semibold text-ink">
-									{num(plan.payments)} payment{plan.payments === 1 ? "" : "s"}
-								</p>
-								<p className="mt-1 text-sm tabular-nums text-ink-soft">
-									{describeGroups(plan.groups)}
-								</p>
+								<span
+									className={`rounded-full px-2.5 py-1 text-xs font-semibold ${TONE[verdict.tone as keyof typeof TONE]}`}
+								>
+									{verdict.label}
+								</span>
 							</div>
 
 							<dl className="grid grid-cols-3 divide-x divide-line rounded-xl border border-line text-center">
@@ -374,179 +275,80 @@ export const UpiPaymentPlanner = () => {
 								))}
 							</dl>
 
-							{kmin > 1 && (
-								<div>
-									<div className="flex items-baseline justify-between gap-2">
-										<label className="text-sm font-semibold text-ink" htmlFor="plan-slider">
-											Number of payments
-										</label>
-										<input
-											aria-label="Number of payments"
-											className="w-24 rounded-lg border border-line-strong bg-white px-2 py-1 text-right text-sm tabular-nums"
-											inputMode="numeric"
-											value={k}
-											onChange={(e) => {
-												engaged();
-												const v = parseInt(e.target.value.replace(/\D/g, ""), 10);
-												setPick(Number.isFinite(v) ? v : 1);
-											}}
-										/>
-									</div>
-									<input
-										id="plan-slider"
-										type="range"
-										min={1}
-										max={kmin}
-										value={k}
-										onChange={(e) => {
-											engaged();
-											setPick(parseInt(e.target.value, 10));
-										}}
-										className="mt-2 w-full accent-brand-700"
-									/>
-									<FeeChart points={chartPoints} current={k} max={kmin} feeMax={single.fee} />
-									<div className="mt-1 flex flex-wrap gap-1.5">
-										{[
-											["One payment", 1],
-											["Halfway", Math.max(1, Math.round(kmin / 2))],
-											[`All ≤ ${inr(MAX_FREE_PAYMENT)}`, kmin],
-										].map(([label, value]) => (
-											<button
-												key={label as string}
-												type="button"
-												onClick={() => setPick(value as number)}
-												className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${
-													k === value
-														? "border-brand-700 bg-brand-50 text-brand-800"
-														: "border-line-strong bg-white text-ink-soft hover:border-ink-muted"
-												}`}
-											>
-												{label}
-											</button>
-										))}
-									</div>
-								</div>
-							)}
-
-							<p className="rounded-xl bg-paper px-3 py-2.5 text-sm text-ink-soft">
-								{kmin > 1 && (
-									<>
-										Taking it all in {num(kmin)} payments saves {inr(single.fee)} —{" "}
-										<span className="font-semibold text-ink">
-											{inr(Math.round(perExtra * 100) / 100)} per extra payment
-										</span>
-										.{" "}
-									</>
-								)}
-								{type === "standard" &&
-									"One payment never costs more than ₹300, and splitting only starts saving once the single remaining payment is under ₹75,000."}
-							</p>
-						</div>
-
-						{/* Logistics */}
-						<div className="surface space-y-3 p-4 sm:p-5">
-							<p className="label-text">Logistics</p>
-							<p className="text-sm text-ink-soft">
-								{days > 1 ? (
-									<>
-										At {inr(limit)} a day the payer needs about{" "}
-										<span className="font-semibold text-ink">{num(days)} days</span>
-										{perDay > 0 && <> (up to {num(perDay)} payments a day)</>}.
-									</>
-								) : (
-									<>The payer can send this within one day at {inr(limit)} a day.</>
-								)}
-							</p>
-
-							<ul className="max-h-72 divide-y divide-line overflow-y-auto rounded-xl border border-line text-sm">
-								{rows.map((amount, i) => (
-									<li key={i} className="flex justify-between px-3 py-2 tabular-nums">
-										<span className="text-ink-muted">Payment {i + 1}</span>
-										<span className="font-medium text-ink">{inr(amount)}</span>
-									</li>
-								))}
-								{showRows && plan.payments > rows.length && (
-									<li className="px-3 py-2 text-center text-xs text-ink-muted">
-										Showing the first {EXPANDED_ROWS} — download the CSV for all {num(plan.payments)}.
-									</li>
-								)}
-								{plan.payments > PREVIEW_ROWS && (
-									<li className="sticky bottom-0 bg-white px-3 py-2 text-center text-ink-muted">
-										<button
-											type="button"
-											onClick={() => setShowRows((v) => !v)}
-											className="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline"
-										>
-											<ChevronDown className={`h-4 w-4 transition-transform ${showRows ? "rotate-180" : ""}`} />
-											{showRows
-												? "Show fewer"
-												: `+ ${num(plan.payments - rows.length)} more`}
-										</button>
-									</li>
-								)}
-							</ul>
-
-							<div className="grid grid-cols-2 gap-2">
-								<button type="button" onClick={copyPlan} className="btn-secondary !px-3 whitespace-nowrap">
-									{copied ? <Check className="h-4 w-4 text-positive" /> : <Copy className="h-4 w-4" />}
-									{copied ? "Copied" : "Copy plan"}
-								</button>
-								<button type="button" onClick={downloadCsv} className="btn-secondary !px-3 whitespace-nowrap">
-									<Download className="h-4 w-4" />
-									Download CSV
-								</button>
-							</div>
-						</div>
-
-						{/* Progress tracker */}
-						{plan.payments > 1 && (
-							<div className="surface space-y-3 p-4 sm:p-5">
-								<div className="flex items-baseline justify-between gap-2">
-									<p className="label-text">Track what you’ve received</p>
-									<p className="text-sm tabular-nums text-ink-soft">
-										{num(received)} / {num(plan.payments)} · {inr(receivedAmount)}
-									</p>
-								</div>
-								<div
-									className="h-2 overflow-hidden rounded-full bg-line"
-									role="progressbar"
-									aria-valuemin={0}
-									aria-valuemax={plan.payments}
-									aria-valuenow={received}
-									aria-label="Payments received"
-								>
-									<div
-										className="h-full rounded-full bg-brand-700 transition-[width]"
-										style={{ width: `${(received / plan.payments) * 100}%` }}
-									/>
-								</div>
-								<div className="flex flex-wrap gap-1.5">
-									{[
-										["+1", 1],
-										["+10", 10],
-										...(plan.payments >= 100 ? [["+50", 50]] : []),
-										["−1", -1],
-									].map(([label, step]) => (
-										<button
-											key={label as string}
-											type="button"
-											onClick={() => updateReceived(received + (step as number))}
-											className="rounded-lg border border-line-strong bg-white px-3 py-2 text-sm font-semibold text-ink-soft hover:border-ink-muted"
-										>
-											{label}
-										</button>
-									))}
+							<div className="flex items-center justify-between gap-3">
+								<span className="text-sm font-semibold text-ink" id="plan-count-label">
+									Number of payments
+								</span>
+								<div className="flex items-center gap-2" role="group" aria-labelledby="plan-count-label">
 									<button
 										type="button"
-										onClick={() => updateReceived(0)}
-										className="rounded-lg px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink"
+										onClick={() => step(-1)}
+										disabled={k <= 1}
+										aria-label="Fewer payments"
+										className="icon-btn border border-line-strong disabled:opacity-40"
 									>
-										Reset
+										<Minus className="h-4 w-4" />
+									</button>
+									<span className="w-8 text-center text-lg font-semibold tabular-nums text-ink">{k}</span>
+									<button
+										type="button"
+										onClick={() => step(1)}
+										disabled={k >= kmin}
+										aria-label="More payments"
+										className="icon-btn border border-line-strong disabled:opacity-40"
+									>
+										<Plus className="h-4 w-4" />
 									</button>
 								</div>
-								<p className="text-xs text-ink-muted">Saved on this device only.</p>
 							</div>
-						)}
+
+							<p className="rounded-xl bg-paper px-3 py-2.5 text-sm text-ink-soft">
+								{saved > 0 ? (
+									<>
+										Splitting saves {inr(saved)}.{" "}
+									</>
+								) : (
+									<>Not enough payments yet to avoid the fee. </>
+								)}
+								All {kmin} payments within {inr(MAX_FREE_PAYMENT)} would save {inr(single.fee)} —{" "}
+								<span className="font-semibold text-ink">
+									{inr(Math.round(perExtra * 100) / 100)} per extra payment
+								</span>
+								.
+							</p>
+						</div>
+
+						<div className="surface space-y-3 p-4 sm:p-5">
+							<div className="flex items-baseline justify-between gap-2">
+								<p className="label-text">Payments</p>
+								<p className="text-sm tabular-nums text-ink-soft">
+									{done.length} of {payments.length} received · {inr(doneAmount)}
+								</p>
+							</div>
+							<ul className="divide-y divide-line rounded-xl border border-line text-sm">
+								{payments.map((amount, i) => (
+									<li key={i}>
+										<label className="flex cursor-pointer items-center gap-3 px-3 py-2.5">
+											<input
+												type="checkbox"
+												checked={done.includes(i)}
+												onChange={() => toggle(i)}
+												className="h-4 w-4 rounded border-line-strong accent-brand-700"
+											/>
+											<span className={`flex-1 ${done.includes(i) ? "text-ink-muted line-through" : "text-ink-soft"}`}>
+												Payment {i + 1}
+											</span>
+											<span className="font-medium tabular-nums text-ink">{inr(amount)}</span>
+										</label>
+									</li>
+								))}
+							</ul>
+							<button type="button" onClick={copyPlan} className="btn-secondary w-full">
+								{copied ? <Check className="h-4 w-4 text-positive" /> : <Copy className="h-4 w-4" />}
+								{copied ? "Copied" : "Copy plan"}
+							</button>
+							<p className="text-xs text-ink-muted">Ticks are saved on this device only.</p>
+						</div>
 					</>
 				)}
 			</div>

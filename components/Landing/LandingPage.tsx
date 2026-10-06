@@ -59,7 +59,7 @@ const TOOL_BLURBS: Record<ToolSlug, string> = {
 	"splitwise-alternative": "Who owes whom, without forcing friends onto an app.",
 	"upi-charges-above-2000": "New 0.4% UPI fee above ₹2,000 — who actually pays?",
 	"upi-mdr-calculator": "Merchant fee on UPI payments above ₹2,000, instantly.",
-	"upi-payment-split-planner": "Plan ₹10 lakh as ₹2,000 payments — and see if it pays off.",
+	"upi-payment-split-planner": "Split up to ₹20,000 into ₹2,000 payments — see if it pays off.",
 	"split-electricity-bill": "Fair shares by usage, AC hours or room.",
 	"split-swiggy-zomato-bill": "Delivery fee, GST and discounts, split fairly.",
 };
