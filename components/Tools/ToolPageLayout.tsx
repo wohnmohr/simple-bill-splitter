@@ -23,7 +23,7 @@ export function ToolJsonLd({ config }: { config: ToolPageConfig }) {
 		"@type": "WebApplication",
 		name: `SplitBiller — ${config.title}`,
 		url: `${site}/${config.slug}`,
-		applicationCategory: "FinanceApplication",
+		applicationCategory: config.schemaCategory ?? "FinanceApplication",
 		operatingSystem: "Any",
 		offers: {
 			"@type": "Offer",
@@ -82,6 +82,11 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 					<p className="text-base sm:text-lg text-ink-soft max-w-2xl mx-auto">
 						{config.subhead}
 					</p>
+					{config.updated && (
+						<p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+							Updated {config.updated}
+						</p>
+					)}
 					<p className="inline-flex items-center gap-1.5 text-sm text-ink-muted">
 						<Lock className="h-3.5 w-3.5" />
 						{config.privacyNote ?? "Share links encrypt in your browser — we never store the split"}

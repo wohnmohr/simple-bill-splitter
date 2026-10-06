@@ -51,6 +51,10 @@ export type ToolPageConfig = {
 	faqs: ToolFaq[];
 	related: ToolSlug[];
 	ctaLabel: string;
+	/** schema.org applicationCategory for structured data; defaults to FinanceApplication. */
+	schemaCategory?: "FinanceApplication" | "UtilitiesApplication" | "TravelApplication" | "LifestyleApplication";
+	/** Shown under the headline on pages whose facts can change, e.g. "October 2026". */
+	updated?: string;
 	/** Replaces the default "share links encrypt…" line under the headline. */
 	privacyNote?: string;
 	/** Replaces the default "Need more than a quick calc?" block. */
@@ -532,6 +536,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			},
 		],
 		related: ["upi-mdr-calculator", "upi-payment-split-planner", "upi-bill-splitter"],
+		updated: "October 2026",
 		ctaLabel: "Split a bill & settle via UPI",
 	},
 	"upi-mdr-calculator": {
@@ -585,6 +590,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			},
 		],
 		related: ["upi-payment-split-planner", "upi-charges-above-2000", "upi-bill-splitter"],
+		updated: "October 2026",
 		ctaLabel: "Try the free bill splitter",
 	},
 	"split-electricity-bill": {
@@ -732,6 +738,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			},
 		],
 		related: ["upi-mdr-calculator", "upi-charges-above-2000", "upi-bill-splitter"],
+		updated: "October 2026",
 		ctaLabel: "Try the free bill splitter",
 	},
 	"upi-qr-code-generator": {
@@ -786,6 +793,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			},
 		],
 		related: ["group-contribution-collector", "upi-bill-splitter", "upi-mdr-calculator"],
+		schemaCategory: "UtilitiesApplication",
 		ctaLabel: "Split a bill & pay via UPI",
 	},
 	"road-trip-cost-splitter": {
@@ -839,6 +847,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			},
 		],
 		related: ["trip-expense-splitter", "split-bill-unequally", "upi-bill-splitter"],
+		schemaCategory: "TravelApplication",
 		ctaLabel: "Track the whole trip in SplitBiller",
 	},
 	"group-contribution-collector": {
@@ -955,6 +964,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			},
 		],
 		related: ["group-contribution-collector", "restaurant-bill-splitter", "split-bill-unequally"],
+		schemaCategory: "LifestyleApplication",
 		ctaLabel: "Split the party costs",
 	},
 };

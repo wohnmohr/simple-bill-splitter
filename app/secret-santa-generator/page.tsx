@@ -1,22 +1,9 @@
-import type { Metadata } from "next";
 import { TOOL_PAGES } from "@/content/tools";
 import { ToolPageLayout } from "@/components/Tools/ToolPageLayout";
+import { toolMetadata } from "@/lib/toolMetadata";
 
-const config = TOOL_PAGES["secret-santa-generator"];
-
-export const metadata: Metadata = {
-	title: config.metaTitle,
-	description: config.metaDescription,
-	alternates: { canonical: `/${config.slug}` },
-	openGraph: {
-		title: config.metaTitle,
-		description: config.metaDescription,
-		url: `/${config.slug}`,
-		siteName: "SplitBiller",
-		type: "website",
-	},
-};
+export const metadata = toolMetadata("secret-santa-generator");
 
 export default function Page() {
-	return <ToolPageLayout config={config} />;
+	return <ToolPageLayout config={TOOL_PAGES["secret-santa-generator"]} />;
 }
