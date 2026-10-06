@@ -19,6 +19,15 @@ import {
 	IndianRupee,
 	UserMinus,
 	ChevronDown,
+	ShieldCheck,
+	Calculator,
+	Lightbulb,
+	Bike,
+	Split,
+	QrCode,
+	Car,
+	HandCoins,
+	Gift,
 } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { StickyCta } from "@/components/Landing/StickyCta";
@@ -34,6 +43,15 @@ const TOOL_ICONS: Record<ToolSlug, typeof Receipt> = {
 	"split-bill-unequally": Scale,
 	"split-bill-without-signup": UserMinus,
 	"splitwise-alternative": ArrowRightLeft,
+	"upi-charges-above-2000": ShieldCheck,
+	"upi-mdr-calculator": Calculator,
+	"upi-payment-split-planner": Split,
+	"upi-qr-code-generator": QrCode,
+	"road-trip-cost-splitter": Car,
+	"group-contribution-collector": HandCoins,
+	"secret-santa-generator": Gift,
+	"split-electricity-bill": Lightbulb,
+	"split-swiggy-zomato-bill": Bike,
 };
 
 const TOOL_BLURBS: Record<ToolSlug, string> = {
@@ -47,6 +65,15 @@ const TOOL_BLURBS: Record<ToolSlug, string> = {
 	"split-bill-unequally": "Custom amounts or percentages when orders differ.",
 	"split-bill-without-signup": "Instant split — no account, no app download.",
 	"splitwise-alternative": "Who owes whom, without forcing friends onto an app.",
+	"upi-charges-above-2000": "New 0.4% UPI fee above ₹2,000 — who actually pays?",
+	"upi-mdr-calculator": "Merchant fee on UPI payments above ₹2,000, instantly.",
+	"upi-payment-split-planner": "Split up to ₹20,000 into ₹2,000 payments — see if it pays off.",
+	"upi-qr-code-generator": "A UPI QR and pay link with your amount — free.",
+	"road-trip-cost-splitter": "Fuel, tolls and parking, split per person.",
+	"group-contribution-collector": "Collect equal shares for gifts and festivals.",
+	"secret-santa-generator": "Private draw links — nobody sees who got whom.",
+	"split-electricity-bill": "Fair shares by usage, AC hours or room.",
+	"split-swiggy-zomato-bill": "Delivery fee, GST and discounts, split fairly.",
 };
 
 const PH_ICON =
@@ -170,6 +197,23 @@ const SettlementPreview = () => (
 export const LandingPage = () => {
 	return (
 		<main className="page-shell min-h-screen bg-paper text-ink pb-20 sm:pb-0">
+			{/* Timely, on-site announcement: answers the question people are searching right now */}
+			<Link
+				href="/upi-charges-above-2000"
+				onClick={() => track("landing_cta_clicked", { location: "upi_fee_strip" })}
+				className="block bg-brand-50 text-brand-900 transition-colors hover:bg-brand-100"
+			>
+				<span className="mx-auto flex min-h-9 max-w-6xl items-center justify-center gap-2 px-4 py-1.5 text-xs font-medium sm:text-sm">
+					<span className="rounded bg-brand-700 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+						New
+					</span>
+					<span>
+						UPI fee above ₹2,000 from 15 Oct — do <em className="not-italic font-semibold">you</em> pay?
+					</span>
+					<ArrowRight className="h-3.5 w-3.5 shrink-0" />
+				</span>
+			</Link>
+
 			{/* Site nav */}
 			<nav className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md">
 				<div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
@@ -247,12 +291,12 @@ export const LandingPage = () => {
 							settlement with friends.
 						</p>
 					</div>
-					<ul className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
+					<ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 						{ALL_TOOL_SLUGS.map((slug) => {
 							const config = TOOL_PAGES[slug];
 							const Icon = TOOL_ICONS[slug];
 							return (
-								<li key={slug} className="bg-white">
+								<li key={slug} className="overflow-hidden rounded-xl border border-line bg-white">
 									<Link
 										href={`/${slug}`}
 										onClick={() =>

@@ -23,7 +23,7 @@ export function ToolJsonLd({ config }: { config: ToolPageConfig }) {
 		"@type": "WebApplication",
 		name: `SplitBiller — ${config.title}`,
 		url: `${site}/${config.slug}`,
-		applicationCategory: "FinanceApplication",
+		applicationCategory: config.schemaCategory ?? "FinanceApplication",
 		operatingSystem: "Any",
 		offers: {
 			"@type": "Offer",
@@ -82,9 +82,14 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 					<p className="text-base sm:text-lg text-ink-soft max-w-2xl mx-auto">
 						{config.subhead}
 					</p>
+					{config.updated && (
+						<p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+							Updated {config.updated}
+						</p>
+					)}
 					<p className="inline-flex items-center gap-1.5 text-sm text-ink-muted">
 						<Lock className="h-3.5 w-3.5" />
-						Share links encrypt in your browser — we never store the split
+						{config.privacyNote ?? "Share links encrypt in your browser — we never store the split"}
 					</p>
 				</div>
 			</section>
@@ -153,11 +158,11 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 			<section className="px-4 sm:px-6 py-8 sm:py-10">
 				<div className="max-w-3xl mx-auto text-center space-y-4">
 					<h2 className="text-xl sm:text-2xl font-bold text-ink">
-						Need more than a quick calc?
+						{config.cta?.heading ?? "Need more than a quick calc?"}
 					</h2>
 					<p className="text-ink-muted text-sm sm:text-base">
-						Track multiple expenses, unequal splits, and ongoing groups in the
-						full SplitBiller app — still no signup.
+						{config.cta?.body ??
+							"Track multiple expenses, unequal splits, and ongoing groups in the full SplitBiller app — still no signup."}
 					</p>
 					<TrackedLink
 						href="/dashboard"

@@ -4,7 +4,15 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 
 /** Renders a UPI intent as a QR any phone's UPI app can scan. */
-export const UpiQr = ({ link, label }: { link: string; label: string }) => {
+export const UpiQr = ({
+	link,
+	label,
+	className = "h-36 w-36",
+}: {
+	link: string;
+	label: string;
+	className?: string;
+}) => {
 	const [svg, setSvg] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -30,7 +38,7 @@ export const UpiQr = ({ link, label }: { link: string; label: string }) => {
 		<div
 			role="img"
 			aria-label={label}
-			className="h-36 w-36 shrink-0 rounded-xl border border-line bg-white p-2.5 [&>svg]:h-full [&>svg]:w-full"
+			className={`${className} shrink-0 rounded-xl border border-line bg-white p-2.5 [&>svg]:h-full [&>svg]:w-full`}
 			// QR markup is generated locally from the UPI link; nothing user-authored is injected.
 			dangerouslySetInnerHTML={svg ? { __html: svg } : undefined}
 		/>
