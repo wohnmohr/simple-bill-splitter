@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { StickyCta } from "@/components/Landing/StickyCta";
+import { PromoVideo } from "@/components/Landing/PromoVideo";
 import { ALL_TOOL_SLUGS, TOOL_PAGES, ToolSlug } from "@/content/tools";
 
 const TOOL_ICONS: Record<ToolSlug, typeof Receipt> = {
@@ -331,32 +332,7 @@ export const LandingPage = () => {
 					<h2 className="mb-8 text-center font-display text-3xl sm:text-4xl font-semibold text-ink">
 						See it in action
 					</h2>
-					<div className="surface w-full max-w-full overflow-hidden shadow-raised">
-						<div
-							className="relative w-full max-w-full"
-							style={{
-								paddingBottom: "calc(52.9688% + 41px)",
-								height: 0,
-							}}
-						>
-							<iframe
-								src="https://demo.arcade.software/ziv5LbSvTljkl6cuICDu?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true"
-								title="Create and Manage Group Trip Expenses"
-								frameBorder="0"
-								loading="lazy"
-								allowFullScreen
-								allow="clipboard-write"
-								style={{
-									position: "absolute",
-									top: 0,
-									left: 0,
-									width: "100%",
-									height: "100%",
-									colorScheme: "light",
-								}}
-							/>
-						</div>
-					</div>
+					<PromoVideo />
 				</div>
 			</section>
 

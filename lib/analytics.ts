@@ -4,6 +4,7 @@ import { noteFeedbackMoment } from "@/lib/feedbackNudge";
 /** High-level product events only — never send names, amounts, or expense details. */
 export type AnalyticsEvent =
 	| "landing_cta_clicked"
+	| "landing_video_unmuted"
 	| "tool_calculator_engaged"
 	| "calculator_result_viewed"
 	| "calculator_continue_clicked"
