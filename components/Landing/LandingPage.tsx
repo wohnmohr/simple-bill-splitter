@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import {
 	Receipt,
@@ -29,7 +27,7 @@ import {
 	HandCoins,
 	Gift,
 } from "lucide-react";
-import { track } from "@/lib/analytics";
+import { TrackedLink } from "@/components/UI/TrackedLink";
 import { StickyCta } from "@/components/Landing/StickyCta";
 import { PromoVideo } from "@/components/Landing/PromoVideo";
 import { ALL_TOOL_SLUGS, TOOL_PAGES, ToolSlug } from "@/content/tools";
@@ -199,9 +197,9 @@ export const LandingPage = () => {
 	return (
 		<main className="page-shell min-h-screen bg-paper text-ink pb-20 sm:pb-0">
 			{/* Timely, on-site announcement: answers the question people are searching right now */}
-			<Link
+			<TrackedLink
 				href="/upi-charges-above-2000"
-				onClick={() => track("landing_cta_clicked", { location: "upi_fee_strip" })}
+				location="upi_fee_strip"
 				className="block bg-brand-50 text-brand-900 transition-colors hover:bg-brand-100"
 			>
 				<span className="mx-auto flex min-h-9 max-w-6xl items-center justify-center gap-2 px-4 py-1.5 text-xs font-medium sm:text-sm">
@@ -213,13 +211,13 @@ export const LandingPage = () => {
 					</span>
 					<ArrowRight className="h-3.5 w-3.5 shrink-0" />
 				</span>
-			</Link>
+			</TrackedLink>
 
 			{/* Site nav */}
 			<nav className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md">
 				<div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
 					<Link href="/" className="flex items-center gap-2 shrink-0">
-						<img src="/logo.png" alt="" className="h-8 w-8 object-contain scale-[1.6]" />
+						<img src="/logo-mark.webp" alt="" width={35} height={30} className="h-[30px] w-[35px] shrink-0 object-contain" />
 						<span className="font-display text-lg font-semibold text-ink">
 							SplitBiller
 						</span>
@@ -231,13 +229,13 @@ export const LandingPage = () => {
 						<a href="#faq" className="btn-ghost hidden sm:inline-flex">
 							FAQ
 						</a>
-						<Link
+						<TrackedLink
 							href="/dashboard"
 							className="btn-primary !py-2"
-							onClick={() => track("landing_cta_clicked", { location: "nav" })}
+							location="nav"
 						>
 							Open app
-						</Link>
+						</TrackedLink>
 					</div>
 				</div>
 			</nav>
@@ -254,15 +252,15 @@ export const LandingPage = () => {
 							no app download.
 						</p>
 						<div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
-							<Link
+							<TrackedLink
 								id="hero-cta"
 								href="/dashboard"
-								onClick={() => track("landing_cta_clicked", { location: "hero" })}
+								location="hero"
 								className="btn-primary w-full sm:w-auto !px-6 !py-3.5 !text-base"
 							>
 								Split a bill now — free
 								<ArrowRight className="h-4 w-4" />
-							</Link>
+							</TrackedLink>
 							<a href="#tools" className="btn-secondary w-full sm:w-auto !px-6 !py-3.5 !text-base">
 								Try a quick calculator
 							</a>
@@ -298,14 +296,9 @@ export const LandingPage = () => {
 							const Icon = TOOL_ICONS[slug];
 							return (
 								<li key={slug} className="overflow-hidden rounded-xl border border-line bg-white">
-									<Link
+									<TrackedLink
 										href={`/${slug}`}
-										onClick={() =>
-											track("landing_cta_clicked", {
-												location: "tools_grid",
-												tool: slug,
-											})
-										}
+										location="tools_grid" properties={{ tool: slug }}
 										className="group flex h-full items-start gap-3.5 p-5 transition-colors hover:bg-paper"
 									>
 										<Icon className="mt-0.5 h-5 w-5 shrink-0 text-brand-700" strokeWidth={1.75} />
@@ -318,7 +311,7 @@ export const LandingPage = () => {
 												{TOOL_BLURBS[slug]}
 											</span>
 										</span>
-									</Link>
+									</TrackedLink>
 								</li>
 							);
 						})}
@@ -471,14 +464,14 @@ export const LandingPage = () => {
 					<p className="mx-auto mt-4 max-w-xl text-lg text-ink-soft">
 						No downloads, no accounts — split expenses instantly and move on.
 					</p>
-					<Link
+					<TrackedLink
 						href="/dashboard"
-						onClick={() => track("landing_cta_clicked", { location: "footer" })}
+						location="footer"
 						className="btn-primary mt-8 !px-7 !py-3.5 !text-base"
 					>
 						Use the free expense splitter
 						<ArrowRight className="h-4 w-4" />
-					</Link>
+					</TrackedLink>
 				</div>
 			</section>
 
@@ -488,7 +481,7 @@ export const LandingPage = () => {
 					<div className="grid gap-8 md:grid-cols-[1fr_2fr]">
 						<div>
 							<Link href="/" className="flex items-center gap-2">
-								<img src="/logo.png" alt="" className="h-8 w-8 object-contain scale-[1.6]" />
+								<img src="/logo-mark.webp" alt="" width={35} height={30} className="h-[30px] w-[35px] shrink-0 object-contain" />
 								<span className="font-display text-lg font-semibold text-ink">
 									SplitBiller
 								</span>
@@ -502,7 +495,7 @@ export const LandingPage = () => {
 								rel="noopener noreferrer"
 								className="btn-secondary mt-4 !py-2"
 							>
-								<img src={PH_ICON} alt="" className="h-4 w-4 rounded" />
+								<img src={PH_ICON} alt="" width={16} height={16} loading="lazy" decoding="async" className="h-4 w-4 rounded" />
 								Find us on Product Hunt
 							</a>
 							<Link

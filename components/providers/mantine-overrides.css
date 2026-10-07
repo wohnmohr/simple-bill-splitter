@@ -1,0 +1,17 @@
+/*
+ * Loaded right after Mantine's stylesheet, only on the routes that use it.
+ * Mantine's global `body` rule would otherwise repaint the page white and change its
+ * line height (1.55 instead of the site's 1.5); keep the site's paper, ink and leading.
+ */
+body {
+	background-color: var(--sb-paper);
+	color: var(--sb-ink);
+	line-height: inherit;
+}
+
+/* Placeholders stay readable (4.5:1) — Mantine's lighter default must not win on these routes. */
+::placeholder,
+.mantine-Input-input::placeholder {
+	color: #767080;
+	opacity: 1;
+}

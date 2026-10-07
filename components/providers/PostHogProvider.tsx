@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
+import { Component, ReactNode, Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import posthog from "posthog-js";
-import { PostHogProvider as PHProvider, PostHogErrorBoundary } from "@posthog/react";
+import { trackError } from "@/lib/analytics";
+import { capture, startPostHogWhenIdle } from "@/lib/posthogClient";
 
 function PostHogPageView() {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 
 	useEffect(() => {
-		if (!pathname || !posthog.__loaded) return;
+		if (!pathname) return;
 		const query = searchParams?.toString();
-		const url = query ? `${pathname}?${query}` : pathname;
-		posthog.capture("$pageview", { $current_url: url });
+		capture("$pageview", { $current_url: query ? `${pathname}?${query}` : pathname });
 	}, [pathname, searchParams]);
 
 	return null;
@@ -37,57 +36,35 @@ function ErrorFallback() {
 	);
 }
 
-export function PostHogProvider({ children }: { children: React.ReactNode }) {
-	useEffect(() => {
-		const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-		if (!key || posthog.__loaded) return;
+/** Catches render errors, shows a friendly fallback and reports them. */
+class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+	state = { failed: false };
 
-		posthog.init(key, {
-			api_host:
-				process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
-			person_profiles: "identified_only",
-			capture_pageview: false, // we send on route change
-			capture_pageleave: true,
-			persistence: "localStorage+cookie",
-			// Session replay — enable in PostHog Project Settings → Session replay
-			disable_session_recording: false,
-			session_recording: {
-				// Privacy-first: never record typed names, amounts, or UPI IDs
-				maskAllInputs: true,
-				maskTextSelector: "[data-ph-mask], input, textarea",
-				recordCrossOriginIframes: false,
-			},
-			// Browsers mask errors from cross-origin scripts (extensions, in-app
-			// browsers, ad blockers) as "Script error." with no stack — nothing
-			// to act on, and it floods the exception feed.
-			before_send: (event) => {
-				if (event?.event !== "$exception") return event;
-				const props = event.properties ?? {};
-				const message: unknown =
-					props.$exception_list?.[0]?.value ?? props.$exception_message;
-				return message === "Script error." ? null : event;
-			},
-			loaded: (client) => {
-				client.startExceptionAutocapture?.();
-				client.startSessionRecording?.();
-				if (process.env.NODE_ENV === "development") {
-					client.debug(false);
-				}
-			},
-		});
+	static getDerivedStateFromError() {
+		return { failed: true };
+	}
+
+	componentDidCatch(error: Error) {
+		trackError(error, { source: "react_error_boundary" });
+	}
+
+	render() {
+		return this.state.failed ? <ErrorFallback /> : this.props.children;
+	}
+}
+
+export function PostHogProvider({ children }: { children: ReactNode }) {
+	// Analytics loads after the page is idle, never during first paint or hydration.
+	useEffect(() => {
+		startPostHogWhenIdle();
 	}, []);
 
 	return (
-		<PHProvider client={posthog}>
-			<PostHogErrorBoundary
-				fallback={ErrorFallback}
-				additionalProperties={{ source: "react_error_boundary" }}
-			>
-				<Suspense fallback={null}>
-					<PostHogPageView />
-				</Suspense>
-				{children}
-			</PostHogErrorBoundary>
-		</PHProvider>
+		<ErrorBoundary>
+			<Suspense fallback={null}>
+				<PostHogPageView />
+			</Suspense>
+			{children}
+		</ErrorBoundary>
 	);
 }

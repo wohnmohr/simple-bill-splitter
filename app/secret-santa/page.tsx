@@ -14,7 +14,7 @@ export default function SecretSantaPage() {
 			<header className="border-b border-line px-4">
 				<div className="mx-auto flex h-14 max-w-2xl items-center">
 					<Link href="/" className="flex min-w-0 items-center gap-2.5">
-						<img src="/logo.png" alt="" className="h-8 w-8 shrink-0 object-contain scale-[1.6]" />
+						<img src="/logo-mark.webp" alt="" width={35} height={30} className="h-[30px] w-[35px] shrink-0 object-contain" />
 						<span className="truncate font-display text-lg font-semibold text-ink">SplitBiller</span>
 					</Link>
 				</div>
