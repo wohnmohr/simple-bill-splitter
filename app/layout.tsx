@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Outfit, Fraunces } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
-import { MantineProvider } from "@/components/providers/MantineProvider";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { FeedbackNudge } from "@/components/Feedback/FeedbackNudge";
-import "@mantine/core/styles.css";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -13,8 +11,10 @@ const outfit = Outfit({
 	display: "swap",
 });
 
+// Headings use a single Fraunces weight (600); one static file loads instead of the variable font or a second weight.
 const fraunces = Fraunces({
 	subsets: ["latin"],
+	weight: ["600"],
 	variable: "--font-fraunces",
 	display: "swap",
 });
@@ -85,11 +85,9 @@ export default function RootLayout({
 		<html lang="en-IN">
 			<body className={`${outfit.variable} ${fraunces.variable} font-sans antialiased`}>
 				<PostHogProvider>
-					<MantineProvider>
-						{children}
-						<FeedbackNudge />
-						<Analytics />
-					</MantineProvider>
+					{children}
+					<FeedbackNudge />
+					<Analytics />
 				</PostHogProvider>
 			</body>
 		</html>

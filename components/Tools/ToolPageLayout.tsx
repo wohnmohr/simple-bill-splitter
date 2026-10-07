@@ -55,11 +55,7 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 			<header className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md px-4 sm:px-6">
 				<div className="max-w-5xl mx-auto flex h-14 items-center justify-between gap-3 min-w-0">
 					<Link href="/" className="flex items-center gap-2 group">
-						<img
-							src="/logo.png"
-							alt=""
-							className="h-8 w-8 object-contain scale-[1.6]"
-						/>
+						<img src="/logo-mark.webp" alt="" width={35} height={30} className="h-[30px] w-[35px] shrink-0 object-contain" />
 						<span className="font-display text-lg font-semibold text-ink">
 							SplitBiller
 						</span>
