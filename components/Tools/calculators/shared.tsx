@@ -213,3 +213,41 @@ export function useTrackResult(tool: string, ready: boolean) {
 		track("calculator_result_viewed", { tool });
 	}, [ready, tool]);
 }
+
+/** Fires `tool_calculator_engaged` on a visitor's first interaction. */
+export function useEngaged(tool: string): () => void {
+	const sent = useRef(false);
+	return useCallback(() => {
+		if (sent.current) return;
+		sent.current = true;
+		track("tool_calculator_engaged", { tool });
+	}, [tool]);
+}
+
+/** Unbiased random integer in [0, max) from the Web Crypto API. */
+export function randomInt(max: number): number {
+	const buf = new Uint32Array(1);
+	const limit = Math.floor(0x100000000 / max) * max;
+	do crypto.getRandomValues(buf);
+	while (buf[0] >= limit);
+	return buf[0] % max;
+}
+
+/** Fisher–Yates shuffle returning a new array. */
+export function shuffled<T>(items: readonly T[]): T[] {
+	const out = [...items];
+	for (let i = out.length - 1; i > 0; i--) {
+		const j = randomInt(i + 1);
+		[out[i], out[j]] = [out[j], out[i]];
+	}
+	return out;
+}
+
+/** Parses a one-per-line / comma-separated list into unique, trimmed names. */
+export function parseNames(text: string): string[] {
+	const seen = new Set<string>();
+	return text
+		.split(/[\n,]/)
+		.map((s) => s.trim())
+		.filter((s) => s && !seen.has(s.toLowerCase()) && seen.add(s.toLowerCase()));
+}

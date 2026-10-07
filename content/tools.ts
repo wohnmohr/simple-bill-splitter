@@ -16,7 +16,11 @@ export type ToolSlug =
 	| "group-contribution-collector"
 	| "secret-santa-generator"
 	| "split-electricity-bill"
-	| "split-swiggy-zomato-bill";
+	| "split-swiggy-zomato-bill"
+	| "random-name-picker"
+	| "random-team-generator"
+	| "gst-calculator"
+	| "discount-calculator";
 
 export type CalculatorKind =
 	| "restaurant"
@@ -34,7 +38,11 @@ export type CalculatorKind =
 	| "upi-qr"
 	| "road-trip"
 	| "contribution"
-	| "secret-santa";
+	| "secret-santa"
+	| "name-picker"
+	| "team-generator"
+	| "gst"
+	| "discount";
 
 export type ToolFaq = { q: string; a: string };
 
@@ -966,6 +974,120 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		related: ["group-contribution-collector", "restaurant-bill-splitter", "split-bill-unequally"],
 		schemaCategory: "LifestyleApplication",
 		ctaLabel: "Split the party costs",
+	},
+	"random-name-picker": {
+		slug: "random-name-picker",
+		calculator: "name-picker",
+		title: "Random Name Picker",
+		metaTitle: "Random Name Picker Wheel — Free Spin the Wheel, No Signup",
+		metaDescription:
+			"Pick a random name with a free spinning wheel. Add names, spin, get a fair winner. Great for deciding who pays the bill, who goes first or who does the chores.",
+		headline: "Spin the wheel, pick a name",
+		subhead: "Add names, spin, and let chance decide — fair and instant.",
+		intro: [
+			"Paste your names, hit spin and the wheel lands on a winner. The pick uses your browser’s cryptographic random generator, so every name has exactly the same chance.",
+			"Use it to decide who pays the bill, who picks the restaurant, who goes first or who does the dishes. Tick “remove the winner” to draw several people in turn.",
+		],
+		howTo: [
+			{ title: "Add the names", body: "One per line, up to 50. Duplicates are ignored." },
+			{ title: "Spin", body: "Tap the button and watch the wheel settle on a name." },
+			{ title: "Draw again", body: "Spin again, or remove each winner to pick a whole order." },
+		],
+		faqs: [
+			{ q: "Is the wheel really random?", a: "Yes. The winner is chosen first with the Web Crypto random generator, then the wheel animates to land on it — the animation never affects the result." },
+			{ q: "Are my names saved?", a: "No. Everything runs in your browser; nothing is sent to our servers." },
+			{ q: "How many names can I add?", a: "Up to 50. Beyond that the wheel gets too crowded to read." },
+			{ q: "Can I use it to decide who pays the bill?", a: "Yes — add everyone at the table and spin. Then split the rest fairly with the free bill splitter." },
+		],
+		related: ["random-team-generator", "restaurant-bill-splitter", "secret-santa-generator", "split-bill-unequally"],
+		schemaCategory: "UtilitiesApplication",
+		cta: { heading: "Settled who pays?", body: "Now split the bill fairly with the free SplitBiller bill splitter — no signup." },
+		ctaLabel: "Open full SplitBiller",
+	},
+	"random-team-generator": {
+		slug: "random-team-generator",
+		calculator: "team-generator",
+		title: "Random Team Generator",
+		metaTitle: "Random Team Generator — Split Names into Fair Teams, Free",
+		metaDescription:
+			"Split a list of names into random, evenly sized teams in one click. Choose the number of teams or people per team. Free, no signup.",
+		headline: "Make fair teams in one click",
+		subhead: "Paste your players, choose how many teams, and shuffle.",
+		intro: [
+			"Paste a list of names and get random teams of even size — sizes never differ by more than one person. Pick the number of teams or the number of people per team.",
+			"Perfect for sports, classroom groups, game nights and office events. Shuffle again until everyone is happy, then copy the teams to WhatsApp.",
+		],
+		howTo: [
+			{ title: "Add the players", body: "One name per line." },
+			{ title: "Choose the split", body: "Either a number of teams or people per team." },
+			{ title: "Shuffle and copy", body: "Reshuffle as often as you like, then copy the result." },
+		],
+		faqs: [
+			{ q: "Are the teams balanced?", a: "Team sizes are as even as possible. The tool doesn’t rate skill — it’s a fair random draw." },
+			{ q: "What if the numbers don’t divide evenly?", a: "Some teams get one extra person." },
+			{ q: "Is anything stored?", a: "No. The shuffle runs in your browser." },
+		],
+		related: ["random-name-picker", "secret-santa-generator", "group-contribution-collector"],
+		schemaCategory: "UtilitiesApplication",
+		cta: { heading: "Splitting the cost too?", body: "Share the pitch fee or party bill with the free SplitBiller bill splitter." },
+		ctaLabel: "Open full SplitBiller",
+	},
+	"gst-calculator": {
+		slug: "gst-calculator",
+		calculator: "gst",
+		title: "GST Calculator",
+		metaTitle: "GST Calculator India — Add or Remove GST (CGST + SGST), Free",
+		metaDescription:
+			"Free GST calculator for India. Add GST to a price or remove it from a GST-inclusive amount at 5%, 12%, 18%, 28% or any rate, with CGST and SGST breakup and a per-person split.",
+		headline: "Add or remove GST instantly",
+		subhead: "Enter an amount and a rate to see the GST, CGST, SGST and final price.",
+		intro: [
+			"Add GST to a price, or work backwards from a GST-inclusive amount to find the original price and the tax. Choose the common slabs — 5%, 12%, 18%, 28% — or type any rate.",
+			"The result shows the CGST and SGST halves for intra-state sales. Need to share a GST bill? Enter the number of people to see each person’s share.",
+		],
+		howTo: [
+			{ title: "Pick add or remove", body: "Add GST to a pre-tax price, or remove it from a final price." },
+			{ title: "Enter amount and rate", body: "Tap a slab or type your own rate." },
+			{ title: "Read the breakup", body: "See base price, GST, CGST, SGST and total." },
+		],
+		faqs: [
+			{ q: "How is GST calculated?", a: "Adding GST: price × (1 + rate ÷ 100). Removing GST: price ÷ (1 + rate ÷ 100)." },
+			{ q: "What are CGST and SGST?", a: "For sales within a state, GST splits equally into central (CGST) and state (SGST) halves. For inter-state sales the full amount is IGST." },
+			{ q: "Which GST rates are valid?", a: "Check the current slabs on the official GST portal — rates and goods categories change. You can enter any rate here." },
+			{ q: "Is this tax advice?", a: "No. It’s a calculator; confirm figures with your invoice or accountant." },
+		],
+		related: ["split-bill-with-tax", "upi-bill-splitter", "discount-calculator"],
+		schemaCategory: "FinanceApplication",
+		cta: { heading: "Splitting a GST bill?", body: "Use the free SplitBiller UPI bill splitter to settle up in ₹." },
+		ctaLabel: "Open full SplitBiller",
+	},
+	"discount-calculator": {
+		slug: "discount-calculator",
+		calculator: "discount",
+		title: "Discount Calculator",
+		metaTitle: "Discount Calculator — Sale Price, Savings & Stacked Discounts, Free",
+		metaDescription:
+			"Free discount calculator: find the final price and how much you save, including a second extra-off coupon. See your true effective discount and split the cost.",
+		headline: "See the real price after discounts",
+		subhead: "Enter the price and discount — add an extra coupon to see the stacked saving.",
+		intro: [
+			"Enter an original price and a percentage off to get the sale price and your savings. Add an extra coupon and the calculator applies it after the first discount, as shops do.",
+			"Stacked discounts don’t add up: 30% then 10% off is 37% off, not 40%. The effective discount shows the true figure.",
+		],
+		howTo: [
+			{ title: "Enter the price", body: "Use any currency." },
+			{ title: "Add discounts", body: "A main discount, plus an optional extra coupon." },
+			{ title: "Compare", body: "See what you pay, what you save and the effective percentage." },
+		],
+		faqs: [
+			{ q: "Do two discounts add up?", a: "No. The second applies to the already-reduced price, so 30% + 10% is 37% off in total." },
+			{ q: "How is the sale price calculated?", a: "Price × (1 − discount ÷ 100), applied once per discount." },
+			{ q: "Can I split a discounted bill?", a: "Yes — enter the number of people and see each share." },
+		],
+		related: ["gst-calculator", "split-bill-with-tip", "restaurant-bill-splitter"],
+		schemaCategory: "FinanceApplication",
+		cta: { heading: "Sharing the purchase?", body: "Split it fairly with the free SplitBiller bill splitter." },
+		ctaLabel: "Open full SplitBiller",
 	},
 };
 
