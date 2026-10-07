@@ -8,11 +8,7 @@ export const Header = ({ onFeedback }: { onFeedback?: () => void }) => {
 				href="/"
 				className="flex items-center gap-2 min-w-0 rounded-lg -ml-1 pl-1 pr-2 py-1"
 			>
-				<img
-					src="/logo.png"
-					alt=""
-					className="h-9 w-9 object-contain shrink-0 scale-[1.6]"
-				/>
+				<img src="/logo-mark.webp" alt="" width={35} height={30} className="h-[30px] w-[35px] shrink-0 object-contain" />
 				<span className="font-display text-lg font-semibold text-ink leading-none">
 					SplitBiller
 				</span>

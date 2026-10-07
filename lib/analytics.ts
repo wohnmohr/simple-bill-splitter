@@ -1,9 +1,10 @@
-import posthog from "posthog-js";
 import { noteFeedbackMoment } from "@/lib/feedbackNudge";
+import { capture, withPostHog } from "@/lib/posthogClient";
 
 /** High-level product events only — never send names, amounts, or expense details. */
 export type AnalyticsEvent =
 	| "landing_cta_clicked"
+	| "landing_video_unmuted"
 	| "tool_calculator_engaged"
 	| "calculator_result_viewed"
 	| "calculator_continue_clicked"
@@ -42,12 +43,7 @@ export function track(event: AnalyticsEvent, properties?: EventProps): void {
 	recentActions.push(event);
 	if (recentActions.length > 15) recentActions.shift();
 	noteFeedbackMoment(event);
-	if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) return;
-	try {
-		posthog.capture(event, properties);
-	} catch {
-		// Never let analytics break the product
-	}
+	capture(event, properties);
 }
 
 export function trackError(
@@ -55,27 +51,17 @@ export function trackError(
 	context?: EventProps & { source?: string }
 ): void {
 	if (typeof window === "undefined") return;
-	if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) return;
 
 	const err =
 		error instanceof Error
 			? error
 			: new Error(typeof error === "string" ? error : "Unknown error");
 
-	try {
-		posthog.captureException(err, {
-			...context,
-			source: context?.source || "app",
-		});
-	} catch {
+	withPostHog((ph) => {
 		try {
-			posthog.capture("client_error", {
-				message: err.message,
-				name: err.name,
-				...context,
-			});
+			ph.captureException(err, { ...context, source: context?.source || "app" });
 		} catch {
-			// ignore
+			ph.capture("client_error", { message: err.message, name: err.name, ...context });
 		}
-	}
+	});
 }
