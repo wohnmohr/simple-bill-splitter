@@ -26,6 +26,10 @@ import {
 	Car,
 	HandCoins,
 	Gift,
+	Dices,
+	Users,
+	BadgePercent,
+	Tag,
 } from "lucide-react";
 import { TrackedLink } from "@/components/UI/TrackedLink";
 import { StickyCta } from "@/components/Landing/StickyCta";
@@ -51,6 +55,10 @@ const TOOL_ICONS: Record<ToolSlug, typeof Receipt> = {
 	"secret-santa-generator": Gift,
 	"split-electricity-bill": Lightbulb,
 	"split-swiggy-zomato-bill": Bike,
+	"random-name-picker": Dices,
+	"random-team-generator": Users,
+	"gst-calculator": BadgePercent,
+	"discount-calculator": Tag,
 };
 
 const TOOL_BLURBS: Record<ToolSlug, string> = {
@@ -73,6 +81,10 @@ const TOOL_BLURBS: Record<ToolSlug, string> = {
 	"secret-santa-generator": "Private draw links — nobody sees who got whom.",
 	"split-electricity-bill": "Fair shares by usage, AC hours or room.",
 	"split-swiggy-zomato-bill": "Delivery fee, GST and discounts, split fairly.",
+	"random-name-picker": "Spin a wheel to pick a name — who pays?",
+	"random-team-generator": "Shuffle names into fair, even teams.",
+	"gst-calculator": "Add or remove GST with CGST/SGST breakup.",
+	"discount-calculator": "True price after stacked discounts.",
 };
 
 const PH_ICON =

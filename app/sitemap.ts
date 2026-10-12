@@ -31,6 +31,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
 			changeFrequency: "monthly",
 			priority: 0.4,
 		},
+		{
+			url: `${baseUrl}/pay-story`,
+			lastModified: new Date(),
+			changeFrequency: "monthly",
+			priority: 0.6,
+		},
 		...toolEntries,
 	];
 }
