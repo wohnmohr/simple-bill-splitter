@@ -10,13 +10,19 @@ export interface SplitTemplate {
 }
 
 export const TEMPLATES: SplitTemplate[] = [
-	{ id: "dinner", emoji: "🍽️", label: "Dinner", title: "Dinner tonight", target: 3000, people: 5 },
+	{ id: "dinner", emoji: "🍽️", label: "Dinner / outing", title: "Dinner tonight", target: 3000, people: 5 },
 	{ id: "rent", emoji: "🔑", label: "Flat rent", title: "This month’s rent", target: 24000, people: 3 },
-	{ id: "trip", emoji: "🧳", label: "Trip", title: "Trip advance booking", target: 20000, people: 4 },
-	{ id: "electricity", emoji: "💡", label: "Electricity", title: "Electricity bill", target: 3600, people: 3 },
 	{ id: "groceries", emoji: "🛒", label: "Groceries", title: "Groceries this week", target: 2400, people: 4 },
+	{ id: "electricity", emoji: "💡", label: "Electricity", title: "Electricity bill", target: 3600, people: 3 },
+	{ id: "wifi", emoji: "📶", label: "Wi-Fi / utilities", title: "Wi-Fi and utilities", target: 1500, people: 3 },
+	{ id: "subscription", emoji: "📺", label: "Subscription", title: "Shared subscription", target: 649, people: 4 },
+	{ id: "cab", emoji: "🚕", label: "Cab / fuel", title: "Cab ride home", target: 800, people: 4 },
+	{ id: "trip", emoji: "🧳", label: "Trip", title: "Trip advance booking", target: 20000, people: 4 },
+	{ id: "sports", emoji: "🏏", label: "Turf / sports", title: "Turf booking", target: 2400, people: 10 },
+	{ id: "lunch", emoji: "🥡", label: "Office lunch", title: "Team lunch", target: 2000, people: 8 },
 	{ id: "gift", emoji: "🎁", label: "Group gift", title: "Group gift", target: 5000 },
-	{ id: "party", emoji: "🎂", label: "Party", title: "Birthday cake and party", target: 2500 },
+	{ id: "party", emoji: "🎂", label: "Birthday / party", title: "Birthday cake and party", target: 2500 },
+	{ id: "shagun", emoji: "💌", label: "Shagun / wedding", title: "Shagun for the wedding", target: 11000 },
 	{ id: "other", emoji: "✨", label: "Something else", title: "" },
 ];
 
