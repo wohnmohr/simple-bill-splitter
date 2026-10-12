@@ -3,9 +3,9 @@ import Link from "next/link";
 import { PayStoryApp } from "@/components/PayStory/PayStoryApp";
 
 export const metadata: Metadata = {
-	title: "Payment Story Links | SplitBiller",
+	title: "Share a Split via UPI | SplitBiller",
 	description:
-		"Turn a payment request into an animated story friends pay via UPI: group gifts, shagun, dinner splits and birthdays. No signup; the request lives in the link.",
+		"Create a shareable bill split for dinners, rent, trips and gifts. Friends pay you via UPI and you track who has paid. No signup; the split lives in the link.",
 	alternates: { canonical: "/pay-story" },
 };
 

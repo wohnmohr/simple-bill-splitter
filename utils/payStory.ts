@@ -1,18 +1,32 @@
-export type Occasion = "gift" | "shagun" | "dinner" | "birthday";
+/** Starting points for a split. Amounts are suggestions the organiser can edit. */
+export interface SplitTemplate {
+	id: string;
+	emoji: string;
+	label: string;
+	title: string;
+	target?: number;
+	/** Split evenly between this many; omit to let friends choose an amount. */
+	people?: number;
+}
 
-export const OCCASIONS: Record<Occasion, { label: string; emoji: string; done: string }> = {
-	gift: { label: "Group gift", emoji: "🎁", done: "The gift box is full" },
-	shagun: { label: "Shagun", emoji: "💌", done: "The envelope is open" },
-	dinner: { label: "Dinner split", emoji: "🧾", done: "Every share is paid" },
-	birthday: { label: "Birthday", emoji: "🎂", done: "All the candles are lit" },
-};
+export const TEMPLATES: SplitTemplate[] = [
+	{ id: "dinner", emoji: "🍽️", label: "Dinner", title: "Dinner tonight", target: 3000, people: 5 },
+	{ id: "rent", emoji: "🔑", label: "Flat rent", title: "This month’s rent", target: 24000, people: 3 },
+	{ id: "trip", emoji: "🧳", label: "Trip", title: "Trip advance booking", target: 20000, people: 4 },
+	{ id: "electricity", emoji: "💡", label: "Electricity", title: "Electricity bill", target: 3600, people: 3 },
+	{ id: "groceries", emoji: "🛒", label: "Groceries", title: "Groceries this week", target: 2400, people: 4 },
+	{ id: "gift", emoji: "🎁", label: "Group gift", title: "Group gift", target: 5000 },
+	{ id: "party", emoji: "🎂", label: "Party", title: "Birthday cake and party", target: 2500 },
+	{ id: "other", emoji: "✨", label: "Something else", title: "" },
+];
 
-export const isOccasion = (v: unknown): v is Occasion =>
-	typeof v === "string" && v in OCCASIONS;
+export const getTemplate = (id: unknown): SplitTemplate =>
+	TEMPLATES.find((t) => t.id === id) ?? TEMPLATES[TEMPLATES.length - 1];
 
 /** Everything lives in the share link's #fragment: no server ever sees it. */
 export interface PayRequest {
-	occasion: Occasion;
+	/** Template id; picks the emoji and label. */
+	kind: string;
 	title: string;
 	/** Organiser's name, shown beside their UPI ID. */
 	name: string;
@@ -46,7 +60,7 @@ export function decodeRequest(fragment: string): PayRequest | null {
 		const raw = JSON.parse(fromBase64Url(fragment));
 		const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
 		const int = (v: unknown) => (Number.isInteger(v) && (v as number) >= 0 ? (v as number) : 0);
-		if (!isOccasion(raw.occasion) || int(raw.target) < 1) return null;
+		if (int(raw.target) < 1) return null;
 		const paid: [string, number][] = Array.isArray(raw.paid)
 			? raw.paid
 					.filter((p: unknown) => Array.isArray(p) && int(p[1]) > 0)
@@ -54,7 +68,7 @@ export function decodeRequest(fragment: string): PayRequest | null {
 					.map((p: [unknown, unknown]) => [str(p[0], 30), int(p[1])])
 			: [];
 		return {
-			occasion: raw.occasion,
+			kind: getTemplate(raw.kind).id,
 			title: str(raw.title, 60),
 			name: str(raw.name, 40),
 			upiId: str(raw.upiId, 80),
@@ -72,25 +86,3 @@ export const totalPaid = (req: PayRequest) => req.paid.reduce((sum, [, amt]) => 
 /** Fixed share per person (rounded up), or 0 when friends pick their own amount. */
 export const sharePerPerson = (req: Pick<PayRequest, "target" | "people">) =>
 	req.people > 0 ? Math.ceil(req.target / req.people) : 0;
-
-/** Starting points for the create form. Amounts are suggestions the organiser can edit. */
-export interface PayTemplate {
-	id: string;
-	emoji: string;
-	label: string;
-	occasion: Occasion;
-	title: string;
-	target?: number;
-	people?: number;
-}
-
-export const TEMPLATES: PayTemplate[] = [
-	{ id: "farewell", emoji: "👋", label: "Farewell gift", occasion: "gift", title: "Farewell gift for a teammate", target: 5000 },
-	{ id: "wedding", emoji: "💍", label: "Wedding shagun", occasion: "shagun", title: "Shagun for the wedding", target: 11000 },
-	{ id: "dinner", emoji: "🍽️", label: "Dinner split", occasion: "dinner", title: "Dinner tonight", target: 3000, people: 5 },
-	{ id: "birthday", emoji: "🎂", label: "Birthday party", occasion: "birthday", title: "Birthday cake and party", target: 2500 },
-	{ id: "housewarming", emoji: "🏠", label: "Housewarming", occasion: "gift", title: "Housewarming gift", target: 4000 },
-	{ id: "trip", emoji: "🧳", label: "Trip advance", occasion: "dinner", title: "Trip advance booking", target: 20000, people: 4 },
-	{ id: "rent", emoji: "🔑", label: "Flat rent", occasion: "dinner", title: "This month’s rent", target: 24000, people: 3 },
-	{ id: "baby", emoji: "🍼", label: "Baby shower", occasion: "shagun", title: "Baby shower blessings", target: 5100 },
-];
