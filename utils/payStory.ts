@@ -72,3 +72,25 @@ export const totalPaid = (req: PayRequest) => req.paid.reduce((sum, [, amt]) => 
 /** Fixed share per person (rounded up), or 0 when friends pick their own amount. */
 export const sharePerPerson = (req: Pick<PayRequest, "target" | "people">) =>
 	req.people > 0 ? Math.ceil(req.target / req.people) : 0;
+
+/** Starting points for the create form. Amounts are suggestions the organiser can edit. */
+export interface PayTemplate {
+	id: string;
+	emoji: string;
+	label: string;
+	occasion: Occasion;
+	title: string;
+	target?: number;
+	people?: number;
+}
+
+export const TEMPLATES: PayTemplate[] = [
+	{ id: "farewell", emoji: "👋", label: "Farewell gift", occasion: "gift", title: "Farewell gift for a teammate", target: 5000 },
+	{ id: "wedding", emoji: "💍", label: "Wedding shagun", occasion: "shagun", title: "Shagun for the wedding", target: 11000 },
+	{ id: "dinner", emoji: "🍽️", label: "Dinner split", occasion: "dinner", title: "Dinner tonight", target: 3000, people: 5 },
+	{ id: "birthday", emoji: "🎂", label: "Birthday party", occasion: "birthday", title: "Birthday cake and party", target: 2500 },
+	{ id: "housewarming", emoji: "🏠", label: "Housewarming", occasion: "gift", title: "Housewarming gift", target: 4000 },
+	{ id: "trip", emoji: "🧳", label: "Trip advance", occasion: "dinner", title: "Trip advance booking", target: 20000, people: 4 },
+	{ id: "rent", emoji: "🔑", label: "Flat rent", occasion: "dinner", title: "This month’s rent", target: 24000, people: 3 },
+	{ id: "baby", emoji: "🍼", label: "Baby shower", occasion: "shagun", title: "Baby shower blessings", target: 5100 },
+];

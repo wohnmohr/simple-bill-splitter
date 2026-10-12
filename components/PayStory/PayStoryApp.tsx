@@ -6,12 +6,14 @@ import { StoryScene } from "./StoryScene";
 import { buildUpiLink, isValidUpiId } from "@/utils/upi";
 import {
 	OCCASIONS,
+	TEMPLATES,
 	decodeRequest,
 	encodeRequest,
 	sharePerPerson,
 	totalPaid,
 	type Occasion,
 	type PayRequest,
+	type PayTemplate,
 } from "@/utils/payStory";
 
 const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
@@ -50,6 +52,15 @@ const CreateForm = ({ onCreate }: { onCreate: (r: PayRequest) => void }) => {
 	const [target, setTarget] = useState("");
 	const [people, setPeople] = useState("");
 	const [error, setError] = useState("");
+	const [template, setTemplate] = useState("");
+
+	const applyTemplate = (t: PayTemplate) => {
+		setTemplate(t.id);
+		setOccasion(t.occasion);
+		setTitle(t.title);
+		setTarget(t.target ? String(t.target) : "");
+		setPeople(t.people ? String(t.people) : "");
+	};
 
 	const submit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -80,13 +91,36 @@ const CreateForm = ({ onCreate }: { onCreate: (r: PayRequest) => void }) => {
 			</div>
 
 			<fieldset>
+				<legend className="label-text">Start from a template</legend>
+				<div className="-mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-1">
+					{TEMPLATES.map((t) => (
+						<button
+							type="button"
+							key={t.id}
+							onClick={() => applyTemplate(t)}
+							aria-pressed={template === t.id}
+							className={`shrink-0 rounded-full border px-3.5 py-2 text-sm font-medium ${
+								template === t.id ? "border-brand-600 bg-brand-50 text-brand-800" : "border-line-strong bg-white text-ink"
+							}`}
+						>
+							<span className="mr-1">{t.emoji}</span>
+							{t.label}
+						</button>
+					))}
+				</div>
+			</fieldset>
+
+			<fieldset>
 				<legend className="label-text">Occasion</legend>
 				<div className="mt-2 grid grid-cols-2 gap-2">
 					{(Object.keys(OCCASIONS) as Occasion[]).map((o) => (
 						<button
 							type="button"
 							key={o}
-							onClick={() => setOccasion(o)}
+							onClick={() => {
+								setOccasion(o);
+								setTemplate("");
+							}}
 							aria-pressed={occasion === o}
 							className={`rounded-xl border px-3 py-3 text-left text-sm font-semibold ${
 								occasion === o ? "border-brand-600 bg-brand-50 text-brand-800" : "border-line-strong bg-white text-ink"
