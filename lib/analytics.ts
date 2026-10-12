@@ -26,7 +26,8 @@ export type AnalyticsEvent =
 	| "feedback_nudge_dismissed"
 	| "feedback_opened"
 	| "feedback_submitted"
-	| "feature_request_submitted";
+	| "feature_request_submitted"
+	| "split_link_created";
 
 type EventProps = Record<string, string | number | boolean | undefined | null>;
 

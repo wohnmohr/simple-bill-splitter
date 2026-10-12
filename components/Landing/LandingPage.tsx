@@ -30,11 +30,14 @@ import {
 	Users,
 	BadgePercent,
 	Tag,
+	Link2,
 } from "lucide-react";
 import { TrackedLink } from "@/components/UI/TrackedLink";
 import { StickyCta } from "@/components/Landing/StickyCta";
 import { PromoVideo } from "@/components/Landing/PromoVideo";
 import { ALL_TOOL_SLUGS, TOOL_PAGES, ToolSlug } from "@/content/tools";
+import { TEMPLATES } from "@/utils/payStory";
+import { themeGradient } from "@/components/PayStory/TemplateGrid";
 
 const TOOL_ICONS: Record<ToolSlug, typeof Receipt> = {
 	"restaurant-bill-splitter": UtensilsCrossed,
@@ -328,6 +331,42 @@ export const LandingPage = () => {
 							);
 						})}
 					</ul>
+				</div>
+			</section>
+
+			{/* Shareable splits — one themed page per situation */}
+			<section id="splits" className="scroll-mt-16 px-4 sm:px-6 py-16 sm:py-20">
+				<div className="mx-auto max-w-6xl">
+					<div className="mb-8 max-w-2xl">
+						<h2 className="font-display text-3xl sm:text-4xl font-semibold text-ink">
+							Split it. Share one link. Get paid.
+						</h2>
+						<p className="mt-2 text-ink-soft">
+							Pick what you are splitting. Friends pay you straight through UPI, a progress bar shows who has paid,
+							and nothing is stored on a server.
+						</p>
+					</div>
+					<ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+						{TEMPLATES.map((t) => (
+							<li key={t.id} className="min-w-0">
+								<TrackedLink
+									href={`/split/${t.id}`}
+									location="splits_section" properties={{ tool: t.id }}
+									className="group flex h-full flex-col overflow-hidden rounded-xl border border-line bg-white transition-shadow hover:shadow-card"
+								>
+									<span aria-hidden className="flex h-14 items-center justify-center text-2xl" style={{ background: themeGradient(t) }}>
+										{t.emoji}
+									</span>
+									<span className="p-2.5 text-sm font-semibold leading-snug text-ink group-hover:text-brand-700">
+										{t.label}
+									</span>
+								</TrackedLink>
+							</li>
+						))}
+					</ul>
+					<TrackedLink href="/split" location="splits_section" className="btn-primary mt-6">
+						Create a split link <ArrowRight className="h-4 w-4" />
+					</TrackedLink>
 				</div>
 			</section>
 
