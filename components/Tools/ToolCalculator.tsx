@@ -13,6 +13,10 @@ import { ContributionCollector } from "@/components/Tools/calculators/Contributi
 import { SecretSantaGenerator } from "@/components/Tools/calculators/SecretSantaGenerator";
 import { UpiPaymentPlanner } from "@/components/Tools/calculators/UpiPaymentPlanner";
 import { UpiFeeCalculator } from "@/components/Tools/calculators/UpiFeeCalculator";
+import { NamePickerWheel } from "@/components/Tools/calculators/NamePickerWheel";
+import { TeamGenerator } from "@/components/Tools/calculators/TeamGenerator";
+import { GstCalculator } from "@/components/Tools/calculators/GstCalculator";
+import { DiscountCalculator } from "@/components/Tools/calculators/DiscountCalculator";
 
 export const ToolCalculator = ({ kind }: { kind: CalculatorKind }) => {
 	switch (kind) {
@@ -48,6 +52,14 @@ export const ToolCalculator = ({ kind }: { kind: CalculatorKind }) => {
 			return <ContributionCollector />;
 		case "secret-santa":
 			return <SecretSantaGenerator />;
+		case "name-picker":
+			return <NamePickerWheel />;
+		case "team-generator":
+			return <TeamGenerator />;
+		case "gst":
+			return <GstCalculator />;
+		case "discount":
+			return <DiscountCalculator />;
 		default:
 			return <RestaurantCalculator />;
 	}
