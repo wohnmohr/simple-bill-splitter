@@ -16,6 +16,29 @@ const PRIVATE_PATH = /^\/(s|pay-story|share|secret-santa)(\/|$)/;
 export const isPrivatePath = (path: string) => PRIVATE_PATH.test(path);
 
 const URL_PROPS = ["$current_url", "$initial_current_url", "$referrer", "$initial_referrer"];
+/** A link without its query or fragment: "upi://pay?pa=…&pn=…&am=…" becomes "upi://pay". */
+const bareLink = (href: string) => href.split(/[?#]/)[0];
+
+/**
+ * PostHog records a clicked link's href even with attribute masking on. Pay,
+ * WhatsApp and share links carry UPI IDs, names, amounts and keys in their
+ * query or fragment, so only the bare link is kept.
+ */
+function stripLinks(props: Record<string, unknown> | undefined) {
+	if (!props) return;
+	if (typeof props.$external_click_url === "string") props.$external_click_url = bareLink(props.$external_click_url);
+	if (Array.isArray(props.$elements)) {
+		for (const el of props.$elements as Record<string, unknown>[]) {
+			for (const k of Object.keys(el)) {
+				if (k.startsWith("attr__") && typeof el[k] === "string") el[k] = bareLink(el[k] as string);
+			}
+		}
+	}
+	if (typeof props.$elements_chain === "string") {
+		props.$elements_chain = props.$elements_chain.replace(/((?:attr__)?href)="([^"]*)"/g, (_m, name: string, href: string) => `${name}="${bareLink(href)}"`);
+	}
+}
+
 /** Removes #fragments from URL properties so keys and shared data never reach analytics. */
 function stripFragments(props: Record<string, unknown> | undefined) {
 	if (!props) return;
@@ -64,11 +87,19 @@ export function startPostHog(): void {
 				capture_pageview: false, // sent on route change by PostHogPageView
 				capture_pageleave: true,
 				persistence: "localStorage+cookie",
+				// Privacy: names, group titles, amounts and UPI IDs appear on screen and
+				// in links. Clicks are tracked by element only, never by their text or
+				// attributes (a UPI pay link carries the payee's ID, name and amount).
+				mask_all_text: true,
+				mask_all_element_attributes: true,
+				disable_capture_url_hashes: true, // shared links keep their data and keys in the #fragment
+				mask_personal_data_properties: true,
 				disable_session_recording: false,
+				enable_recording_console_log: false,
 				session_recording: {
-					// Privacy-first: never record typed names, amounts, or UPI IDs
+					// Replays show layout and clicks only: every input and every piece of text is masked.
 					maskAllInputs: true,
-					maskTextSelector: "[data-ph-mask], input, textarea",
+					maskTextSelector: "*",
 					recordCrossOriginIframes: false,
 				},
 				// Browsers mask errors from cross-origin scripts (extensions, in-app
@@ -77,6 +108,7 @@ export function startPostHog(): void {
 				before_send: (event) => {
 					if (!event) return event;
 					stripFragments(event.properties);
+					stripLinks(event.properties);
 					stripFragments(event.properties?.$set);
 					stripFragments(event.properties?.$set_once);
 					if (event.event === "$snapshot" && isPrivatePath(window.location.pathname)) return null;

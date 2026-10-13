@@ -97,7 +97,7 @@ const WHY = [
 	{ icon: Receipt, label: "Split bills online instantly" },
 	{ icon: UserX, label: "No account, no app, no signup" },
 	{ icon: Globe, label: "Works entirely in your browser" },
-	{ icon: Lock, label: "Privacy-first — your splits stay on your device" },
+	{ icon: Lock, label: "Privacy-first — your groups stay on your device" },
 	{ icon: ArrowRightLeft, label: 'Simple "who owes whom" result' },
 	{ icon: Zap, label: "Lightweight & fast" },
 ];
