@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ORGANISER_KEY } from "../scenes/shared";
 import { UpiQr, useCanOpenUpiApps } from "@/components/Settlements/UpiQr";
 import { track } from "@/lib/analytics";
 import { buildUpiLink } from "@/utils/upi";
-import { encodeRequest, sharePerPerson, totalPaid, type PayRequest, type SplitTemplate } from "@/utils/payStory";
+import { encodeRequest, isMarked, sharePerPerson, totalPaid, type PayRequest, type SplitTemplate } from "@/utils/payStory";
+import { isOrganiser } from "@/utils/splitOrganiser";
 
 export const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 
@@ -16,7 +16,7 @@ export type PayOptions = {
 	expiresAt?: number;
 };
 
-/** Everything a payer can do on a shared split. Views only decide how it looks. */
+/** Everything a payer (or the organiser) can do on a shared split. Views only decide how it looks. */
 export function usePay(t: SplitTemplate, req: PayRequest, onChange: (r: PayRequest) => void, opts: PayOptions = {}) {
 	const live = Boolean(opts.shareUrl);
 	const canOpenApps = useCanOpenUpiApps();
@@ -30,21 +30,15 @@ export function usePay(t: SplitTemplate, req: PayRequest, onChange: (r: PayReque
 	const [who, setWho] = useState("");
 	const [paying, setPaying] = useState(false);
 	const [copied, setCopied] = useState(false);
+	// Views render only in the browser (after the split loads), so this reads storage once, on mount.
+	const [organiser] = useState(() => typeof window !== "undefined" && isOrganiser(window.location.pathname));
 
 	const storage = live ? "cloud" : "link";
 	const mode = share ? "even" : "free";
 
 	// Once per split per page load: who opened it and how far along it is (no amounts or names).
 	useEffect(() => {
-		let role = "visitor";
-		try {
-			if (sessionStorage.getItem(ORGANISER_KEY) === window.location.pathname) {
-				role = "organiser";
-				if (!live) sessionStorage.removeItem(ORGANISER_KEY); // link-only splits share one path
-			}
-		} catch {
-			/* storage blocked */
-		}
+		const role = organiser ? "organiser" : "visitor";
 		track("split_link_opened", { template: t.id, storage, mode, role, payments: req.paid.length, done });
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- count the open, not later payments
 	}, []);
@@ -52,10 +46,13 @@ export function usePay(t: SplitTemplate, req: PayRequest, onChange: (r: PayReque
 	const amt = Math.round(Number(amount)) || 0;
 	const upi = amt >= 1 ? buildUpiLink({ pa: req.upiId, pn: req.name, am: amt, tn: req.title }) : null;
 
+	/** This name is already marked: whoever marked first (payer or organiser) counts. */
+	const taken = isMarked(req, who);
+
 	const record = () => {
-		if (!who.trim() || !(amt >= 1)) return;
+		if (!who.trim() || !(amt >= 1) || taken) return;
 		onChange({ ...req, paid: [...req.paid, [who.trim().slice(0, 30), amt]] });
-		track("split_payment_marked", { template: t.id, storage, mode, completes: paid + amt >= req.target });
+		track("split_payment_marked", { template: t.id, storage, mode, by: organiser ? "organiser" : "payer", completes: paid + amt >= req.target });
 		setWho("");
 		setPaying(false);
 	};
@@ -95,7 +92,7 @@ export function usePay(t: SplitTemplate, req: PayRequest, onChange: (r: PayReque
 
 	return {
 		live, expiresAt: opts.expiresAt, req, canOpenApps, share, paid, remaining, progress, done,
-		amount, setAmount, amt, upi, who, setWho, paying, startPay, record, copied, shareLink,
+		amount, setAmount, amt, upi, who, setWho, taken, organiser, paying, startPay, record, copied, shareLink,
 		/** How many even shares are covered so far (for seats, jerseys, slices). */
 		sharesPaid: share ? Math.min(Math.floor(paid / share), req.people) : 0,
 	};
@@ -145,22 +142,27 @@ export const PayButton = ({ p, className = "", style, children }: { p: PayState;
 	);
 };
 
-/** After paying, the payer adds their name so everyone can see it. */
+/**
+ * Marks a payment so everyone can see it: the payer after paying, or the
+ * organiser once the money arrives. Whoever marks a name first counts.
+ */
 export const MarkPaid = ({ p, className = "", btnClass = "", btnStyle }: { p: PayState; className?: string; btnClass?: string; btnStyle?: React.CSSProperties }) =>
-	p.paying || p.canOpenApps === false ? (
+	p.paying || p.canOpenApps === false || p.organiser ? (
 		<div className={`flex items-end gap-3 ${className}`}>
 			<label className="min-w-0 flex-1 text-left">
-				<span className="block text-xs opacity-70">Paid? Add your name</span>
+				<span aria-live="polite" className={`block text-xs ${p.taken ? "font-semibold" : "opacity-70"}`}>
+					{p.taken ? `${p.who.trim()} is already marked paid` : p.organiser ? "Got paid? Add who paid you" : "Paid? Add your name"}
+				</span>
 				<input
 					value={p.who}
 					maxLength={30}
 					onChange={(e) => p.setWho(e.target.value)}
-					placeholder="Your first name"
+					placeholder={p.organiser ? "Their first name" : "Your first name"}
 					className="inline-edit w-full py-1 text-base"
 				/>
 			</label>
-			<button type="button" onClick={p.record} disabled={!p.who.trim() || !(p.amt >= 1)} className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-40 ${btnClass}`} style={btnStyle}>
-				I’ve paid ✓
+			<button type="button" onClick={p.record} disabled={!p.who.trim() || !(p.amt >= 1) || p.taken} className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-40 ${btnClass}`} style={btnStyle}>
+				{p.organiser ? "Received ✓" : "I’ve paid ✓"}
 			</button>
 		</div>
 	) : null;
@@ -185,6 +187,8 @@ export const Trust = ({ p, className = "" }: { p: PayState; className?: string }
 			</span>
 		)}
 		Paying <b>{p.req.upiId}</b>. Check your UPI app shows <b>{p.req.name}</b> before you confirm. Payments are on trust:
-		{p.live ? " “I’ve paid” marks are added by the payer, not confirmed by UPI." : " after someone taps “I’ve paid”, share the updated link so everyone sees it."}
+		{p.live
+			? ` marked paid by the payer or by ${p.req.name}, whoever’s first. UPI doesn’t confirm them.`
+			: " after someone taps “I’ve paid”, share the updated link so everyone sees it."}
 	</p>
 );

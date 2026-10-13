@@ -95,7 +95,7 @@ export const CloudSplitApp = ({ id }: { id: string }) => {
 				await addCloudPayment(id, key.current, payment);
 			} catch {
 				setState({ status: "ok", req: before, expiresAt: state.expiresAt });
-				setSaveError("Couldn’t save your payment mark. Check your connection and tap “I’ve paid” again.");
+				setSaveError("Couldn’t save that payment mark. Check your connection and try again.");
 			} finally {
 				pending.current--;
 			}

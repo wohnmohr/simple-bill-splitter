@@ -6,9 +6,9 @@ import { track } from "@/lib/analytics";
 import { isValidUpiId } from "@/utils/upi";
 import { encodeRequest, sharePerPerson, type SplitTemplate } from "@/utils/payStory";
 import { SPLIT_TTL_DAYS, createCloudSplit } from "@/utils/splitCloud";
+import { rememberOrganiser } from "@/utils/splitOrganiser";
 
 export const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
-export const ORGANISER_KEY = "splitbiller-created-split";
 const MIN_PEOPLE = 2;
 const MAX_PEOPLE = 50;
 
@@ -54,12 +54,8 @@ export function useSplitDraft(t: SplitTemplate) {
 			storage = "link";
 		}
 		track("split_link_created", { template: t.id, mode: even ? "even" : "free", storage });
-		try {
-			// Lets the next page know the organiser (not a friend) opened it.
-			sessionStorage.setItem(ORGANISER_KEY, path.split("#")[0]);
-		} catch {
-			/* storage blocked: the open is counted as a visitor */
-		}
+		// Lets the split page know the organiser (not a friend) opened it.
+		rememberOrganiser(path.split("#")[0]);
 		window.location.assign(path);
 	};
 

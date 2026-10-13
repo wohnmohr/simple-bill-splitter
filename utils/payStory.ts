@@ -410,7 +410,7 @@ export interface PayRequest {
 	target: number;
 	/** Split evenly between this many people; 0 lets each friend pick an amount. */
 	people: number;
-	/** Payments friends have recorded, as [first name, rupees]. */
+	/** Payments marked by the payer or the organiser, as [first name, rupees]. One per person; see firstMarks. */
 	paid: [string, number][];
 }
 
@@ -438,13 +438,38 @@ export function sanitizePayment(p: unknown): [string, number] | null {
 	return [str(p[0], 30), int(p[1])];
 }
 
+/** Who a mark is for: "Priya", " priya " and "PRIYA" are the same person. */
+const personKey = (name: string) => name.trim().replace(/\s+/g, " ").toLowerCase();
+
+/**
+ * One mark per person, whoever marked it first: the payer ("I’ve paid") or the
+ * organiser ("Received"). Later marks for the same name are ignored, so a
+ * payment marked by both sides only counts once. Unnamed marks are kept.
+ */
+export function firstMarks(paid: [string, number][]): [string, number][] {
+	const seen = new Set<string>();
+	return paid.filter(([name]) => {
+		const key = personKey(name);
+		if (!key) return true;
+		if (seen.has(key)) return false;
+		seen.add(key);
+		return true;
+	});
+}
+
+/** True if `name` already has a payment marked. */
+export const isMarked = (req: PayRequest, name: string) => {
+	const key = personKey(name);
+	return key !== "" && req.paid.some(([n]) => personKey(n) === key);
+};
+
 /** Validates a request from untrusted input (a link or a decrypted blob); null if malformed. */
 export function sanitizeRequest(raw: unknown): PayRequest | null {
 	if (!raw || typeof raw !== "object") return null;
 	const r = raw as Record<string, unknown>;
 	if (int(r.target) < 1) return null;
 	const paid = Array.isArray(r.paid)
-		? r.paid.slice(0, 200).map(sanitizePayment).filter((x): x is [string, number] => x !== null)
+		? firstMarks(r.paid.slice(0, 200).map(sanitizePayment).filter((x): x is [string, number] => x !== null))
 		: [];
 	return {
 		kind: getTemplate(r.kind).id,
