@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { ALL_TOOL_SLUGS } from "@/content/tools";
+import { TEMPLATES } from "@/utils/payStory";
 
 export default function sitemap(): MetadataRoute.Sitemap {
 	const baseUrl =
@@ -10,6 +11,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
 		lastModified: new Date(),
 		changeFrequency: "weekly",
 		priority: 0.9,
+	}));
+
+	const splitEntries: MetadataRoute.Sitemap = TEMPLATES.map((t) => ({
+		url: `${baseUrl}/split/${t.id}`,
+		lastModified: new Date(),
+		changeFrequency: "monthly",
+		priority: 0.8,
 	}));
 
 	return [
@@ -32,11 +40,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
 			priority: 0.4,
 		},
 		{
-			url: `${baseUrl}/pay-story`,
+			url: `${baseUrl}/split`,
 			lastModified: new Date(),
-			changeFrequency: "monthly",
-			priority: 0.6,
+			changeFrequency: "weekly",
+			priority: 0.9,
 		},
+		...splitEntries,
 		...toolEntries,
 	];
 }

@@ -6,14 +6,17 @@ import {
 	ensureSchema,
 	getDb,
 	hashIp,
-	isRateLimited,
+	rateLimitHit,
 } from "@/lib/turso";
+
+import { sameOrigin } from "@/lib/splitStore";
 
 export const runtime = "nodejs";
 
 const TRIGGERS = new Set(["group_settled", "manual", "share_viewed", "moment"]);
 
 export async function POST(req: Request) {
+	if (!sameOrigin(req)) return Response.json({ error: "Forbidden" }, { status: 403 });
 	let body: Record<string, unknown>;
 	try {
 		body = await req.json();
@@ -39,10 +42,11 @@ export async function POST(req: Request) {
 		const db = getDb();
 		await ensureSchema(db);
 		const ipHash = hashIp(req);
-		if (await isRateLimited(db, "feedback", ipHash, 10)) {
+		const hit = await rateLimitHit(db, "feedback", ipHash);
+		if (hit) {
 			return Response.json(
-				{ error: "Thanks — we've got plenty from you this hour. Try again later." },
-				{ status: 429 }
+				{ error: `Thanks — we've got plenty from you ${hit === "day" ? "today" : "this hour"}. Try again later.` },
+				{ status: 429, headers: { "Retry-After": hit === "day" ? "86400" : "3600" } }
 			);
 		}
 		await db.execute({

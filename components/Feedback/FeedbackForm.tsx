@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
-import { track } from "@/lib/analytics";
+import { track, pageArea } from "@/lib/analytics";
 import { FeedbackContext, describeContext } from "@/lib/feedbackContext";
 
 interface FeedbackFormProps {
@@ -57,7 +57,7 @@ export const FeedbackForm = ({
 			});
 			const data = await res.json().catch(() => ({}));
 			if (!res.ok) throw new Error(data.error || "Couldn't send feedback. Try again.");
-			track("feedback_submitted", { rating, trigger, has_comment: comment.trim().length > 0 });
+			track("feedback_submitted", { rating, trigger, area: pageArea(), has_comment: comment.trim().length > 0 });
 			setStatus("sent");
 			onSent?.();
 		} catch (err) {

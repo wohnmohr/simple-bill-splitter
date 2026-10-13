@@ -26,7 +26,12 @@ export type AnalyticsEvent =
 	| "feedback_nudge_dismissed"
 	| "feedback_opened"
 	| "feedback_submitted"
-	| "feature_request_submitted";
+	| "feature_request_submitted"
+	| "split_link_created"
+	| "split_link_shared"
+	| "split_link_opened"
+	| "split_open_failed"
+	| "split_payment_marked";
 
 type EventProps = Record<string, string | number | boolean | undefined | null>;
 
@@ -36,6 +41,15 @@ const recentActions: string[] = [];
 
 export function getRecentActions(): string[] {
 	return [...recentActions];
+}
+
+/** Which part of the product a page belongs to. Never the full path (it can hold ids). */
+export function pageArea(): string {
+	if (typeof window === "undefined") return "unknown";
+	const seg = window.location.pathname.split("/")[1] || "home";
+	if (seg === "s" || seg === "pay-story") return "split_view";
+	if (seg === "split") return "split_create";
+	return seg === "dashboard" || seg === "share" || seg === "home" ? seg : "tool";
 }
 
 export function track(event: AnalyticsEvent, properties?: EventProps): void {

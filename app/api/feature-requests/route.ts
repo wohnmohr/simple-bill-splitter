@@ -7,12 +7,15 @@ import {
 	getDb,
 	hashIp,
 	isEmail,
-	isRateLimited,
+	rateLimitHit,
 } from "@/lib/turso";
+
+import { sameOrigin } from "@/lib/splitStore";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+	if (!sameOrigin(req)) return Response.json({ error: "Forbidden" }, { status: 403 });
 	let body: Record<string, unknown>;
 	try {
 		body = await req.json();
@@ -43,10 +46,11 @@ export async function POST(req: Request) {
 		const db = getDb();
 		await ensureSchema(db);
 		const ipHash = hashIp(req);
-		if (await isRateLimited(db, "feature_requests", ipHash, 5)) {
+		const hit = await rateLimitHit(db, "feature_requests", ipHash);
+		if (hit) {
 			return Response.json(
-				{ error: "You've sent several requests this hour — we'll read those first." },
-				{ status: 429 }
+				{ error: `You've sent several requests ${hit === "day" ? "today" : "this hour"} — we'll read those first.` },
+				{ status: 429, headers: { "Retry-After": hit === "day" ? "86400" : "3600" } }
 			);
 		}
 		await db.execute({
