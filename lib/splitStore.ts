@@ -1,8 +1,25 @@
 import "server-only";
 import { createHash, timingSafeEqual } from "crypto";
+import type { Client } from "@libsql/client";
+import { SPLIT_TTL_DAYS } from "@/utils/splitCloud";
 
-/** Splits are kept for 180 days, then they stop loading. */
-export const SPLIT_TTL_MS = 180 * 24 * 60 * 60 * 1000;
+/** Splits stop loading and are deleted SPLIT_TTL_DAYS after creation. */
+export const SPLIT_TTL_MS = SPLIT_TTL_DAYS * 24 * 60 * 60 * 1000;
+
+/**
+ * Deletes expired splits and their payments. Runs alongside normal writes, so
+ * storage stays bounded without a scheduled job. Cheap: both deletes use indexes.
+ */
+export async function purgeExpired(db: Client): Promise<void> {
+	const now = Date.now();
+	await db.batch(
+		[
+			{ sql: "DELETE FROM split_payments WHERE split_id IN (SELECT id FROM splits WHERE expires_at <= ?)", args: [now] },
+			{ sql: "DELETE FROM splits WHERE expires_at <= ?", args: [now] },
+		],
+		"write"
+	);
+}
 export const MAX_PAYMENTS = 200;
 
 export const SPLIT_ID_RE = /^[A-Za-z0-9_-]{22}$/;

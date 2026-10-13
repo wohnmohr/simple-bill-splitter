@@ -388,7 +388,7 @@ export const TEMPLATES: SplitTemplate[] = [
 		],
 		faqs: [
 			{ q: "Does money pass through SplitBiller?", a: "No. Payments go straight from your friends’ UPI app to yours. SplitBiller only builds the link." },
-			{ q: "Where is the split stored?", a: "In the cloud, end-to-end encrypted. It’s locked in your browser before upload and the key stays in your link, so SplitBiller can’t read it. That’s also how payments update live for everyone." },
+			{ q: "Where is the split stored?", a: "In the cloud, end-to-end encrypted. It’s locked in your browser before upload and the key stays in your link, so SplitBiller can’t read it. That’s also how payments update live for everyone. Splits are deleted automatically 30 days after they’re made." },
 		],
 	},
 ];

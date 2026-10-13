@@ -1,5 +1,5 @@
 import { FeedbackUnavailableError, ensureSchema, getDb, hashIp, isRateLimited } from "@/lib/turso";
-import { NO_STORE, SPLIT_ID_RE, SPLIT_TTL_MS, cleanBlob, cleanToken, hashToken } from "@/lib/splitStore";
+import { NO_STORE, SPLIT_ID_RE, SPLIT_TTL_MS, cleanBlob, cleanToken, hashToken, purgeExpired } from "@/lib/splitStore";
 
 export const runtime = "nodejs";
 
@@ -30,7 +30,8 @@ export async function POST(req: Request) {
 			args: [id, now, now + SPLIT_TTL_MS, hashToken(token), blob, ipHash],
 		});
 		if (res.rowsAffected === 0) return Response.json({ error: "Split already exists" }, { status: 409, headers: NO_STORE });
-		return Response.json({ ok: true }, { status: 201, headers: NO_STORE });
+		await purgeExpired(db).catch((e) => console.error("split purge failed", (e as Error).message));
+		return Response.json({ ok: true, expiresAt: now + SPLIT_TTL_MS }, { status: 201, headers: NO_STORE });
 	} catch (err) {
 		if (err instanceof FeedbackUnavailableError) return Response.json({ error: "Offline" }, { status: 503, headers: NO_STORE });
 		console.error("split create failed", (err as Error).message);

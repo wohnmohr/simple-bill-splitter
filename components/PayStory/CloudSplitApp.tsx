@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { track } from "@/lib/analytics";
 import type { PayRequest } from "@/utils/payStory";
-import { addCloudPayment, loadCloudSplit } from "@/utils/splitCloud";
+import { SPLIT_TTL_DAYS, addCloudPayment, loadCloudSplit } from "@/utils/splitCloud";
 import { SplitViewKeyed as SplitView } from "./views";
 
 const POLL_MS = 15_000;
 
-type State = { status: "loading" } | { status: "ok"; req: PayRequest } | { status: "missing" | "locked" | "offline" };
+type State = { status: "loading" } | { status: "ok"; req: PayRequest; expiresAt: number } | { status: "missing" | "locked" | "offline" };
 
 const MESSAGES = {
-	missing: ["This split has ended", "It may have expired, or the link was copied incompletely."],
+	missing: ["This split has ended", `Split links are deleted automatically ${SPLIT_TTL_DAYS} days after they’re made, or the link may have been copied incompletely.`],
 	locked: ["This link can’t be opened", "The key at the end of the link is missing or wrong. Ask the organiser to send it again."],
 	offline: ["Couldn’t load this split", "Check your connection and try again."],
 } as const;
@@ -22,12 +23,20 @@ export const CloudSplitApp = ({ id }: { id: string }) => {
 	const [saveError, setSaveError] = useState("");
 	const key = useRef("");
 	const pending = useRef(0);
+	const reported = useRef(false);
 
 	const refresh = useCallback(async () => {
 		if (pending.current) return; // don't overwrite an optimistic payment mid-save
 		const next = await loadCloudSplit(id, key.current);
-		if (next.status === "ok") setState(next);
-		else setState((prev) => (prev.status === "ok" && next.status === "offline" ? prev : next));
+		if (next.status === "ok") return setState(next);
+		setState((prev) => {
+			if (prev.status === "ok" && next.status === "offline") return prev; // keep showing what we have
+			if (!reported.current) {
+				reported.current = true;
+				track("split_open_failed", { reason: next.status });
+			}
+			return next;
+		});
 	}, [id]);
 
 	useEffect(() => {
@@ -53,12 +62,12 @@ export const CloudSplitApp = ({ id }: { id: string }) => {
 			const payment = next.paid[next.paid.length - 1];
 			const before = state.req;
 			setSaveError("");
-			setState({ status: "ok", req: next });
+			setState({ status: "ok", req: next, expiresAt: state.expiresAt });
 			pending.current++;
 			try {
 				await addCloudPayment(id, key.current, payment);
 			} catch {
-				setState({ status: "ok", req: before });
+				setState({ status: "ok", req: before, expiresAt: state.expiresAt });
 				setSaveError("Couldn’t save your payment mark. Check your connection and tap “I’ve paid” again.");
 			} finally {
 				pending.current--;
@@ -84,7 +93,7 @@ export const CloudSplitApp = ({ id }: { id: string }) => {
 	return (
 		<>
 			{saveError && <p role="alert" className="bg-negative-soft px-4 py-3 text-center text-sm font-semibold text-negative">{saveError}</p>}
-			<SplitView req={state.req} onChange={record} shareUrl={typeof window === "undefined" ? undefined : window.location.href} />
+			<SplitView req={state.req} onChange={record} expiresAt={state.expiresAt} shareUrl={typeof window === "undefined" ? undefined : window.location.href} />
 		</>
 	);
 };

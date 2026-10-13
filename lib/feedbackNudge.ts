@@ -17,7 +17,7 @@ const COOLDOWN_DAYS: Record<NudgeOutcome, number> = {
 };
 
 /** Analytics events that mean the user just finished the job they came to do. */
-const MOMENTS = new Set(["share_settlement_succeeded", "settlement_marked_paid"]);
+const MOMENTS = new Set(["share_settlement_succeeded", "settlement_marked_paid", "split_link_shared", "split_payment_marked"]);
 
 let shownThisSession = false;
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ORGANISER_KEY } from "../scenes/shared";
 import { UpiQr, useCanOpenUpiApps } from "@/components/Settlements/UpiQr";
 import { track } from "@/lib/analytics";
 import { buildUpiLink } from "@/utils/upi";
@@ -11,6 +12,8 @@ export const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 export type PayOptions = {
 	/** Stable link for a cloud split; payments sync for everyone, so no "updated link" to reshare. */
 	shareUrl?: string;
+	/** When a cloud split is deleted (ms since epoch). */
+	expiresAt?: number;
 };
 
 /** Everything a payer can do on a shared split. Views only decide how it looks. */
@@ -28,12 +31,31 @@ export function usePay(t: SplitTemplate, req: PayRequest, onChange: (r: PayReque
 	const [paying, setPaying] = useState(false);
 	const [copied, setCopied] = useState(false);
 
+	const storage = live ? "cloud" : "link";
+	const mode = share ? "even" : "free";
+
+	// Once per split per page load: who opened it and how far along it is (no amounts or names).
+	useEffect(() => {
+		let role = "visitor";
+		try {
+			if (sessionStorage.getItem(ORGANISER_KEY) === window.location.pathname) {
+				role = "organiser";
+				if (!live) sessionStorage.removeItem(ORGANISER_KEY); // link-only splits share one path
+			}
+		} catch {
+			/* storage blocked */
+		}
+		track("split_link_opened", { template: t.id, storage, mode, role, payments: req.paid.length, done });
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- count the open, not later payments
+	}, []);
+
 	const amt = Math.round(Number(amount)) || 0;
 	const upi = amt >= 1 ? buildUpiLink({ pa: req.upiId, pn: req.name, am: amt, tn: req.title }) : null;
 
 	const record = () => {
 		if (!who.trim() || !(amt >= 1)) return;
 		onChange({ ...req, paid: [...req.paid, [who.trim().slice(0, 30), amt]] });
+		track("split_payment_marked", { template: t.id, storage, mode, completes: paid + amt >= req.target });
 		setWho("");
 		setPaying(false);
 	};
@@ -41,7 +63,7 @@ export function usePay(t: SplitTemplate, req: PayRequest, onChange: (r: PayReque
 	const startPay = () => {
 		if (!upi) return;
 		setPaying(true);
-		track("upi_pay_link_clicked", { source: "split", template: t.id });
+		track("upi_pay_link_clicked", { source: "split", template: t.id, storage, mode });
 	};
 
 	const shareLink = async () => {
@@ -51,9 +73,11 @@ export function usePay(t: SplitTemplate, req: PayRequest, onChange: (r: PayReque
 			: live
 				? `${req.title}: pay your share here. It updates live for everyone.`
 				: `${req.title}: ${inr(paid)} of ${inr(req.target)} so far. Join in:`;
+		const shared = (method: "native" | "copy") => track("split_link_shared", { template: t.id, storage, method, done });
 		if (navigator.share) {
 			try {
 				await navigator.share({ title: req.title, text, url });
+				shared("native");
 				return;
 			} catch {
 				/* cancelled: fall through to copy */
@@ -61,6 +85,7 @@ export function usePay(t: SplitTemplate, req: PayRequest, onChange: (r: PayReque
 		}
 		try {
 			await navigator.clipboard?.writeText(`${text} ${url}`);
+			shared("copy");
 			setCopied(true);
 			setTimeout(() => setCopied(false), 2000);
 		} catch {
@@ -69,7 +94,7 @@ export function usePay(t: SplitTemplate, req: PayRequest, onChange: (r: PayReque
 	};
 
 	return {
-		live, req, canOpenApps, share, paid, remaining, progress, done,
+		live, expiresAt: opts.expiresAt, req, canOpenApps, share, paid, remaining, progress, done,
 		amount, setAmount, amt, upi, who, setWho, paying, startPay, record, copied, shareLink,
 		/** How many even shares are covered so far (for seats, jerseys, slices). */
 		sharesPaid: share ? Math.min(Math.floor(paid / share), req.people) : 0,
@@ -153,7 +178,12 @@ export const ShareBar = ({ p, t, className = "", primary = "", primaryStyle, sec
 /** Who is being paid, and the honest caveat about trust. */
 export const Trust = ({ p, className = "" }: { p: PayState; className?: string }) => (
 	<p className={`text-xs opacity-70 ${className}`}>
-		{p.live && <span className="mb-1 block font-semibold">🔒 End-to-end encrypted · updates live for everyone with the link</span>}
+		{p.live && (
+			<span className="mb-1 block font-semibold">
+				🔒 End-to-end encrypted · updates live for everyone with the link
+				{p.expiresAt ? ` · deleted automatically on ${new Date(p.expiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}` : ""}
+			</span>
+		)}
 		Paying <b>{p.req.upiId}</b>. Check your UPI app shows <b>{p.req.name}</b> before you confirm. Payments are on trust:
 		{p.live ? " “I’ve paid” marks are added by the payer, not confirmed by UPI." : " after someone taps “I’ve paid”, share the updated link so everyone sees it."}
 	</p>

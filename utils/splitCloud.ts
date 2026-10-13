@@ -1,6 +1,9 @@
 import { sanitizePayment, sanitizeRequest, type PayRequest } from "@/utils/payStory";
 import { SPLIT_ID_RE, SPLIT_KEY_RE, newVault, open, seal, writeToken } from "@/utils/splitVault";
 
+/** Cloud splits are deleted this many days after they're created (keeps the free service cheap and private). */
+export const SPLIT_TTL_DAYS = 30;
+
 /** Share path for a cloud split; the key rides in the fragment and never reaches the server. */
 export const cloudPath = (id: string, key: string) => `/s/${id}#${key}`;
 
@@ -18,7 +21,7 @@ export async function createCloudSplit(req: PayRequest): Promise<string> {
 	return cloudPath(id, key);
 }
 
-export type CloudLoad = { status: "ok"; req: PayRequest } | { status: "missing" | "locked" | "offline" };
+export type CloudLoad = { status: "ok"; req: PayRequest; expiresAt: number } | { status: "missing" | "locked" | "offline" };
 
 /** Fetches and decrypts a split and its payments. */
 export async function loadCloudSplit(id: string, key: string): Promise<CloudLoad> {
@@ -31,12 +34,12 @@ export async function loadCloudSplit(id: string, key: string): Promise<CloudLoad
 	}
 	if (res.status === 404) return { status: "missing" };
 	if (!res.ok) return { status: "offline" };
-	const body = (await res.json()) as { blob: string; payments: string[] };
+	const body = (await res.json()) as { blob: string; payments: string[]; expiresAt: number };
 	const split = await open(key, id, "split", body.blob);
 	if (!split) return { status: "locked" };
 	const payments = await Promise.all(body.payments.map((b) => open(key, id, "payment", b)));
 	const req = sanitizeRequest({ ...(split as object), paid: payments.map(sanitizePayment).filter(Boolean) });
-	return req ? { status: "ok", req } : { status: "locked" };
+	return req ? { status: "ok", req, expiresAt: body.expiresAt } : { status: "locked" };
 }
 
 /** Encrypts and appends one payment. Throws if it couldn't be saved. */

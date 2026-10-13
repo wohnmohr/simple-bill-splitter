@@ -45,6 +45,7 @@ const SCHEMA = [
 		ip_hash     TEXT NOT NULL
 	)`,
 	`CREATE INDEX IF NOT EXISTS splits_ip ON splits (ip_hash, created_at)`,
+	`CREATE INDEX IF NOT EXISTS splits_expiry ON splits (expires_at)`,
 	`CREATE TABLE IF NOT EXISTS split_payments (
 		id          TEXT PRIMARY KEY,
 		split_id    TEXT NOT NULL REFERENCES splits (id) ON DELETE CASCADE,

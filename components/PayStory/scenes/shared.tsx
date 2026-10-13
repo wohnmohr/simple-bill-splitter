@@ -5,9 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
 import { isValidUpiId } from "@/utils/upi";
 import { encodeRequest, sharePerPerson, type SplitTemplate } from "@/utils/payStory";
-import { createCloudSplit } from "@/utils/splitCloud";
+import { SPLIT_TTL_DAYS, createCloudSplit } from "@/utils/splitCloud";
 
 export const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+export const ORGANISER_KEY = "splitbiller-created-split";
 const MIN_PEOPLE = 2;
 const MAX_PEOPLE = 50;
 
@@ -53,6 +54,12 @@ export function useSplitDraft(t: SplitTemplate) {
 			storage = "link";
 		}
 		track("split_link_created", { template: t.id, mode: even ? "even" : "free", storage });
+		try {
+			// Lets the next page know the organiser (not a friend) opened it.
+			sessionStorage.setItem(ORGANISER_KEY, path.split("#")[0]);
+		} catch {
+			/* storage blocked: the open is counted as a visitor */
+		}
 		window.location.assign(path);
 	};
 
@@ -182,7 +189,7 @@ export const Note = ({ d, className = "" }: { d: SplitDraft; className?: string 
 	d.error ? (
 		<p role="alert" className={`text-sm font-semibold ${className}`}>{d.error}</p>
 	) : (
-		<p className={`text-xs opacity-70 ${className}`}>🔒 End-to-end encrypted in the cloud: only people with your link can read it. Payments go straight to your UPI ID.</p>
+		<p className={`text-xs opacity-70 ${className}`}>🔒 End-to-end encrypted: only people with your link can read it. Deleted automatically after {SPLIT_TTL_DAYS} days. Payments go straight to your UPI ID.</p>
 	);
 
 /** Deterministic bars for a decorative barcode. */

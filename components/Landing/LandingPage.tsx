@@ -37,6 +37,7 @@ import { StickyCta } from "@/components/Landing/StickyCta";
 import { PromoVideo } from "@/components/Landing/PromoVideo";
 import { ALL_TOOL_SLUGS, TOOL_PAGES, ToolSlug } from "@/content/tools";
 import { TEMPLATES } from "@/utils/payStory";
+import { SPLIT_TTL_DAYS } from "@/utils/splitCloud";
 import { themeGradient } from "@/components/PayStory/TemplateGrid";
 
 const TOOL_ICONS: Record<ToolSlug, typeof Receipt> = {
@@ -140,7 +141,7 @@ const FAQS = [
 	},
 	{
 		q: "Do split pages store my data on a server?",
-		a: "Yes, but end-to-end encrypted. Split pages (dinner, rent, trip and the rest) are saved on our server so payments update live for everyone with the link. Each split is encrypted in your browser before upload, and the key stays in your link, which browsers never send to us. Our server only holds scrambled data that we can’t read. Groups you make in the main app never leave your device.",
+		a: `Yes, but end-to-end encrypted. Split pages (dinner, rent, trip and the rest) are saved on our server so payments update live for everyone with the link. Each split is encrypted in your browser before upload, and the key stays in your link, which browsers never send to us. Our server only holds scrambled data that we can’t read, and every split is deleted automatically ${SPLIT_TTL_DAYS} days after it’s made. Groups you make in the main app never leave your device.`,
 	},
 ];
 
@@ -355,6 +356,7 @@ export const LandingPage = () => {
 								<b className="font-semibold text-ink">Split pages use our server, end-to-end encrypted.</b> That’s how payments
 								update live for everyone. Each split is locked in your browser before it’s saved, and the key stays in your link,
 								so our server only ever holds scrambled data. Only people you share the link with can read it. Not even we can.
+								To keep it free and private, splits are deleted automatically {SPLIT_TTL_DAYS} days after they’re made.
 							</span>
 						</p>
 					</div>
@@ -484,7 +486,7 @@ export const LandingPage = () => {
 								"All calculations run locally in your browser",
 								"Your expenses are never sent to our servers",
 								"Share links are encrypted — only people with the link can read them",
-								"Split pages use our server to sync payments, end-to-end encrypted: we store only data we can’t read",
+								`Split pages use our server to sync payments, end-to-end encrypted, and are deleted after ${SPLIT_TTL_DAYS} days`,
 							].map((item) => (
 								<li key={item} className="flex items-start gap-2.5">
 									<Check className="mt-1 h-4 w-4 shrink-0 text-brand-300" />
