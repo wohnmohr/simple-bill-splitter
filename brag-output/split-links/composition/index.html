@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/audio-data.js"></script>
+    <style>
+      @font-face { font-family: "Outfit"; font-weight: 500; src: url("assets/fonts/outfit-latin-500-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Outfit"; font-weight: 600; src: url("assets/fonts/outfit-latin-600-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Outfit"; font-weight: 700; src: url("assets/fonts/outfit-latin-700-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Fraunces"; font-weight: 600; src: url("assets/fonts/fraunces-latin-600-normal.woff2") format("woff2"); }
+      @font-face { font-family: "Fraunces"; font-weight: 700; src: url("assets/fonts/fraunces-latin-700-normal.woff2") format("woff2"); }
+
+      :root {
+        --paper: #f7f6f3;
+        --ink: #1c1826;
+        --muted: #6b6577;
+        --brand: #53307b;
+        --brand-soft: #ece3f5;
+        --line: #e7e3ea;
+        --positive: #11754c;
+        --positive-soft: #e8f4ee;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--paper);
+        font-family: "Outfit", ui-sans-serif, system-ui, sans-serif; color: var(--ink); }
+      .display { font-family: "Fraunces", Georgia, serif; font-weight: 600; letter-spacing: -0.02em; }
+      .scene { position: absolute; inset: 0; }
+      .fill { position: absolute; inset: 0; }
+      .ico { width: 1em; height: 1em; flex: none; }
+
+      /* background glows (audio-reactive) */
+      #glowA { position: absolute; left: 980px; top: 40px; width: 1100px; height: 1100px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(83,48,123,0.20), rgba(83,48,123,0) 100%); }
+      #glowB { position: absolute; left: -380px; top: 520px; width: 900px; height: 900px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(236,227,245,0.95), rgba(236,227,245,0) 100%); }
+
+      /* scene 1: hook */
+      #s1-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+      .brandrow { display: flex; align-items: center; gap: 18px; font-size: 40px; font-weight: 600; color: var(--brand); margin-bottom: 36px; }
+      .brandrow img { width: 72px; height: 72px; object-fit: contain; transform: scale(1.6); margin-right: 8px; }
+      #hook { font-size: 200px; line-height: 1.02; text-align: center; }
+      #hook .u { position: relative; display: inline-block; }
+      #underline { position: absolute; left: 0; right: 0; bottom: -6px; height: 14px; border-radius: 7px; background: var(--brand); transform-origin: left center; }
+      #hooksub { margin-top: 56px; font-size: 44px; font-weight: 500; color: var(--muted); }
+
+      /* step labels */
+      .label { position: absolute; left: 140px; top: 0; width: 760px; height: 1080px; display: flex; flex-direction: column; justify-content: center; gap: 36px; }
+      .num { width: 84px; height: 84px; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 700; font-size: 44px; display: flex; align-items: center; justify-content: center; }
+      .label .display { font-size: 84px; line-height: 1.06; }
+      .label .sub { font-size: 36px; font-weight: 500; color: var(--muted); line-height: 1.3; max-width: 680px; }
+
+      /* the split card */
+      #stage-inner { position: absolute; inset: 0; }
+      #card { position: absolute; left: 1000px; top: 170px; width: 780px; height: 660px; background: #fff; border: 2px solid var(--line); border-radius: 36px;
+        box-shadow: 0 30px 70px -20px rgba(28,24,38,0.28); overflow: hidden; }
+      #cardhead { position: absolute; left: 40px; right: 40px; top: 32px; height: 104px; border-bottom: 2px solid var(--line); }
+      #cardhead .t { position: absolute; left: 0; top: 0; font-size: 50px; }
+      #cardhead .sub { position: absolute; left: 0; top: 64px; font-size: 28px; color: var(--muted); white-space: nowrap; }
+      #duebox { position: absolute; right: 0; top: 0; text-align: right; }
+      #duebox .k { font-size: 22px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+      #duebox .v { font-size: 52px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+
+      #empty { position: absolute; left: 40px; right: 40px; top: 260px; text-align: center; font-size: 32px; color: var(--muted); }
+      .row { position: absolute; left: 40px; width: 700px; height: 96px; border: 2px solid var(--line); border-radius: 24px; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; background: #fff; opacity: 0; }
+      .row .n { font-size: 38px; font-weight: 600; display: flex; align-items: center; gap: 14px; line-height: 1.1; }
+      .row .n .ck { width: 46px; height: 46px; border-radius: 50%; background: var(--positive-soft); color: var(--positive); display: flex; align-items: center; justify-content: center; font-size: 28px; }
+      .row .by { font-size: 24px; color: var(--muted); font-weight: 500; margin-top: 2px; }
+      .row .a { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; }
+      #row1 { top: 164px; } #row2 { top: 276px; } #row3 { top: 388px; }
+
+      #sharebtn { position: absolute; left: 40px; right: 40px; top: 532px; height: 88px; border-radius: 22px; background: var(--brand); color: #fff; font-size: 36px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+      #sharebtn span { position: absolute; }
+
+      #mark { position: absolute; left: 40px; right: 40px; top: 508px; height: 120px; display: flex; align-items: flex-end; gap: 24px; opacity: 0; }
+      #mark .field { position: relative; flex: 1; height: 120px; }
+      #mark .lbl { position: absolute; left: 0; top: 0; font-size: 28px; white-space: nowrap; }
+      #lblA { color: var(--muted); }
+      #lblB { font-weight: 600; color: var(--ink); opacity: 0; }
+      #mark .input { position: absolute; left: 0; right: 0; bottom: 6px; height: 64px; border-bottom: 3px dashed var(--ink); font-size: 40px; font-weight: 500; display: flex; align-items: center; }
+      #ph { color: #b8b2c0; position: absolute; }
+      #typed { position: absolute; }
+      #caret { position: absolute; width: 3px; height: 44px; background: var(--brand); }
+      #recv { flex: none; width: 250px; height: 84px; border-radius: 20px; background: var(--brand); color: #fff; font-size: 34px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; }
+
+      .note { position: absolute; right: 140px; top: 868px; height: 84px; padding: 0 34px 0 22px; display: flex; align-items: center; gap: 16px; background: #fff; border: 2px solid var(--line); border-radius: 22px;
+        box-shadow: 0 18px 40px -14px rgba(28,24,38,0.3); font-size: 34px; font-weight: 600; opacity: 0; white-space: nowrap; }
+      .note .dot { width: 48px; height: 48px; border-radius: 50%; background: var(--positive-soft); display: flex; align-items: center; justify-content: center; color: var(--positive); font-size: 28px; }
+      #livepulse { width: 18px; height: 18px; border-radius: 50%; background: var(--positive); }
+      #cursor { position: absolute; left: 0; top: 0; width: 64px; height: 64px; opacity: 0; filter: drop-shadow(0 6px 8px rgba(28,24,38,0.35)); }
+
+      /* scene 5: outro */
+      #s5-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+      #outro { font-size: 116px; line-height: 1.08; text-align: center; }
+      #outro .l { display: block; }
+      #chips5 { display: flex; gap: 24px; margin-top: 60px; }
+      .pill { display: inline-flex; align-items: center; gap: 12px; height: 76px; padding: 0 34px 0 26px; border-radius: 38px; background: #fff; border: 2px solid var(--line); font-size: 36px; font-weight: 600; }
+      .pill svg { width: 34px; height: 34px; color: var(--positive); }
+      #logorow { display: flex; align-items: center; gap: 26px; margin-top: 64px; }
+      #logorow img { width: 96px; height: 96px; object-fit: contain; transform: scale(1.6); margin-right: 20px; }
+      #logorow .nm { font-size: 56px; color: var(--brand); }
+      #logorow .tg { font-size: 34px; color: var(--muted); font-weight: 500; margin-top: 4px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="24" data-width="1920" data-height="1080">
+      <!-- music + sfx (SFX volumes sit under the bed) -->
+      <audio id="music" data-start="0" data-duration="24" data-track-index="10" data-volume="0.4" data-fade-in="1" data-fade-out="2" src="assets/music/happy-beats-business-moves-vol-1-by-ende-dot-app.mp3"></audio>
+      <audio id="sfx-hook" data-start="0.4" data-duration="0.2" data-track-index="11" data-volume="0.7" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+      <audio id="sfx-share" data-start="5.52" data-duration="0.03" data-track-index="12" data-volume="0.7" src="assets/sfx/click_003.ogg"></audio>
+      <audio id="sfx-copied" data-start="6.02" data-duration="0.08" data-track-index="12" data-volume="0.55" src="assets/sfx/click2.ogg"></audio>
+      <audio id="sfx-row1" data-start="9.02" data-duration="0.62" data-track-index="13" data-volume="0.5" src="assets/sfx/card-slide-1.ogg"></audio>
+      <audio id="sfx-row2" data-start="10.02" data-duration="0.62" data-track-index="13" data-volume="0.5" src="assets/sfx/card-slide-1.ogg"></audio>
+      <audio id="sfx-live" data-start="11.02" data-duration="0.08" data-track-index="12" data-volume="0.55" src="assets/sfx/click2.ogg"></audio>
+      <audio id="sfx-k1" data-start="14.02" data-duration="0.08" data-track-index="14" data-volume="0.3" src="assets/sfx/click2.ogg"></audio>
+      <audio id="sfx-k2" data-start="14.17" data-duration="0.08" data-track-index="14" data-volume="0.3" src="assets/sfx/click2.ogg"></audio>
+      <audio id="sfx-k3" data-start="14.32" data-duration="0.08" data-track-index="14" data-volume="0.3" src="assets/sfx/click2.ogg"></audio>
+      <audio id="sfx-press" data-start="15.02" data-duration="0.03" data-track-index="15" data-volume="0.7" src="assets/sfx/click_003.ogg"></audio>
+      <audio id="sfx-row3" data-start="15.1" data-duration="0.62" data-track-index="13" data-volume="0.5" src="assets/sfx/card-slide-1.ogg"></audio>
+      <audio id="sfx-badge" data-start="16.52" data-duration="0.14" data-track-index="16" data-volume="0.6" src="assets/sfx/bong_001.ogg"></audio>
+      <audio id="sfx-title" data-start="18.02" data-duration="1.5" data-track-index="17" data-volume="0.6" src="assets/sfx/impactBell_heavy_000.ogg"></audio>
+      <audio id="sfx-logo" data-start="20.02" data-duration="0.14" data-track-index="16" data-volume="0.45" src="assets/sfx/bong_001.ogg"></audio>
+
+      <!-- background -->
+      <div class="fill" id="bg"><div id="glowB" data-layout-allow-overflow></div><div id="glowA"></div></div>
+
+      <!-- Scene 1: hook -->
+      <div class="scene clip" id="scene1" data-start="0" data-duration="3.6" data-track-index="1">
+        <div id="s1-inner">
+          <div class="brandrow" id="s1-brand"><img src="assets/logo.png" alt="" /><span>SplitBiller</span></div>
+          <h1 id="hook" class="display">Who’s <span class="u">paid?<span id="underline"></span></span></h1>
+          <p id="hooksub">No more scrolling the group chat to check.</p>
+        </div>
+      </div>
+
+      <!-- Scenes 2-4: share the link → friends mark paid → organiser marks received -->
+      <div class="scene clip" id="stage" data-start="3.5" data-duration="14.6" data-track-index="2">
+        <div id="stage-inner">
+          <div id="card">
+            <div id="cardhead">
+              <div class="t display">Dinner tonight</div>
+              <div class="sub">Bill from Priya · ₹3,000 ÷ 5</div>
+              <div id="duebox"><div class="k">Balance due</div><div class="v" id="duev">₹3,000</div></div>
+            </div>
+
+            <div id="empty">No payments yet. Be the first.</div>
+
+            <div class="row" id="row1"><div><div class="n"><span class="ck">✓</span>Rahul</div></div><div class="a">−₹600</div></div>
+            <div class="row" id="row2"><div><div class="n"><span class="ck">✓</span>Aisha</div></div><div class="a">−₹600</div></div>
+            <div class="row" id="row3"><div><div class="n"><span class="ck">✓</span>Dev</div></div><div class="a">−₹600</div></div>
+
+            <div id="sharebtn" data-layout-allow-overlap><span id="shareA">Share link</span><span id="shareB" style="opacity:0">Link copied</span></div>
+
+            <div id="mark">
+              <div class="field" data-layout-allow-overlap>
+                <div class="lbl" id="lblA">Got paid? Add who paid you</div>
+                <div class="lbl" id="lblB">rahul is already marked paid</div>
+                <div class="input"><span id="ph">Their first name</span><span id="typed"></span><span id="caret"></span></div>
+              </div>
+              <div id="recv">Received ✓</div>
+            </div>
+          </div>
+
+          <div class="note" id="note-e2e" style="font-size:28px"><span class="dot">🔒</span>End-to-end encrypted · updates live for everyone with the link</div>
+          <div class="note" id="note-live"><span class="dot"><span id="livepulse"></span></span>Updates live for everyone</div>
+          <div class="note" id="note-once"><span class="dot">✓</span>Counted once, whoever marks first</div>
+
+          <svg id="cursor" viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.8L9.5 19z" fill="#1c1826" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <!-- Step labels: one clip each so they never coexist -->
+      <div class="scene clip" id="labc1" data-start="3.5" data-duration="4.9" data-track-index="4"><div class="label" id="lab1"><div class="num">1</div><div class="display">Share one link with the group</div><div class="sub">The key lives in the link. Our server can’t read the split.</div></div></div>
+      <div class="scene clip" id="labc2" data-start="8.4" data-duration="5" data-track-index="4"><div class="label" id="lab2"><div class="num">2</div><div class="display">Friends pay by UPI and tap “I’ve paid”</div></div></div>
+      <div class="scene clip" id="labc3" data-start="13.4" data-duration="4.7" data-track-index="4"><div class="label" id="lab3"><div class="num">3</div><div class="display">Or mark it “Received” yourself</div><div class="sub">Paid in cash? Forgot to tap? You’re covered.</div></div></div>
+
+      <!-- Scene 5: outro -->
+      <div class="scene clip" id="scene5" data-start="18" data-duration="6" data-track-index="3">
+        <div id="s5-inner">
+          <h2 id="outro" class="display"><span class="l" id="o1">One link.</span><span class="l" id="o2">Everyone knows who’s paid.</span></h2>
+          <div id="chips5">
+            <span class="pill" id="p1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>End-to-end encrypted</span>
+            <span class="pill" id="p2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Updates live</span>
+            <span class="pill" id="p3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>No sign-up</span>
+          </div>
+          <div id="logorow"><img src="assets/logo.png" alt="" /><div><div class="nm display">SplitBiller</div><div class="tg">Pay your share of a split by UPI.</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const EASE = "power3.out";
+      const fmt = (n) => "₹" + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+      // Seek-safe helpers: state comes from tweened values, never from one-off callbacks.
+      const due = { v: 3000 };
+      const showDue = () => (document.getElementById("duev").textContent = fmt(due.v));
+      const typer = { n: 0, word: "" };
+      const showTyped = () => {
+        const text = typer.word.slice(0, Math.round(typer.n));
+        document.getElementById("typed").textContent = text;
+        document.getElementById("ph").style.opacity = text ? 0 : 1;
+        const caret = document.getElementById("caret");
+        caret.style.left = document.getElementById("typed").offsetWidth + 4 + "px";
+      };
+      const typeWord = (word, at, perChar) => {
+        tl.set(typer, { word, n: 0, onUpdate: showTyped, onComplete: showTyped }, at - 0.001);
+        tl.to(typer, { n: word.length, duration: perChar * word.length, ease: "none", onUpdate: showTyped }, at);
+      };
+
+      // ---- Scene 1: hook (0 - 3.5s)
+      tl.fromTo("#s1-brand", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: EASE }, 0.15);
+      tl.fromTo("#hook", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.7, ease: EASE }, 0.4);
+      tl.fromTo("#underline", { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power2.inOut" }, 1.1);
+      tl.fromTo("#hooksub", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: EASE }, 1.6);
+      tl.to("#s1-inner", { opacity: 0, y: -30, duration: 0.4, ease: "power2.in" }, 3.1);
+
+      // ---- Step 1: share one link (3.5 - 8.4s)
+      tl.fromTo("#lab1", { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.5, ease: EASE }, 3.5);
+      tl.fromTo("#card", { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.6, ease: EASE }, 3.5);
+      tl.fromTo("#note-e2e", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, ease: EASE }, 4.52);
+      // Organiser taps "Share link" (button center ≈ page 1390,746; cursor tip sits ~15,10 into its box) — beat 5.52, then "Link copied" on 6.02
+      tl.fromTo("#cursor", { opacity: 0, x: 1560, y: 760 }, { opacity: 1, x: 1385, y: 735, duration: 0.7, ease: "power2.inOut" }, 4.8);
+      tl.to("#sharebtn", { scale: 0.97, backgroundColor: "#3f2260", duration: 0.1 }, 5.52);
+      tl.to("#cursor", { scale: 0.88, duration: 0.1 }, 5.52);
+      tl.to("#sharebtn", { scale: 1, backgroundColor: "#53307b", duration: 0.25, ease: "power2.out" }, 5.64);
+      tl.to("#cursor", { scale: 1, duration: 0.25, ease: "power2.out" }, 5.64);
+      tl.to("#shareA", { opacity: 0, duration: 0.15 }, 6.02);
+      tl.fromTo("#shareB", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 6.06);
+      tl.to("#cursor", { opacity: 0, duration: 0.3 }, 6.6);
+
+      // ---- Step 2: friends mark paid (8.4 - 13.4s)
+      tl.to("#lab1", { opacity: 0, x: -30, duration: 0.3, ease: "power2.in" }, 8.0);
+      tl.to("#note-e2e", { opacity: 0, duration: 0.3 }, 8.0);
+      tl.to("#shareB", { opacity: 0, duration: 0.2 }, 8.1);
+      tl.to("#shareA", { opacity: 1, duration: 0.2 }, 8.3);
+      tl.fromTo("#lab2", { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.5, ease: EASE }, 8.4);
+      tl.to("#empty", { opacity: 0, duration: 0.3 }, 8.7);
+      // beat-grid, every other beat for readability: 9.02, 10.02
+      [["#row1", 9.02, 2400], ["#row2", 10.02, 1800]].forEach(([id, t, v]) => {
+        tl.fromTo(id, { opacity: 0, x: 70 }, { opacity: 1, x: 0, duration: 0.5, ease: EASE }, t);
+        tl.to(due, { v, duration: 0.6, ease: "power2.out", onUpdate: showDue }, t + 0.1);
+      });
+      tl.fromTo("#note-live", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, ease: EASE }, 11.02);
+      tl.fromTo("#livepulse", { scale: 0.7 }, { scale: 1.15, duration: 0.5, repeat: 3, yoyo: true, ease: "sine.inOut" }, 11.3);
+
+      // ---- Step 3: organiser marks "Received" (13.4 - 18s)
+      tl.to("#lab2", { opacity: 0, x: -30, duration: 0.3, ease: "power2.in" }, 13.0);
+      tl.to("#note-live", { opacity: 0, duration: 0.3 }, 13.0);
+      tl.to("#sharebtn", { opacity: 0, y: 10, duration: 0.3 }, 13.0);
+      tl.fromTo("#lab3", { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.5, ease: EASE }, 13.4);
+      tl.fromTo("#mark", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: EASE }, 13.5);
+      typeWord("Dev", 14.02, 0.15);
+      // Cursor to "Received ✓" (button center ≈ page 1613,758), press on beat 15.02
+      tl.fromTo("#cursor", { opacity: 0, x: 1700, y: 820 }, { opacity: 1, x: 1595, y: 745, duration: 0.6, ease: "power2.inOut" }, 14.3);
+      tl.to("#recv", { scale: 0.95, backgroundColor: "#3f2260", duration: 0.1 }, 15.02);
+      tl.to("#cursor", { scale: 0.88, duration: 0.1 }, 15.02);
+      tl.to("#recv", { scale: 1, backgroundColor: "#53307b", duration: 0.25, ease: "power2.out" }, 15.14);
+      tl.to("#cursor", { scale: 1, duration: 0.25, ease: "power2.out" }, 15.14);
+      tl.to(typer, { n: 0, duration: 0.01, onUpdate: showTyped }, 15.08);
+      tl.fromTo("#row3", { opacity: 0, x: 70 }, { opacity: 1, x: 0, duration: 0.5, ease: EASE }, 15.1);
+      tl.to(due, { v: 1200, duration: 0.6, ease: "power2.out", onUpdate: showDue }, 15.2);
+      tl.to("#cursor", { opacity: 0, duration: 0.3 }, 15.5);
+      // Someone tries Rahul again: blocked, counted once
+      typeWord("rahul", 15.7, 0.08);
+      tl.to("#lblA", { opacity: 0, duration: 0.15 }, 16.1);
+      tl.fromTo("#lblB", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 16.12);
+      tl.to("#recv", { opacity: 0.5, duration: 0.2 }, 16.12);
+      tl.fromTo("#row1", { boxShadow: "0 0 0 0 rgba(17,117,76,0)" }, { boxShadow: "0 0 0 6px rgba(17,117,76,0.25)", duration: 0.3, yoyo: true, repeat: 1 }, 16.2);
+      // beat-locked badge
+      tl.fromTo("#note-once", { opacity: 0, scale: 0.85, y: 20 }, { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "back.out(2)" }, 16.52);
+
+      // Stage exit
+      tl.to(["#stage-inner", "#lab3"], { opacity: 0, y: -30, duration: 0.4, ease: "power2.in" }, 17.6);
+
+      // ---- Scene 5: outro. beat-locked title 18.02; pills 18.52, 19.02, 19.52; logo 20.02; hold to 24
+      tl.fromTo("#o1", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.6, ease: EASE }, 18.02);
+      tl.fromTo("#o2", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.6, ease: EASE }, 18.3);
+      [["#p1", 18.52], ["#p2", 19.02], ["#p3", 19.52]].forEach(([id, t]) => {
+        tl.fromTo(id, { opacity: 0, y: 24, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.8)" }, t);
+      });
+      tl.fromTo("#logorow", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: EASE }, 20.02);
+
+      // ---- Audio-reactive: bass breathes the brand glow, mids lift the soft glow
+      const A = window.AUDIO;
+      for (let f = 0; f < A.bass.length; f++) {
+        tl.call(() => {
+          gsap.set("#glowA", { scale: 1 + A.bass[f] * 0.14, opacity: 0.55 + A.bass[f] * 0.45 });
+          gsap.set("#glowB", { opacity: 0.6 + A.mid[f] * 0.4 });
+        }, [], f / A.fps);
+      }
+
+      window.__timelines["main"] = tl;
+      showDue();
+      showTyped();
+      tl.seek(0);
+    </script>
+  </body>
+</html>
