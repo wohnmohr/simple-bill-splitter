@@ -26,16 +26,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 		if (!row || !tokenMatches(token, String(row.write_hash))) return reply({ error: "Not found" }, 404);
 		const hit = await rateLimitHit(db, "split_payments", ipHash);
 		if (hit) return rateLimited(hit, "payment updates");
-		// Claim a slot atomically, so concurrent requests can't push a split past the cap.
-		const slot = await db.execute({
-			sql: "UPDATE splits SET payments = payments + 1 WHERE id = ? AND payments < ? AND expires_at > ?",
-			args: [id, MAX_PAYMENTS, now],
-		});
-		if (slot.rowsAffected === 0) return reply({ error: "This split is full" }, 409);
-		await db.execute({
-			sql: "INSERT INTO split_payments (id, split_id, created_at, blob, ip_hash) VALUES (?, ?, ?, ?, ?)",
-			args: [randomUUID(), id, now, blob, ipHash],
-		});
+		// One transaction: the cap check, the new row and the version that announces it
+		// commit together. Parallel marks queue behind each other, none is lost, and a
+		// poll never sees the new version without the row (it would then miss it for good).
+		const [inserted] = await db.batch(
+			[
+				{
+					sql: `INSERT INTO split_payments (id, split_id, created_at, blob, ip_hash)
+					      SELECT ?, id, ?, ?, ? FROM splits WHERE id = ? AND payments < ? AND expires_at > ?`,
+					args: [randomUUID(), now, blob, ipHash, id, MAX_PAYMENTS, now],
+				},
+				{ sql: "UPDATE splits SET payments = (SELECT COUNT(*) FROM split_payments WHERE split_id = ?) WHERE id = ?", args: [id, id] },
+			],
+			"write"
+		);
+		if (inserted.rowsAffected === 0) return reply({ error: "This split is full" }, 409);
 		return reply({ ok: true }, 201);
 	} catch (err) {
 		if (err instanceof FeedbackUnavailableError) return reply({ error: "Offline" }, 503);
