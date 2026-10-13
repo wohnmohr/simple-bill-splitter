@@ -138,6 +138,10 @@ const FAQS = [
 		q: "Does it support different currencies?",
 		a: "Yes. The calculator works with any currency.",
 	},
+	{
+		q: "Do split pages store my data on a server?",
+		a: "Yes, but end-to-end encrypted. Split pages (dinner, rent, trip and the rest) are saved on our server so payments update live for everyone with the link. Each split is encrypted in your browser before upload, and the key stays in your link, which browsers never send to us. Our server only holds scrambled data that we can’t read. Groups you make in the main app never leave your device.",
+	},
 ];
 
 const Cell = ({ value, strong }: { value: boolean | string; strong?: boolean }) => {
@@ -348,8 +352,9 @@ export const LandingPage = () => {
 						<p className="mt-4 inline-flex items-start gap-2 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink-soft">
 							<Lock className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" strokeWidth={2} />
 							<span>
-								<b className="font-semibold text-ink">End-to-end encrypted in the cloud.</b> Each split is locked in your browser
-								before it’s saved. The key stays in your link, so only people you share it with can read it. Not even we can.
+								<b className="font-semibold text-ink">Split pages use our server, end-to-end encrypted.</b> That’s how payments
+								update live for everyone. Each split is locked in your browser before it’s saved, and the key stays in your link,
+								so our server only ever holds scrambled data. Only people you share the link with can read it. Not even we can.
 							</span>
 						</p>
 					</div>
@@ -472,13 +477,14 @@ export const LandingPage = () => {
 							Privacy-First Expense Splitting
 						</h2>
 						<p className="mt-3 text-lg font-medium text-brand-100">
-							Your data never leaves your device.
+							Your groups never leave your device.
 						</p>
 						<ul className="mt-5 space-y-2.5 text-brand-100">
 							{[
 								"All calculations run locally in your browser",
 								"Your expenses are never sent to our servers",
 								"Share links are encrypted — only people with the link can read them",
+								"Split pages use our server to sync payments, end-to-end encrypted: we store only data we can’t read",
 							].map((item) => (
 								<li key={item} className="flex items-start gap-2.5">
 									<Check className="mt-1 h-4 w-4 shrink-0 text-brand-300" />
