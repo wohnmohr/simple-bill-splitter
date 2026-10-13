@@ -15,6 +15,7 @@ import { GroupSelector } from "@/components/Group/GroupSelector";
 import { CreateGroupModal } from "@/components/Group/CreateGroupModal";
 import { AddMembersModal } from "@/components/Group/AddMembersModal";
 import { GroupsHome } from "@/components/Group/GroupsHome";
+import { SyncModal } from "@/components/Group/SyncModal";
 import { TabNavigation } from "@/components/Tabs/TabNavigation";
 import { ExpenseList } from "@/components/Expense/ExpenseList";
 import { ExpenseFormModal } from "@/components/Expense/ExpenseFormModal";
@@ -37,6 +38,7 @@ export default function Home() {
 	const [showGroupForm, setShowGroupForm] = useState(false);
 	const [showExpenseForm, setShowExpenseForm] = useState(false);
 	const [showMembersModal, setShowMembersModal] = useState(false);
+	const [showSync, setShowSync] = useState(false);
 	const [viewingExpenseId, setViewingExpenseId] = useState<string | null>(null);
 	const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 	const [editExpenseData, setEditExpenseData] = useState<{
@@ -59,6 +61,7 @@ export default function Home() {
 		updateGroupCurrency,
 		setGroupMe,
 		setGroups,
+		sync,
 	} = useGroups();
 
 	const { addMember, updateMemberUpi, deleteMember } = useGroupMembers(
@@ -309,6 +312,8 @@ export default function Home() {
 							onSelectGroup={setSelectedGroupId}
 							onDeleteGroup={handleDeleteGroup}
 							onManageMembers={() => setShowMembersModal(true)}
+							onShare={() => setShowSync(true)}
+							syncStatus={currentGroup ? sync.status[currentGroup.id] : undefined}
 							onChangeMe={() => {
 								if (!currentGroup) return;
 								setGroupMe(currentGroup.id, undefined);
@@ -447,6 +452,20 @@ export default function Home() {
 					onCreate={handleCreateGroup}
 					groupCount={groups.length}
 				/>
+
+				{currentGroup && (
+					<SyncModal
+						isOpen={showSync}
+						onClose={() => setShowSync(false)}
+						group={currentGroup}
+						status={sync.status[currentGroup.id]}
+						expiresAt={sync.expiresAt(currentGroup.id)}
+						onEnable={sync.enableSync}
+						onResetLink={sync.resetLink}
+						onDeleteForEveryone={sync.deleteSyncedGroup}
+						onKeepLocal={sync.keepLocalCopy}
+					/>
+				)}
 
 				{currentGroup && (
 					<AddMembersModal

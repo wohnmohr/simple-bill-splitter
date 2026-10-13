@@ -1,4 +1,5 @@
 import { Expense, Group, SplitMethod } from "@/types";
+import { newId } from "@/utils/ids";
 
 export const useExpenses = (
   groups: Group[],
@@ -20,7 +21,7 @@ export const useExpenses = (
 
     // Split only among the people ticked: the payer may have paid for others.
     const newExpense: Expense = {
-      id: `expense-${Date.now()}`,
+      id: newId("expense"),
       amount,
       paidBy,
       participants: Array.from(participants),
@@ -84,7 +85,7 @@ export const useExpenses = (
   const recordPayment = (from: string, to: string, amount: number): string | null => {
     if (!currentGroup || amount <= 0 || from === to) return null;
     const payment: Expense = {
-      id: `payment-${Date.now()}`,
+      id: newId("payment"),
       amount: Math.round(amount * 100) / 100,
       paidBy: from,
       participants: [to],

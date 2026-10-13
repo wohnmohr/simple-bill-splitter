@@ -1,4 +1,4 @@
-import { ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, Lock, Plus, Trash2 } from "lucide-react";
 import { Group } from "@/types";
 import { MAX_GROUPS } from "@/constants";
 import { formatCurrency } from "@/utils/formatting";
@@ -30,7 +30,7 @@ export const GroupsHome = ({
 						Your groups
 					</h1>
 					<p className="mt-1 text-sm text-ink-muted">
-						Saved on this device. Open one to add expenses.
+						Saved on this device. Share a group to add expenses together, end-to-end encrypted.
 					</p>
 				</div>
 				{canCreate && (
@@ -55,8 +55,9 @@ export const GroupsHome = ({
 									{group.name.trim().charAt(0).toUpperCase() || "G"}
 								</span>
 								<span className="min-w-0 flex-1">
-									<span className="block truncate font-semibold text-ink">
-										{group.name}
+									<span className="flex items-center gap-1.5 font-semibold text-ink">
+										<span className="truncate">{group.name}</span>
+										{group.sync && <Lock className="h-3.5 w-3.5 shrink-0 text-positive" aria-label="Shared, end-to-end encrypted" />}
 									</span>
 									<span className="mt-0.5 block text-sm text-ink-muted">
 										{mine !== null ? (
@@ -80,7 +81,7 @@ export const GroupsHome = ({
 							<button
 								onClick={() => onDeleteGroup(group.id)}
 								className="icon-btn hidden sm:inline-flex absolute right-3 hover:!text-negative"
-								aria-label={`Delete ${group.name}`}
+								aria-label={group.sync ? `Remove ${group.name} from this device` : `Delete ${group.name}`}
 							>
 								<Trash2 className="h-4 w-4" />
 							</button>
@@ -89,11 +90,11 @@ export const GroupsHome = ({
 				})}
 			</ul>
 
-			<p className="mt-3 text-xs text-ink-muted">
-				{canCreate
-					? `You can keep up to ${MAX_GROUPS} groups.`
-					: `You've reached the ${MAX_GROUPS}-group limit. Delete one to start another.`}
-			</p>
+			{!canCreate && (
+				<p className="mt-3 text-xs text-ink-muted">
+					You&apos;ve reached the {MAX_GROUPS}-group limit. Delete one to start another.
+				</p>
+			)}
 		</div>
 	);
 };

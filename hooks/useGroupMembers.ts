@@ -1,5 +1,6 @@
 import { Person } from "@/types";
 import { Group } from "@/types";
+import { newId } from "@/utils/ids";
 
 export const useGroupMembers = (
   groups: Group[],
@@ -12,7 +13,7 @@ export const useGroupMembers = (
     }
 
     const newPerson: Person = {
-      id: `person-${Date.now()}`,
+      id: newId("person"),
       name: name.trim(),
       ...(upiId?.trim() ? { upiId: upiId.trim() } : {}),
     };

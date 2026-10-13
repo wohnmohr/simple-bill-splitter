@@ -32,6 +32,18 @@ export type Group = {
    * never included in share links. undefined = not asked yet; null = just viewing.
    */
   meId?: string | null;
+  /**
+   * Present when the group is end-to-end encrypted and synced. Holds the link
+   * secret (and the stretched passphrase, if the group has one); both stay on
+   * this device and in the link's #fragment, never on the server.
+   */
+  sync?: GroupSyncLink;
+};
+
+export type GroupSyncLink = {
+  secret: string;
+  /** PBKDF2 output of the group passphrase; the passphrase itself is never stored. */
+  pass?: string;
 };
 
 export type Balance = {

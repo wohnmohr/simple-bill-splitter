@@ -3,6 +3,8 @@ import { Group, Currency } from "@/types";
 import { MAX_GROUPS, DEFAULT_CURRENCY } from "@/constants";
 import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
 import { consumePendingGroupSelection } from "@/utils/shareImport";
+import { useGroupSync } from "@/hooks/useGroupSync";
+import { newId } from "@/utils/ids";
 
 export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -20,6 +22,9 @@ export const useGroups = () => {
     }
   }, []);
 
+  // Synced groups: every change below is picked up and sent, encrypted.
+  const sync = useGroupSync(groups, setGroups, selectedGroupId);
+
   // Save groups to localStorage whenever groups change (after initial load)
   useEffect(() => {
     if (hasLoadedRef.current) {
@@ -36,7 +41,7 @@ export const useGroups = () => {
     }
 
     const newGroup: Group = {
-      id: `group-${Date.now()}`,
+      id: newId("group"),
       name: name.trim(),
       members: [],
       expenses: [],
@@ -48,7 +53,9 @@ export const useGroups = () => {
     return true;
   };
 
+  /** Removes a group from this device. A synced group stays on the server for everyone else. */
   const deleteGroup = (groupId: string): void => {
+    sync.forgetGroup(groupId);
     const updatedGroups = groups.filter((g) => g.id !== groupId);
     setGroups(updatedGroups);
     if (selectedGroupId === groupId) {
@@ -79,6 +86,7 @@ export const useGroups = () => {
     updateGroupCurrency,
     setGroupMe,
     setGroups,
+    sync,
   };
 };
 

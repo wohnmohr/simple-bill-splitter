@@ -2,6 +2,7 @@ import { Group } from "@/types";
 import { MAX_GROUPS, STORAGE_KEY } from "@/constants";
 import { ShareSnapshot } from "@/types/share";
 import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
+import { newId } from "@/utils/ids";
 
 export type ImportResult =
 	| { ok: true; groupId: string }
@@ -22,7 +23,7 @@ export function importShareSnapshot(snapshot: ShareSnapshot): ImportResult {
 	}
 
 	const group: Group = {
-		id: `group-${Date.now()}`,
+		id: newId("group"),
 		name: snapshot.name.slice(0, 60) || "Shared split",
 		members: snapshot.members,
 		expenses: snapshot.expenses.map((e, i) => ({

@@ -4,13 +4,14 @@ A modern, user-friendly web application for splitting bills and expenses among g
 
 ## Features
 
-- **Group Management**: Create and manage multiple expense groups (up to 3 groups)
+- **Group Management**: Create and manage multiple expense groups
+- **End-to-end encrypted group sync**: Share a group by link and everyone adds expenses from their own phone. The key lives only in the link's `#fragment`; the server stores padded AES-256-GCM ciphertext, a hash of a write token and an expiry, nothing else. Optional passphrase (PBKDF2, 600k rounds), a safety code to compare, link reset to remove someone, and conflict-free merging so offline edits and simultaneous edits never clash.
 - **Member Management**: Add and remove members from groups
 - **Expense Tracking**: Add expenses with descriptions, amounts, and participants
 - **Balance Calculation**: Automatically calculates who owes what to whom
 - **Settlement Suggestions**: Provides optimal settlement recommendations to minimize transactions
 - **Multi-Currency Support**: Supports USD, EUR, GBP, JPY, and INR
-- **Local Storage**: All data is persisted in browser's local storage
+- **Local-first**: Groups live in the browser's local storage; synced groups also keep an encrypted copy on the server
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
 - **Modern UI**: Beautiful gradient design with smooth interactions
 

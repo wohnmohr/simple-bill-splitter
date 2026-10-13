@@ -3,10 +3,10 @@ import { createClient, type Client } from "@libsql/client";
 import { createHash } from "crypto";
 
 /**
- * Turso holds feedback, feature requests and end-to-end encrypted split links.
- * Groups and expenses never leave the user's device. Split rows are ciphertext
- * sealed in the browser; the key stays in the link's #fragment, so the server
- * cannot read names, amounts or UPI IDs.
+ * Turso holds feedback, feature requests, and end-to-end encrypted split links
+ * and synced groups. Groups stay on the user's device unless they turn on sync.
+ * Split and group rows are ciphertext sealed in the browser; the key stays in
+ * the link's #fragment, so the server cannot read names, amounts or UPI IDs.
  */
 
 let client: Client | null = null;
@@ -56,6 +56,25 @@ const SCHEMA = [
 	)`,
 	`CREATE INDEX IF NOT EXISTS split_payments_split ON split_payments (split_id, created_at)`,
 	`CREATE INDEX IF NOT EXISTS split_payments_ip ON split_payments (ip_hash, created_at)`,
+	// Synced groups. The server holds ciphertext, a hash of the write token and an
+	// expiry, and nothing else: no names, no creation time, no IP. The id is
+	// derived one-way from the link secret, so it can't be turned back into a key.
+	`CREATE TABLE IF NOT EXISTS groups (
+		id            TEXT PRIMARY KEY,
+		auth_hash     TEXT NOT NULL,
+		expires_at    INTEGER NOT NULL,
+		head_seq      INTEGER NOT NULL DEFAULT 0,
+		snapshot_seq  INTEGER NOT NULL DEFAULT 0,
+		snapshot      TEXT NOT NULL
+	)`,
+	`CREATE INDEX IF NOT EXISTS groups_expiry ON groups (expires_at)`,
+	// Encrypted batches of changes since the last snapshot, in server order.
+	`CREATE TABLE IF NOT EXISTS group_ops (
+		group_id  TEXT NOT NULL,
+		seq       INTEGER NOT NULL,
+		blob      TEXT NOT NULL,
+		PRIMARY KEY (group_id, seq)
+	)`,
 	// Global counters per hour and per day ("h:<hour>", "d:<day>"): ceilings on new
 	// splits whatever IPs they come from.
 	`CREATE TABLE IF NOT EXISTS api_quota (
