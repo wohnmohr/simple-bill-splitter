@@ -11,10 +11,8 @@ export const metadata: Metadata = {
 
 export default function PayStoryPage() {
 	return (
-		<PageFrame>
-			<div className="mx-auto w-full max-w-xl min-w-0 px-4 py-5 sm:py-8">
-				<PayStoryApp />
-			</div>
+		<PageFrame wide>
+			<PayStoryApp />
 		</PageFrame>
 	);
 }
