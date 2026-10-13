@@ -3,8 +3,10 @@ import { createClient, type Client } from "@libsql/client";
 import { createHash } from "crypto";
 
 /**
- * Turso holds feedback and feature requests only — never groups, expenses,
- * names or UPI IDs. Those stay on the user's device.
+ * Turso holds feedback, feature requests and end-to-end encrypted split links.
+ * Groups and expenses never leave the user's device. Split rows are ciphertext
+ * sealed in the browser; the key stays in the link's #fragment, so the server
+ * cannot read names, amounts or UPI IDs.
  */
 
 let client: Client | null = null;
@@ -34,6 +36,24 @@ const SCHEMA = [
 	)`,
 	`CREATE INDEX IF NOT EXISTS feature_requests_created ON feature_requests (created_at)`,
 	`CREATE INDEX IF NOT EXISTS feature_requests_ip ON feature_requests (ip_hash, created_at)`,
+	`CREATE TABLE IF NOT EXISTS splits (
+		id          TEXT PRIMARY KEY,
+		created_at  INTEGER NOT NULL,
+		expires_at  INTEGER NOT NULL,
+		write_hash  TEXT NOT NULL,
+		blob        TEXT NOT NULL,
+		ip_hash     TEXT NOT NULL
+	)`,
+	`CREATE INDEX IF NOT EXISTS splits_ip ON splits (ip_hash, created_at)`,
+	`CREATE TABLE IF NOT EXISTS split_payments (
+		id          TEXT PRIMARY KEY,
+		split_id    TEXT NOT NULL REFERENCES splits (id) ON DELETE CASCADE,
+		created_at  INTEGER NOT NULL,
+		blob        TEXT NOT NULL,
+		ip_hash     TEXT NOT NULL
+	)`,
+	`CREATE INDEX IF NOT EXISTS split_payments_split ON split_payments (split_id, created_at)`,
+	`CREATE INDEX IF NOT EXISTS split_payments_ip ON split_payments (ip_hash, created_at)`,
 ];
 
 export class FeedbackUnavailableError extends Error {}
@@ -82,7 +102,7 @@ export function hashIp(req: Request): string {
 /** True when this IP has already submitted `max` rows to `table` in the last hour. */
 export async function isRateLimited(
 	db: Client,
-	table: "feedback" | "feature_requests",
+	table: "feedback" | "feature_requests" | "splits" | "split_payments",
 	ipHash: string,
 	max: number
 ): Promise<boolean> {

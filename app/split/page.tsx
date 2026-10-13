@@ -31,7 +31,8 @@ export default function SplitHubPage() {
 				</h1>
 				<p className="mt-3 max-w-2xl text-ink-soft sm:text-lg">
 					Every split has its own page with sensible defaults. Fill in the amount, share one link, and friends pay you directly
-					through UPI. No signup; the split lives inside the link.
+					through UPI. Payments update live for everyone with the link. No signup, and every split is end-to-end
+					encrypted: the key stays in your link, so not even SplitBiller can read it.
 				</p>
 				<div className="mt-8">
 					<TemplateGrid />

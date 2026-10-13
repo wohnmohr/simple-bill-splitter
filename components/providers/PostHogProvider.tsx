@@ -3,7 +3,7 @@
 import { Component, ReactNode, Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { trackError } from "@/lib/analytics";
-import { capture, startPostHogWhenIdle } from "@/lib/posthogClient";
+import { capture, isPrivatePath, startPostHogWhenIdle, withPostHog } from "@/lib/posthogClient";
 
 function PostHogPageView() {
 	const pathname = usePathname();
@@ -13,6 +13,8 @@ function PostHogPageView() {
 		if (!pathname) return;
 		const query = searchParams?.toString();
 		capture("$pageview", { $current_url: query ? `${pathname}?${query}` : pathname });
+		// Never record pages whose link carries private data.
+		withPostHog((ph) => (isPrivatePath(pathname) ? ph.stopSessionRecording() : ph.startSessionRecording()));
 	}, [pathname, searchParams]);
 
 	return null;

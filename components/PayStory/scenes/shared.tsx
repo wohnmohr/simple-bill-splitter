@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
 import { isValidUpiId } from "@/utils/upi";
 import { encodeRequest, sharePerPerson, type SplitTemplate } from "@/utils/payStory";
+import { createCloudSplit } from "@/utils/splitCloud";
 
 export const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 const MIN_PEOPLE = 2;
@@ -19,17 +20,20 @@ export function useSplitDraft(t: SplitTemplate) {
 	const [name, setName] = useState("");
 	const [upiId, setUpiId] = useState("");
 	const [error, setError] = useState("");
+	const saving = useRef(false);
 
 	const total = Math.round(Number(amount)) || 0;
 	const each = even && total > 0 ? sharePerPerson({ target: total, people }) : 0;
 	const setPeople = (n: number) => setPeopleRaw(Math.min(MAX_PEOPLE, Math.max(MIN_PEOPLE, n)));
 
-	const submit = (e: React.FormEvent) => {
+	const submit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		if (saving.current) return;
 		if (!(total >= 1)) return setError("Enter the amount you need.");
 		if (!title.trim() || !name.trim()) return setError("Add a title and your name.");
 		if (!isValidUpiId(upiId)) return setError("That UPI ID doesn’t look right (e.g. priya@okaxis).");
-		track("split_link_created", { template: t.id, mode: even ? "even" : "free" });
+		setError("");
+		saving.current = true;
 		const req = {
 			kind: t.id,
 			title: title.trim(),
@@ -39,7 +43,17 @@ export function useSplitDraft(t: SplitTemplate) {
 			people: even ? people : 0,
 			paid: [] as [string, number][],
 		};
-		window.location.assign(`/pay-story#${encodeRequest(req)}`);
+		// Encrypted in the browser and saved to the cloud; if that fails, fall back to a link-only split.
+		let path: string;
+		let storage: "cloud" | "link" = "cloud";
+		try {
+			path = await createCloudSplit(req);
+		} catch {
+			path = `/pay-story#${encodeRequest(req)}`;
+			storage = "link";
+		}
+		track("split_link_created", { template: t.id, mode: even ? "even" : "free", storage });
+		window.location.assign(path);
 	};
 
 	return {
@@ -168,7 +182,7 @@ export const Note = ({ d, className = "" }: { d: SplitDraft; className?: string 
 	d.error ? (
 		<p role="alert" className={`text-sm font-semibold ${className}`}>{d.error}</p>
 	) : (
-		<p className={`text-xs opacity-70 ${className}`}>No signup, no server: the split lives in the link and payments go straight to your UPI ID.</p>
+		<p className={`text-xs opacity-70 ${className}`}>🔒 End-to-end encrypted in the cloud: only people with your link can read it. Payments go straight to your UPI ID.</p>
 	);
 
 /** Deterministic bars for a decorative barcode. */

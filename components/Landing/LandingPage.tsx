@@ -342,8 +342,15 @@ export const LandingPage = () => {
 							Split it. Share one link. Get paid.
 						</h2>
 						<p className="mt-2 text-ink-soft">
-							Pick what you are splitting. Friends pay you straight through UPI, a progress bar shows who has paid,
-							and nothing is stored on a server.
+							Pick what you are splitting. Friends pay you straight through UPI and everyone sees who has paid,
+							live, from the same link.
+						</p>
+						<p className="mt-4 inline-flex items-start gap-2 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink-soft">
+							<Lock className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" strokeWidth={2} />
+							<span>
+								<b className="font-semibold text-ink">End-to-end encrypted in the cloud.</b> Each split is locked in your browser
+								before it’s saved. The key stays in your link, so only people you share it with can read it. Not even we can.
+							</span>
 						</p>
 					</div>
 					<ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">

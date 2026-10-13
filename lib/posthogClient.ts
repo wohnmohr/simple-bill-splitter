@@ -10,6 +10,20 @@ import type { PostHog } from "posthog-js";
 type Job = (ph: PostHog) => void;
 
 const MAX_QUEUED = 100;
+
+/** Pages whose URL fragment carries private data (split keys, shared groups). Never recorded. */
+const PRIVATE_PATH = /^\/(s|pay-story|share|secret-santa)(\/|$)/;
+export const isPrivatePath = (path: string) => PRIVATE_PATH.test(path);
+
+const URL_PROPS = ["$current_url", "$initial_current_url", "$referrer", "$initial_referrer"];
+/** Removes #fragments from URL properties so keys and shared data never reach analytics. */
+function stripFragments(props: Record<string, unknown> | undefined) {
+	if (!props) return;
+	for (const k of URL_PROPS) {
+		const v = props[k];
+		if (typeof v === "string") props[k] = v.split("#")[0];
+	}
+}
 let client: PostHog | null = null;
 let starting = false;
 const queue: Job[] = [];
@@ -61,14 +75,19 @@ export function startPostHog(): void {
 				// browsers, ad blockers) as "Script error." with no stack — nothing
 				// to act on, and it floods the exception feed.
 				before_send: (event) => {
-					if (event?.event !== "$exception") return event;
+					if (!event) return event;
+					stripFragments(event.properties);
+					stripFragments(event.properties?.$set);
+					stripFragments(event.properties?.$set_once);
+					if (event.event === "$snapshot" && isPrivatePath(window.location.pathname)) return null;
+					if (event.event !== "$exception") return event;
 					const props = event.properties ?? {};
 					const message: unknown = props.$exception_list?.[0]?.value ?? props.$exception_message;
 					return message === "Script error." ? null : event;
 				},
 				loaded: (ph) => {
 					ph.startExceptionAutocapture?.();
-					ph.startSessionRecording?.();
+					if (!isPrivatePath(window.location.pathname)) ph.startSessionRecording?.();
 				},
 			});
 			client = posthog;

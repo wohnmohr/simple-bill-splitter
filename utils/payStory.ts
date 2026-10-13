@@ -288,7 +288,7 @@ export const TEMPLATES: SplitTemplate[] = [
 			"For a regular lunch group, keep one person as the organiser each week and rotate.",
 		],
 		faqs: [
-			{ q: "Is this suitable for work?", a: "Yes. Nobody needs an account, and nothing is stored on a server. The split lives only in the link." },
+			{ q: "Is this suitable for work?", a: "Yes. Nobody needs an account, and the split is end-to-end encrypted: it’s locked in your browser before it’s saved, and only people with the link can read it." },
 			{ q: "What if a few people didn’t eat?", a: "Count only the people eating in the headcount." },
 		],
 	},
@@ -388,7 +388,7 @@ export const TEMPLATES: SplitTemplate[] = [
 		],
 		faqs: [
 			{ q: "Does money pass through SplitBiller?", a: "No. Payments go straight from your friends’ UPI app to yours. SplitBiller only builds the link." },
-			{ q: "Where is the split stored?", a: "Inside the link itself. There is no account and no server database for it." },
+			{ q: "Where is the split stored?", a: "In the cloud, end-to-end encrypted. It’s locked in your browser before upload and the key stays in your link, so SplitBiller can’t read it. That’s also how payments update live for everyone." },
 		],
 	},
 ];
@@ -398,7 +398,7 @@ export const getTemplate = (id: unknown): SplitTemplate =>
 
 export const findTemplate = (id: string): SplitTemplate | undefined => TEMPLATES.find((t) => t.id === id);
 
-/** Everything lives in the share link's #fragment: no server ever sees it. */
+/** A split request. Stored end-to-end encrypted in the cloud, or (older links) inside the link’s #fragment. */
 export interface PayRequest {
 	/** Template id; picks the emoji and label. */
 	kind: string;
@@ -429,28 +429,38 @@ const fromBase64Url = (value: string) => {
 
 export const encodeRequest = (req: PayRequest): string => toBase64Url(JSON.stringify(req));
 
-/** Parses and sanitises a fragment; returns null for anything malformed. */
+const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
+const int = (v: unknown) => (Number.isInteger(v) && (v as number) >= 0 ? (v as number) : 0);
+
+/** One recorded payment from untrusted input, or null. */
+export function sanitizePayment(p: unknown): [string, number] | null {
+	if (!Array.isArray(p) || int(p[1]) < 1) return null;
+	return [str(p[0], 30), int(p[1])];
+}
+
+/** Validates a request from untrusted input (a link or a decrypted blob); null if malformed. */
+export function sanitizeRequest(raw: unknown): PayRequest | null {
+	if (!raw || typeof raw !== "object") return null;
+	const r = raw as Record<string, unknown>;
+	if (int(r.target) < 1) return null;
+	const paid = Array.isArray(r.paid)
+		? r.paid.slice(0, 200).map(sanitizePayment).filter((x): x is [string, number] => x !== null)
+		: [];
+	return {
+		kind: getTemplate(r.kind).id,
+		title: str(r.title, 60),
+		name: str(r.name, 40),
+		upiId: str(r.upiId, 80),
+		target: int(r.target),
+		people: Math.min(int(r.people), 100),
+		paid,
+	};
+}
+
+/** Parses and sanitises a link-only fragment; returns null for anything malformed. */
 export function decodeRequest(fragment: string): PayRequest | null {
 	try {
-		const raw = JSON.parse(fromBase64Url(fragment));
-		const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
-		const int = (v: unknown) => (Number.isInteger(v) && (v as number) >= 0 ? (v as number) : 0);
-		if (int(raw.target) < 1) return null;
-		const paid: [string, number][] = Array.isArray(raw.paid)
-			? raw.paid
-					.filter((p: unknown) => Array.isArray(p) && int(p[1]) > 0)
-					.slice(0, 200)
-					.map((p: [unknown, unknown]) => [str(p[0], 30), int(p[1])])
-			: [];
-		return {
-			kind: getTemplate(raw.kind).id,
-			title: str(raw.title, 60),
-			name: str(raw.name, 40),
-			upiId: str(raw.upiId, 80),
-			target: int(raw.target),
-			people: Math.min(int(raw.people), 100),
-			paid,
-		};
+		return sanitizeRequest(JSON.parse(fromBase64Url(fragment)));
 	} catch {
 		return null;
 	}
