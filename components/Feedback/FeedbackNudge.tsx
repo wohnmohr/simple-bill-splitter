@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { FeedbackCard } from "@/components/Feedback/FeedbackCard";
 import { FeedbackForm } from "@/components/Feedback/FeedbackForm";
 import { collectFeedbackContext } from "@/lib/feedbackContext";
 import { track } from "@/lib/analytics";
@@ -77,30 +77,19 @@ export const FeedbackNudge = () => {
 	if (!open) return null;
 
 	return (
-		<section
-			aria-label="Feedback"
-			data-feedback-inline
+		<FeedbackCard
+			onClose={() => close("dismissed")}
+			closeLabel="No thanks"
 			onPointerDownCapture={() => (engaged.current = true)}
 			onFocusCapture={() => (engaged.current = true)}
-			className="surface shadow-raised fixed inset-x-4 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+8.5rem)] z-[300] max-h-[70vh] overflow-y-auto p-4 animate-[fade-in-up_0.25s_ease-out] sm:inset-x-auto sm:bottom-6 sm:left-6 sm:w-80"
 		>
-			<button
-				type="button"
-				onClick={() => close("dismissed")}
-				className="icon-btn absolute right-1.5 top-1.5"
-				aria-label="No thanks"
-			>
-				<X className="h-4 w-4" />
-			</button>
-			<div className="pr-7">
-				<FeedbackForm
-					trigger="moment"
-					question="How did that go?"
-					getContext={() => collectFeedbackContext({ trigger: "moment" })}
-					onSent={() => recordFeedbackOutcome("answered")}
-					onDone={() => setOpen(false)}
-				/>
-			</div>
-		</section>
+			<FeedbackForm
+				trigger="moment"
+				question="How did that go?"
+				getContext={() => collectFeedbackContext({ trigger: "moment" })}
+				onSent={() => recordFeedbackOutcome("answered")}
+				onDone={() => setOpen(false)}
+			/>
+		</FeedbackCard>
 	);
 };

@@ -116,6 +116,23 @@
 }
 
 @layer components {
+	/* Text you edit in place on a split scene: underlined, inherits the scene's type and colour */
+	.inline-edit {
+		@apply min-w-0 bg-transparent outline-none;
+		border-bottom: 2px dashed color-mix(in srgb, currentColor 35%, transparent);
+		color: inherit;
+		font: inherit;
+		letter-spacing: inherit;
+		text-transform: inherit;
+	}
+	.inline-edit:focus {
+		border-bottom-color: currentColor;
+	}
+	.inline-edit::placeholder {
+		color: color-mix(in srgb, currentColor 45%, transparent);
+		text-transform: none;
+	}
+
 	/* Flat, bordered surface — the one container used across the app */
 	.surface {
 		@apply rounded-2xl border border-line bg-white shadow-card;

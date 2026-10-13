@@ -3,8 +3,10 @@ import { createClient, type Client } from "@libsql/client";
 import { createHash } from "crypto";
 
 /**
- * Turso holds feedback and feature requests only — never groups, expenses,
- * names or UPI IDs. Those stay on the user's device.
+ * Turso holds feedback, feature requests and end-to-end encrypted split links.
+ * Groups and expenses never leave the user's device. Split rows are ciphertext
+ * sealed in the browser; the key stays in the link's #fragment, so the server
+ * cannot read names, amounts or UPI IDs.
  */
 
 let client: Client | null = null;
@@ -34,7 +36,37 @@ const SCHEMA = [
 	)`,
 	`CREATE INDEX IF NOT EXISTS feature_requests_created ON feature_requests (created_at)`,
 	`CREATE INDEX IF NOT EXISTS feature_requests_ip ON feature_requests (ip_hash, created_at)`,
+	`CREATE TABLE IF NOT EXISTS splits (
+		id          TEXT PRIMARY KEY,
+		created_at  INTEGER NOT NULL,
+		expires_at  INTEGER NOT NULL,
+		write_hash  TEXT NOT NULL,
+		blob        TEXT NOT NULL,
+		ip_hash     TEXT NOT NULL,
+		payments    INTEGER NOT NULL DEFAULT 0
+	)`,
+	`CREATE INDEX IF NOT EXISTS splits_ip ON splits (ip_hash, created_at)`,
+	`CREATE INDEX IF NOT EXISTS splits_expiry ON splits (expires_at)`,
+	`CREATE TABLE IF NOT EXISTS split_payments (
+		id          TEXT PRIMARY KEY,
+		split_id    TEXT NOT NULL REFERENCES splits (id) ON DELETE CASCADE,
+		created_at  INTEGER NOT NULL,
+		blob        TEXT NOT NULL,
+		ip_hash     TEXT NOT NULL
+	)`,
+	`CREATE INDEX IF NOT EXISTS split_payments_split ON split_payments (split_id, created_at)`,
+	`CREATE INDEX IF NOT EXISTS split_payments_ip ON split_payments (ip_hash, created_at)`,
+	// Global counters per hour and per day ("h:<hour>", "d:<day>"): ceilings on new
+	// splits whatever IPs they come from.
+	`CREATE TABLE IF NOT EXISTS api_quota (
+		bucket  TEXT PRIMARY KEY,
+		at      INTEGER NOT NULL,
+		n       INTEGER NOT NULL
+	)`,
 ];
+
+/** Columns added after a table first shipped; "duplicate column" means it's already there. */
+const MIGRATIONS = ["ALTER TABLE splits ADD COLUMN payments INTEGER NOT NULL DEFAULT 0"];
 
 export class FeedbackUnavailableError extends Error {}
 
@@ -60,7 +92,9 @@ export async function ensureSchema(db: Client): Promise<void> {
 	if (!schemaReady) {
 		schemaReady = db
 			.batch(SCHEMA, "write")
-			.then(() => undefined)
+			.then(async () => {
+				for (const sql of MIGRATIONS) await db.execute(sql).catch(() => undefined);
+			})
 			.catch((err) => {
 				schemaReady = null;
 				throw err;
@@ -71,27 +105,51 @@ export async function ensureSchema(db: Client): Promise<void> {
 
 /** Salted hash of the caller's IP: enough to rate-limit, not enough to identify. */
 export function hashIp(req: Request): string {
+	// Vercel sets these at its edge and overwrites anything the client sends,
+	// so they can't be spoofed to dodge rate limits.
 	const ip =
-		req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+		req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
 		req.headers.get("x-real-ip") ||
+		req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
 		"unknown";
 	const salt = process.env.FEEDBACK_IP_SALT || "splitbiller-dev-salt";
 	return createHash("sha256").update(`${salt}:${ip}`).digest("hex").slice(0, 32);
 }
 
-/** True when this IP has already submitted `max` rows to `table` in the last hour. */
-export async function isRateLimited(
-	db: Client,
-	table: "feedback" | "feature_requests",
-	ipHash: string,
-	max: number
-): Promise<boolean> {
-	const since = Date.now() - 60 * 60 * 1000;
+export type RateTable = "feedback" | "feature_requests" | "splits" | "split_payments";
+
+/** Per-IP write budgets: a short burst window and a daily cap, so one source can't flood us all day. */
+export const WRITE_LIMITS: Record<RateTable, { hour: number; day: number }> = {
+	splits: { hour: 30, day: 100 },
+	split_payments: { hour: 60, day: 300 },
+	feedback: { hour: 10, day: 30 },
+	feature_requests: { hour: 5, day: 15 },
+};
+
+/**
+ * Which window this IP has used up in `table`, or null if it may write.
+ * One indexed query covers both the hourly and the daily budget.
+ */
+export async function rateLimitHit(db: Client, table: RateTable, ipHash: string): Promise<"hour" | "day" | null> {
+	const now = Date.now();
+	const { hour, day } = WRITE_LIMITS[table];
 	const res = await db.execute({
-		sql: `SELECT COUNT(*) AS n FROM ${table} WHERE ip_hash = ? AND created_at > ?`,
-		args: [ipHash, since],
+		sql: `SELECT COUNT(*) AS day, COALESCE(SUM(created_at > ?), 0) AS hour FROM ${table} WHERE ip_hash = ? AND created_at > ?`,
+		args: [now - 3_600_000, ipHash, now - 86_400_000],
 	});
-	return Number(res.rows[0]?.n ?? 0) >= max;
+	const row = res.rows[0];
+	if (Number(row?.day ?? 0) >= day) return "day";
+	if (Number(row?.hour ?? 0) >= hour) return "hour";
+	return null;
+}
+
+/** A 429 that says when to come back. */
+export function rateLimited(window: "hour" | "day", what: string): Response {
+	const retry = window === "day" ? 86_400 : 3_600;
+	return Response.json(
+		{ error: `You've reached today's limit for ${what}. Try again ${window === "day" ? "tomorrow" : "in an hour"}.` },
+		{ status: 429, headers: { "Retry-After": String(retry), "Cache-Control": "no-store" } }
+	);
 }
 
 // ── Input hygiene ─────────────────────────────────────────────

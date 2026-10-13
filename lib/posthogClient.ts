@@ -6,10 +6,44 @@
  * before it is ready is queued with its real timestamp and sent once it loads.
  */
 import type { PostHog } from "posthog-js";
+import { isPrivatePath, scrubUrl } from "@/lib/privateUrl";
 
 type Job = (ph: PostHog) => void;
 
 const MAX_QUEUED = 100;
+
+/** $current_url, $pathname, $initial_referrer, $session_entry_url and the like. */
+const URL_PROP = /(url|pathname|referrer)$/i;
+/** A link without its query or fragment: "upi://pay?pa=…&pn=…&am=…" becomes "upi://pay". */
+const bareLink = (href: string) => href.split(/[?#]/)[0];
+
+/**
+ * PostHog records a clicked link's href even with attribute masking on. Pay,
+ * WhatsApp and share links carry UPI IDs, names, amounts and keys in their
+ * query or fragment, so only the bare link is kept.
+ */
+function stripLinks(props: Record<string, unknown> | undefined) {
+	if (!props) return;
+	if (typeof props.$external_click_url === "string") props.$external_click_url = bareLink(props.$external_click_url);
+	if (Array.isArray(props.$elements)) {
+		for (const el of props.$elements as Record<string, unknown>[]) {
+			for (const k of Object.keys(el)) {
+				if (k.startsWith("attr__") && typeof el[k] === "string") el[k] = bareLink(el[k] as string);
+			}
+		}
+	}
+	if (typeof props.$elements_chain === "string") {
+		props.$elements_chain = props.$elements_chain.replace(/((?:attr__)?href)="([^"]*)"/g, (_m, name: string, href: string) => `${name}="${bareLink(href)}"`);
+	}
+}
+
+/** Scrubs URL properties so split keys, split ids and shared data never reach analytics. */
+function scrubUrls(props: Record<string, unknown> | undefined) {
+	if (!props) return;
+	for (const [k, v] of Object.entries(props)) {
+		if (typeof v === "string" && URL_PROP.test(k)) props[k] = scrubUrl(v);
+	}
+}
 let client: PostHog | null = null;
 let starting = false;
 const queue: Job[] = [];
@@ -50,25 +84,39 @@ export function startPostHog(): void {
 				capture_pageview: false, // sent on route change by PostHogPageView
 				capture_pageleave: true,
 				persistence: "localStorage+cookie",
+				// Privacy: names, group titles, amounts and UPI IDs appear on screen and
+				// in links. Clicks are tracked by element only, never by their text or
+				// attributes (a UPI pay link carries the payee's ID, name and amount).
+				mask_all_text: true,
+				mask_all_element_attributes: true,
+				disable_capture_url_hashes: true, // shared links keep their data and keys in the #fragment
+				mask_personal_data_properties: true,
 				disable_session_recording: false,
+				enable_recording_console_log: false,
 				session_recording: {
-					// Privacy-first: never record typed names, amounts, or UPI IDs
+					// Replays show layout and clicks only: every input and every piece of text is masked.
 					maskAllInputs: true,
-					maskTextSelector: "[data-ph-mask], input, textarea",
+					maskTextSelector: "*",
 					recordCrossOriginIframes: false,
 				},
 				// Browsers mask errors from cross-origin scripts (extensions, in-app
 				// browsers, ad blockers) as "Script error." with no stack — nothing
 				// to act on, and it floods the exception feed.
 				before_send: (event) => {
-					if (event?.event !== "$exception") return event;
+					if (!event) return event;
+					scrubUrls(event.properties);
+					stripLinks(event.properties);
+					scrubUrls(event.properties?.$set);
+					scrubUrls(event.properties?.$set_once);
+					if (event.event === "$snapshot" && isPrivatePath(window.location.pathname)) return null;
+					if (event.event !== "$exception") return event;
 					const props = event.properties ?? {};
 					const message: unknown = props.$exception_list?.[0]?.value ?? props.$exception_message;
 					return message === "Script error." ? null : event;
 				},
 				loaded: (ph) => {
 					ph.startExceptionAutocapture?.();
-					ph.startSessionRecording?.();
+					if (!isPrivatePath(window.location.pathname)) ph.startSessionRecording?.();
 				},
 			});
 			client = posthog;
