@@ -76,30 +76,8 @@ export function useTween(value: number) {
 	return shown;
 }
 
-const TONES = {
-	light: {
-		label: "label-text",
-		field: "border-line-strong bg-white text-ink placeholder:text-ink-muted/70 focus:border-brand-500",
-		chip: "border-line-strong bg-white text-ink-soft hover:bg-paper",
-		chipOn: "border-brand-600 bg-brand-50 text-brand-800",
-		seg: "border-line-strong bg-paper",
-		segOn: "bg-white text-ink shadow-card",
-		segOff: "text-ink-muted",
-		muted: "text-ink-muted",
-		round: "border border-line-strong bg-white text-ink hover:bg-paper",
-	},
-	dark: {
-		label: "text-xs font-medium uppercase tracking-[0.06em] text-white/60",
-		field: "border-white/20 bg-white/5 text-white placeholder:text-white/35 focus:border-white/60",
-		chip: "border-white/20 bg-transparent text-white/80 hover:bg-white/10",
-		chipOn: "border-white bg-white text-[#111]",
-		seg: "border-white/15 bg-white/5",
-		segOn: "bg-white text-[#111]",
-		segOff: "text-white/70",
-		muted: "text-white/60",
-		round: "border border-white/25 bg-white/10 text-white hover:bg-white/20",
-	},
-} as const;
+/** Width for an inline input so it hugs its content. */
+const fit = (text: string, min = 3) => `${Math.max(text.length, min) + 1}ch`;
 
 export const Crumb = ({ t, className = "" }: { t: SplitTemplate; className?: string }) => (
 	<nav aria-label="Breadcrumb" className={`text-sm opacity-75 ${className}`}>
@@ -107,99 +85,91 @@ export const Crumb = ({ t, className = "" }: { t: SplitTemplate; className?: str
 	</nav>
 );
 
-export const AmountInput = ({ d, tone = "light", label = "Total to collect" }: { d: SplitDraft; tone?: Tone; label?: string }) => (
-	<div>
-		<label htmlFor="sp-amount" className={TONES[tone].label}>{label}</label>
-		<div className={`mt-1 flex items-center gap-2 rounded-xl border px-4 ${TONES[tone].field}`}>
-			<span className="font-display text-2xl opacity-60">₹</span>
-			<input
-				id="sp-amount"
-				inputMode="numeric"
-				value={d.amount}
-				onChange={(e) => d.setAmount(e.target.value.replace(/\D/g, "").slice(0, 7))}
-				placeholder="0"
-				className="w-full min-w-0 bg-transparent py-2.5 font-display text-3xl font-semibold tabular-nums outline-none"
-			/>
-		</div>
-	</div>
+/** The amount, typed straight onto the scene. */
+export const InlineAmount = ({ d, label = "Total amount", className = "", grow = false }: { d: SplitDraft; label?: string; className?: string; grow?: boolean }) => (
+	<span className={`inline-flex min-w-0 items-baseline ${className}`}>
+		<span aria-hidden>₹</span>
+		<input
+			aria-label={label}
+			inputMode="numeric"
+			value={d.amount}
+			onChange={(e) => d.setAmount(e.target.value.replace(/\D/g, "").slice(0, 7))}
+			placeholder="0"
+			className="inline-edit tabular-nums"
+			style={{ width: grow ? "100%" : fit(d.amount) }}
+		/>
+	</span>
 );
 
-export const Presets = ({ t, d, tone = "light", format = inr }: { t: SplitTemplate; d: SplitDraft; tone?: Tone; format?: (n: number) => string }) => (
-	<div className="flex flex-wrap gap-2">
-		{t.presets.map((p) => (
-			<button
-				type="button"
-				key={p}
-				onClick={() => d.setAmount(String(p))}
-				aria-pressed={d.total === p}
-				className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${d.total === p ? TONES[tone].chipOn : TONES[tone].chip}`}
-			>
-				{format(p)}
-			</button>
-		))}
-	</div>
-);
-
-export const ModeToggle = ({ t, d, tone = "light" }: { t: SplitTemplate; d: SplitDraft; tone?: Tone }) => (
-	<div className={`grid grid-cols-2 gap-1 rounded-xl border p-1 ${TONES[tone].seg}`} role="group" aria-label="How it’s shared">
-		{[
-			{ v: true, l: "Split evenly" },
-			{ v: false, l: "Any amount" },
-		].map((o) => (
-			<button
-				type="button"
-				key={String(o.v)}
-				aria-pressed={d.even === o.v}
-				title={o.v ? undefined : `Each ${t.who} chooses what to pay`}
-				onClick={() => d.setEven(o.v)}
-				className={`rounded-lg px-2 py-2 text-sm font-semibold transition-colors ${d.even === o.v ? TONES[tone].segOn : TONES[tone].segOff}`}
-			>
-				{o.l}
-			</button>
-		))}
-	</div>
-);
-
-export const Stepper = ({ t, d, tone = "light" }: { t: SplitTemplate; d: SplitDraft; tone?: Tone }) => (
-	<div className="flex items-center gap-3">
-		<button type="button" aria-label={`Fewer ${t.who}s`} onClick={() => d.setPeople(d.people - 1)} className={`h-10 w-10 shrink-0 rounded-full text-xl font-semibold ${TONES[tone].round}`}>−</button>
-		<p className="min-w-[7.5rem] text-center text-sm font-semibold" aria-live="polite">{d.people} {t.who}s</p>
-		<button type="button" aria-label={`More ${t.who}s`} onClick={() => d.setPeople(d.people + 1)} className={`h-10 w-10 shrink-0 rounded-full text-xl font-semibold ${TONES[tone].round}`}>+</button>
-	</div>
-);
-
-/** Title, organiser and UPI ID, then the create button. Lives inside the scene's <form>. */
-export const DetailsFields = ({ d, tone = "light", cta = "Create split link" }: { d: SplitDraft; tone?: Tone; cta?: string }) => {
-	const f = `mt-1 w-full min-w-0 rounded-xl border px-3 py-2.5 text-base outline-none sm:text-sm ${TONES[tone].field}`;
-	return (
-		<div className="space-y-3">
-			<label className="block">
-				<span className={TONES[tone].label}>What’s it for?</span>
-				<input className={f} value={d.title} maxLength={60} onChange={(e) => d.setTitle(e.target.value)} placeholder="Dinner tonight" />
-			</label>
-			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-				<label className="block">
-					<span className={TONES[tone].label}>Your name</span>
-					<input className={f} value={d.name} maxLength={40} onChange={(e) => d.setName(e.target.value)} placeholder="Priya Sharma" />
-				</label>
-				<label className="block">
-					<span className={TONES[tone].label}>Your UPI ID</span>
-					<input className={f} value={d.upiId} onChange={(e) => d.setUpiId(e.target.value)} placeholder="priya@okaxis" autoCapitalize="none" autoCorrect="off" />
-				</label>
-			</div>
-			{d.error && <p role="alert" className={`text-sm ${tone === "dark" ? "text-red-300" : "text-negative"}`}>{d.error}</p>}
-			<button
-				type="submit"
-				className={`w-full !py-3.5 !text-base ${tone === "dark" ? "inline-flex items-center justify-center rounded-xl bg-white font-semibold text-[#111] hover:bg-white/90" : "btn-primary"}`}
-			>
-				{cta}
-			</button>
-			<p className={`text-center text-xs ${TONES[tone].muted}`}>
-				No signup and no server: the split lives inside the link. Payments go straight to your UPI ID.
-			</p>
-		</div>
-	);
+type TextProps = {
+	value: string;
+	onChange: (v: string) => void;
+	label: string;
+	placeholder: string;
+	maxLength?: number;
+	className?: string;
+	grow?: boolean;
+	upi?: boolean;
 };
+
+/** A word or line on the scene that you can edit in place. */
+export const InlineText = ({ value, onChange, label, placeholder, maxLength = 60, className = "", grow = false, upi = false }: TextProps) => (
+	<input
+		aria-label={label}
+		value={value}
+		maxLength={maxLength}
+		onChange={(e) => onChange(e.target.value)}
+		placeholder={placeholder}
+		className={`inline-edit ${upi ? "normal-case" : ""} ${className}`}
+		style={{ width: grow ? "100%" : fit(value || placeholder, 4) }}
+		{...(upi ? { autoCapitalize: "none", autoCorrect: "off", spellCheck: false, inputMode: "email" as const } : {})}
+	/>
+);
+
+export const TitleField = (p: { d: SplitDraft; className?: string; grow?: boolean; placeholder?: string }) => (
+	<InlineText value={p.d.title} onChange={p.d.setTitle} label="What it’s for" placeholder={p.placeholder ?? "What’s it for?"} className={p.className} grow={p.grow} />
+);
+export const NameField = (p: { d: SplitDraft; className?: string; grow?: boolean; placeholder?: string }) => (
+	<InlineText value={p.d.name} onChange={p.d.setName} label="Your name" placeholder={p.placeholder ?? "Your name"} maxLength={40} className={p.className} grow={p.grow} />
+);
+export const UpiField = (p: { d: SplitDraft; className?: string; grow?: boolean }) => (
+	<InlineText value={p.d.upiId} onChange={p.d.setUpiId} label="Your UPI ID" placeholder="you@okaxis" maxLength={80} className={p.className} grow={p.grow} upi />
+);
+
+/** − n + for the headcount, styled by the scene. */
+export const Counter = ({ t, d, className = "", btn = "" }: { t: SplitTemplate; d: SplitDraft; className?: string; btn?: string }) => (
+	<span className={`inline-flex items-center gap-2 ${className}`}>
+		<button type="button" aria-label={`Fewer ${t.who}s`} onClick={() => d.setPeople(d.people - 1)} className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-semibold ${btn}`}>−</button>
+		<span className="min-w-[2ch] text-center tabular-nums" aria-live="polite" aria-label={`${d.people} ${t.who}s`}>{d.people}</span>
+		<button type="button" aria-label={`More ${t.who}s`} onClick={() => d.setPeople(d.people + 1)} className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-semibold ${btn}`}>+</button>
+	</span>
+);
+
+/** Even split vs. any amount, as a two-way switch in the scene's own style. */
+export const ModeSwitch = ({ d, labels = ["Split evenly", "Any amount"], className = "", on = "", off = "", onStyle }: { d: SplitDraft; labels?: [string, string]; className?: string; on?: string; off?: string; onStyle?: React.CSSProperties }) => (
+	<span role="group" aria-label="How it’s shared" className={`inline-flex rounded-full p-0.5 ${className}`}>
+		{[true, false].map((v, i) => (
+			<button
+				type="button"
+				key={labels[i]}
+				aria-pressed={d.even === v}
+				onClick={() => d.setEven(v)}
+				style={d.even === v ? onStyle : undefined}
+				className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${d.even === v ? on : off}`}
+			>
+				{labels[i]}
+			</button>
+		))}
+	</span>
+);
+
+/** Validation message, or the privacy promise when all is well. */
+export const Note = ({ d, className = "" }: { d: SplitDraft; className?: string }) =>
+	d.error ? (
+		<p role="alert" className={`text-sm font-semibold ${className}`}>{d.error}</p>
+	) : (
+		<p className={`text-xs opacity-70 ${className}`}>No signup, no server: the split lives in the link and payments go straight to your UPI ID.</p>
+	);
 
 /** Deterministic bars for a decorative barcode. */
 export const Barcode = ({ seed, className = "" }: { seed: string; className?: string }) => {

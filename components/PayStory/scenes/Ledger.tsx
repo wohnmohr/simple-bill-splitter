@@ -1,78 +1,89 @@
 "use client";
 
 import type { SplitTemplate } from "@/utils/payStory";
-import { AmountInput, Crumb, DetailsFields, ModeToggle, Presets, Stepper, inr, useTween, type SplitDraft } from "./shared";
+import { Crumb, InlineAmount, ModeSwitch, NameField, Note, TitleField, UpiField, inr, useTween, type SplitDraft } from "./shared";
 
-const MAX_ROWS = 8;
+const MAX_ROWS = 10;
+const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
-/** A ruled ledger sheet with a row per person. Rent, utilities, anything else. */
+/** A ruled ledger sheet you fill in directly: rows, total and signature. Rent, utilities, anything. */
 export const LedgerScene = ({ t, d }: { t: SplitTemplate; d: SplitDraft }) => {
 	const each = useTween(d.each);
-	const total = useTween(d.total);
 	const fg = t.theme.darkText ? "#1c1826" : "#fff";
 	const rows = d.even ? d.people : 3;
-	const ruled = "repeating-linear-gradient(#fff 0 39px, #e7e3ea 39px 40px)";
+	const paper = "repeating-linear-gradient(#fffdf8 0 43px, #e7e3ea 43px 44px)";
+	const ink = t.theme.darkText ? "#7a5200" : t.theme.to;
 
 	return (
 		<>
 			<section className="relative overflow-hidden px-4 pb-32 pt-10 sm:pt-14" style={{ background: t.theme.to, color: fg }}>
 				<span aria-hidden className="pointer-events-none absolute -right-6 -top-10 select-none text-[11rem] opacity-25 sm:right-10 sm:text-[14rem]">{t.emoji}</span>
-				<div className="relative mx-auto max-w-5xl">
+				<div className="relative mx-auto max-w-3xl">
 					<Crumb t={t} />
 					<h1 className="mt-3 max-w-2xl font-display text-3xl font-semibold leading-tight [text-wrap:balance] sm:text-5xl">{t.headline}</h1>
 					<p className="mt-3 max-w-xl opacity-90 sm:text-lg">{t.sub}</p>
 				</div>
 			</section>
 
-			<section className="px-4">
-				<div className="surface relative z-10 mx-auto -mt-24 grid max-w-5xl overflow-hidden md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-					<div className="min-w-0 space-y-4 border-b border-line p-5 sm:p-6 md:border-b-0 md:border-r">
-						<AmountInput d={d} label="Amount due" />
-						<Presets t={t} d={d} />
-						<ModeToggle t={t} d={d} />
-						{d.even && <Stepper t={t} d={d} />}
-					</div>
-
-					{/* Ledger sheet */}
-					<div className="relative min-w-0 p-5 sm:p-6" style={{ background: ruled }}>
-						<span aria-hidden className="absolute inset-y-0 left-10 w-px bg-rose-300" />
-						<div className="flex items-baseline justify-between gap-3 pl-8">
-							<p className="truncate font-display text-xl font-semibold italic text-ink">{d.title || t.label}</p>
-							<p className="label-text shrink-0">Ledger</p>
+			<section className="px-4 pb-4">
+				<div className="relative z-10 mx-auto -mt-24 max-w-3xl overflow-hidden rounded-2xl shadow-2xl" style={{ background: paper }}>
+					<span aria-hidden className="absolute inset-y-0 left-10 w-px bg-rose-300 sm:left-14" />
+					<div className="space-y-1 py-6 pl-14 pr-5 sm:pl-20 sm:pr-8">
+						<div className="flex flex-wrap items-center justify-between gap-3">
+							<TitleField d={d} className="font-display text-2xl font-semibold italic text-ink sm:text-3xl" />
+							<ModeSwitch d={d} className="bg-ink/5" on="text-white" onStyle={{ background: ink }} off="text-ink-muted" />
 						</div>
-						<table className="mt-3 w-full text-sm">
+
+						<table className="w-full text-sm text-ink">
 							<thead>
-								<tr className="h-10 text-left text-ink-muted">
-									<th className="pl-8 font-medium">{t.who[0].toUpperCase() + t.who.slice(1)}</th>
+								<tr className="h-11 text-left text-xs uppercase tracking-[0.08em] text-ink-muted">
+									<th className="font-medium">{cap(t.who)}</th>
 									<th className="font-medium">Share</th>
-									<th className="text-right font-medium">Status</th>
+									<th className="w-10" />
 								</tr>
 							</thead>
 							<tbody>
 								{Array.from({ length: Math.min(rows, MAX_ROWS) }, (_, i) => (
-									<tr key={i} className="h-10">
-										<td className="pl-8 text-ink">{i === 0 ? "You (organiser)" : `${t.who[0].toUpperCase() + t.who.slice(1)} ${i + 1}`}</td>
-										<td className="tabular-nums text-ink">{d.even ? inr(each) : "Any"}</td>
+									<tr key={i} className="h-11">
+										<td>{i === 0 ? "You" : `${cap(t.who)} ${i + 1}`}</td>
+										<td className="tabular-nums">{d.even ? inr(each) : <span className="text-ink-muted">Any amount</span>}</td>
 										<td className="text-right">
-											<span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: `${t.theme.from}1f`, color: t.theme.darkText ? "#7a5200" : t.theme.from }}>
-												{i === 0 ? "Organiser" : "Due"}
-											</span>
+											{d.even && i > 0 && (
+												<button type="button" aria-label={`Remove ${t.who} ${i + 1}`} onClick={() => d.setPeople(d.people - 1)} className="h-7 w-7 rounded-full text-ink-muted hover:bg-ink/5 hover:text-ink">×</button>
+											)}
 										</td>
 									</tr>
 								))}
-								{rows > MAX_ROWS && (
-									<tr className="h-10"><td colSpan={3} className="pl-8 text-ink-muted">+ {rows - MAX_ROWS} more</td></tr>
+								{rows > MAX_ROWS && <tr className="h-11"><td colSpan={3} className="text-ink-muted">+ {rows - MAX_ROWS} more</td></tr>}
+								{d.even && (
+									<tr className="h-11">
+										<td colSpan={3}>
+											<button type="button" onClick={() => d.setPeople(d.people + 1)} className="font-semibold hover:underline" style={{ color: ink }}>+ Add {t.who}</button>
+										</td>
+									</tr>
 								)}
-								<tr className="h-10 font-semibold text-ink">
-									<td className="pl-8">Total</td>
-									<td className="tabular-nums" colSpan={2}>{inr(total)}</td>
+								<tr className="h-11 font-semibold">
+									<td>Total</td>
+									<td colSpan={2} className="font-display text-xl"><InlineAmount d={d} label="Total amount" /></td>
 								</tr>
 							</tbody>
 						</table>
-					</div>
 
-					<div className="border-t border-line p-5 sm:p-6 md:col-span-2">
-						<DetailsFields d={d} />
+						<div className="grid gap-x-6 pt-2 text-sm text-ink sm:grid-cols-2">
+							<p className="flex h-11 items-center gap-2"><span className="shrink-0 text-ink-muted">Collected by</span><NameField d={d} grow className="font-display text-lg italic" /></p>
+							<p className="flex h-11 items-center gap-2"><span className="shrink-0 text-ink-muted">UPI ID</span><UpiField d={d} grow /></p>
+						</div>
+
+						<div className="flex flex-wrap items-center gap-4 pt-4">
+							<button
+								type="submit"
+								className="rotate-[-2deg] rounded-lg border-[3px] px-5 py-2.5 font-display text-lg font-semibold uppercase tracking-[0.1em] transition-transform hover:rotate-0 active:scale-95"
+								style={{ borderColor: ink, color: ink }}
+							>
+								Send to {t.who}s ✓
+							</button>
+							<Note d={d} className="min-w-0 flex-1 text-ink" />
+						</div>
 					</div>
 				</div>
 			</section>
