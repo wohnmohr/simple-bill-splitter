@@ -1,4 +1,4 @@
-import { FeedbackUnavailableError, ensureSchema, getDb, hashIp, isRateLimited } from "@/lib/turso";
+import { FeedbackUnavailableError, ensureSchema, getDb, hashIp, rateLimitHit, rateLimited } from "@/lib/turso";
 import {
 	SPLIT_ID_RE, SPLIT_TTL_MS, cleanBlob, cleanToken, hashToken, overLimit, purgeExpired, readSmallJson, reply, sameOrigin, takeGlobalSlot,
 } from "@/lib/splitStore";
@@ -20,9 +20,8 @@ export async function POST(req: Request) {
 	try {
 		const db = getDb();
 		await ensureSchema(db);
-		if (await isRateLimited(db, "splits", ipHash, 30)) {
-			return reply({ error: "Too many splits this hour. Try again later." }, 429, { "Retry-After": "3600" });
-		}
+		const hit = await rateLimitHit(db, "splits", ipHash);
+		if (hit) return rateLimited(hit, "new splits");
 		if (!(await takeGlobalSlot(db))) return reply({ error: "Busy" }, 503, { "Retry-After": "600" });
 		const now = Date.now();
 		const res = await db.execute({

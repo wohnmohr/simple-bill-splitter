@@ -56,10 +56,12 @@ const SCHEMA = [
 	)`,
 	`CREATE INDEX IF NOT EXISTS split_payments_split ON split_payments (split_id, created_at)`,
 	`CREATE INDEX IF NOT EXISTS split_payments_ip ON split_payments (ip_hash, created_at)`,
-	// One row per hour: a global ceiling on new splits, whatever IPs they come from.
-	`CREATE TABLE IF NOT EXISTS split_quota (
-		hour  INTEGER PRIMARY KEY,
-		n     INTEGER NOT NULL
+	// Global counters per hour and per day ("h:<hour>", "d:<day>"): ceilings on new
+	// splits whatever IPs they come from.
+	`CREATE TABLE IF NOT EXISTS api_quota (
+		bucket  TEXT PRIMARY KEY,
+		at      INTEGER NOT NULL,
+		n       INTEGER NOT NULL
 	)`,
 ];
 
@@ -114,19 +116,40 @@ export function hashIp(req: Request): string {
 	return createHash("sha256").update(`${salt}:${ip}`).digest("hex").slice(0, 32);
 }
 
-/** True when this IP has already submitted `max` rows to `table` in the last hour. */
-export async function isRateLimited(
-	db: Client,
-	table: "feedback" | "feature_requests" | "splits" | "split_payments",
-	ipHash: string,
-	max: number
-): Promise<boolean> {
-	const since = Date.now() - 60 * 60 * 1000;
+export type RateTable = "feedback" | "feature_requests" | "splits" | "split_payments";
+
+/** Per-IP write budgets: a short burst window and a daily cap, so one source can't flood us all day. */
+export const WRITE_LIMITS: Record<RateTable, { hour: number; day: number }> = {
+	splits: { hour: 30, day: 100 },
+	split_payments: { hour: 60, day: 300 },
+	feedback: { hour: 10, day: 30 },
+	feature_requests: { hour: 5, day: 15 },
+};
+
+/**
+ * Which window this IP has used up in `table`, or null if it may write.
+ * One indexed query covers both the hourly and the daily budget.
+ */
+export async function rateLimitHit(db: Client, table: RateTable, ipHash: string): Promise<"hour" | "day" | null> {
+	const now = Date.now();
+	const { hour, day } = WRITE_LIMITS[table];
 	const res = await db.execute({
-		sql: `SELECT COUNT(*) AS n FROM ${table} WHERE ip_hash = ? AND created_at > ?`,
-		args: [ipHash, since],
+		sql: `SELECT COUNT(*) AS day, COALESCE(SUM(created_at > ?), 0) AS hour FROM ${table} WHERE ip_hash = ? AND created_at > ?`,
+		args: [now - 3_600_000, ipHash, now - 86_400_000],
 	});
-	return Number(res.rows[0]?.n ?? 0) >= max;
+	const row = res.rows[0];
+	if (Number(row?.day ?? 0) >= day) return "day";
+	if (Number(row?.hour ?? 0) >= hour) return "hour";
+	return null;
+}
+
+/** A 429 that says when to come back. */
+export function rateLimited(window: "hour" | "day", what: string): Response {
+	const retry = window === "day" ? 86_400 : 3_600;
+	return Response.json(
+		{ error: `You've reached today's limit for ${what}. Try again ${window === "day" ? "tomorrow" : "in an hour"}.` },
+		{ status: 429, headers: { "Retry-After": String(retry), "Cache-Control": "no-store" } }
+	);
 }
 
 // ── Input hygiene ─────────────────────────────────────────────

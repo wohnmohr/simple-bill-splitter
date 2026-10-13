@@ -15,8 +15,11 @@ export const SPLIT_TTL_MS = SPLIT_TTL_DAYS * 24 * 60 * 60 * 1000;
 export const MAX_PAYMENTS = 200;
 /** Requests larger than this are refused before parsing. Real ones are under 2 KB. */
 const MAX_BODY_BYTES = 8 * 1024;
-/** Ceiling on new splits per hour across everyone; beyond it, the app falls back to link-only splits. */
+/** Ceilings on new splits across everyone; beyond them, the app falls back to link-only splits. */
 const GLOBAL_SPLITS_PER_HOUR = Number(process.env.SPLITS_PER_HOUR_MAX) || 1000;
+const GLOBAL_SPLITS_PER_DAY = Number(process.env.SPLITS_PER_DAY_MAX) || 10_000;
+/** Reads per IP per day, per server instance. Kept in memory so a read flood never adds database writes. */
+export const READS_PER_IP_PER_DAY = 3000;
 
 export const SPLIT_ID_RE = /^[A-Za-z0-9_-]{22}$/;
 const TOKEN_RE = /^[A-Za-z0-9_-]{43}$/;
@@ -88,14 +91,19 @@ export function overLimit(key: string, limit: number, windowMs = 60_000): boolea
 	return b.n > limit;
 }
 
-/** Takes one slot from this hour's global quota; false when the hour is full. */
+const bump = (bucket: string, now: number) => ({
+	sql: "INSERT INTO api_quota (bucket, at, n) VALUES (?, ?, 1) ON CONFLICT (bucket) DO UPDATE SET n = n + 1 RETURNING n",
+	args: [bucket, now],
+});
+
+/** Takes one slot from this hour's and today's global quotas; false when either is full. */
 export async function takeGlobalSlot(db: Client): Promise<boolean> {
-	const hour = Math.floor(Date.now() / 3_600_000);
-	const res = await db.execute({
-		sql: "INSERT INTO split_quota (hour, n) VALUES (?, 1) ON CONFLICT (hour) DO UPDATE SET n = n + 1 RETURNING n",
-		args: [hour],
-	});
-	return Number(res.rows[0]?.n ?? 0) <= GLOBAL_SPLITS_PER_HOUR;
+	const now = Date.now();
+	const [hour, day] = await db.batch(
+		[bump(`splits:h:${Math.floor(now / 3_600_000)}`, now), bump(`splits:d:${Math.floor(now / 86_400_000)}`, now)],
+		"write"
+	);
+	return Number(hour.rows[0]?.n ?? 0) <= GLOBAL_SPLITS_PER_HOUR && Number(day.rows[0]?.n ?? 0) <= GLOBAL_SPLITS_PER_DAY;
 }
 
 /**
@@ -108,7 +116,7 @@ export async function purgeExpired(db: Client): Promise<void> {
 		[
 			{ sql: "DELETE FROM split_payments WHERE split_id IN (SELECT id FROM splits WHERE expires_at <= ?)", args: [now] },
 			{ sql: "DELETE FROM splits WHERE expires_at <= ?", args: [now] },
-			{ sql: "DELETE FROM split_quota WHERE hour < ?", args: [Math.floor(now / 3_600_000) - 24] },
+			{ sql: "DELETE FROM api_quota WHERE at < ?", args: [now - 2 * 86_400_000] },
 		],
 		"write"
 	);

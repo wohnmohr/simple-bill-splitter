@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { FeedbackUnavailableError, ensureSchema, getDb, hashIp, isRateLimited } from "@/lib/turso";
+import { FeedbackUnavailableError, ensureSchema, getDb, hashIp, rateLimitHit, rateLimited } from "@/lib/turso";
 import { MAX_PAYMENTS, SPLIT_ID_RE, cleanBlob, cleanToken, overLimit, readSmallJson, reply, sameOrigin, tokenMatches } from "@/lib/splitStore";
 
 export const runtime = "nodejs";
@@ -24,9 +24,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 		const row = split.rows[0];
 		// Same answer for "no such split" and "wrong token", so ids can't be probed.
 		if (!row || !tokenMatches(token, String(row.write_hash))) return reply({ error: "Not found" }, 404);
-		if (await isRateLimited(db, "split_payments", ipHash, 60)) {
-			return reply({ error: "Too many updates this hour. Try again later." }, 429, { "Retry-After": "3600" });
-		}
+		const hit = await rateLimitHit(db, "split_payments", ipHash);
+		if (hit) return rateLimited(hit, "payment updates");
 		// Claim a slot atomically, so concurrent requests can't push a split past the cap.
 		const slot = await db.execute({
 			sql: "UPDATE splits SET payments = payments + 1 WHERE id = ? AND payments < ? AND expires_at > ?",

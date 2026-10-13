@@ -1,5 +1,5 @@
 import { FeedbackUnavailableError, ensureSchema, getDb, hashIp } from "@/lib/turso";
-import { SPLIT_ID_RE, overLimit, reply } from "@/lib/splitStore";
+import { READS_PER_IP_PER_DAY, SPLIT_ID_RE, overLimit, reply } from "@/lib/splitStore";
 
 export const runtime = "nodejs";
 
@@ -10,7 +10,11 @@ export const runtime = "nodejs";
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 	if (!SPLIT_ID_RE.test(id)) return reply({ error: "Not found" }, 404);
-	if (overLimit(`read:${hashIp(req)}`, 60)) return reply({ error: "Slow down" }, 429, { "Retry-After": "30" });
+	const ip = hashIp(req);
+	if (overLimit(`read:${ip}`, 60)) return reply({ error: "Slow down" }, 429, { "Retry-After": "30" });
+	if (overLimit(`read-day:${ip}`, READS_PER_IP_PER_DAY, 86_400_000)) {
+		return reply({ error: "Daily limit reached. Try again tomorrow." }, 429, { "Retry-After": "86400" });
+	}
 	const v = new URL(req.url).searchParams.get("v");
 	const known = v === null || v === "" ? null : Number(v);
 
