@@ -3,7 +3,8 @@
 import { Component, ReactNode, Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { trackError } from "@/lib/analytics";
-import { capture, isPrivatePath, startPostHogWhenIdle, withPostHog } from "@/lib/posthogClient";
+import { capture, startPostHogWhenIdle, withPostHog } from "@/lib/posthogClient";
+import { isPrivatePath } from "@/lib/privateUrl";
 
 function PostHogPageView() {
 	const pathname = usePathname();

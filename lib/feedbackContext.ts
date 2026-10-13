@@ -1,5 +1,6 @@
 import { Group } from "@/types";
 import { getRecentActions } from "@/lib/analytics";
+import { scrubUrl } from "@/lib/privateUrl";
 
 export type FeedbackContext = Record<string, string | number | boolean | string[]>;
 
@@ -17,7 +18,7 @@ export function collectFeedbackContext(options: {
 	if (typeof window === "undefined") return ctx;
 
 	const coarse = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-	ctx.path = window.location.pathname;
+	ctx.path = scrubUrl(window.location.pathname);
 	ctx.device = coarse ? (window.innerWidth >= 768 ? "tablet" : "phone") : "desktop";
 	ctx.viewport = `${window.innerWidth}x${window.innerHeight}`;
 	ctx.locale = navigator.language;

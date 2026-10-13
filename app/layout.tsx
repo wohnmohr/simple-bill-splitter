@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, Fraunces } from "next/font/google";
-import { Analytics } from "@vercel/analytics/react";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { VercelAnalytics } from "@/components/providers/VercelAnalytics";
 import { FeedbackNudge } from "@/components/Feedback/FeedbackNudge";
 import "./globals.css";
 
@@ -87,7 +87,7 @@ export default function RootLayout({
 				<PostHogProvider>
 					{children}
 					<FeedbackNudge />
-					<Analytics />
+					<VercelAnalytics />
 				</PostHogProvider>
 			</body>
 		</html>

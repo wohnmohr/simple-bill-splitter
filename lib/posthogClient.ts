@@ -6,16 +6,14 @@
  * before it is ready is queued with its real timestamp and sent once it loads.
  */
 import type { PostHog } from "posthog-js";
+import { isPrivatePath, scrubUrl } from "@/lib/privateUrl";
 
 type Job = (ph: PostHog) => void;
 
 const MAX_QUEUED = 100;
 
-/** Pages whose URL fragment carries private data (split keys, shared groups). Never recorded. */
-const PRIVATE_PATH = /^\/(s|pay-story|share|secret-santa)(\/|$)/;
-export const isPrivatePath = (path: string) => PRIVATE_PATH.test(path);
-
-const URL_PROPS = ["$current_url", "$initial_current_url", "$referrer", "$initial_referrer"];
+/** $current_url, $pathname, $initial_referrer, $session_entry_url and the like. */
+const URL_PROP = /(url|pathname|referrer)$/i;
 /** A link without its query or fragment: "upi://pay?pa=…&pn=…&am=…" becomes "upi://pay". */
 const bareLink = (href: string) => href.split(/[?#]/)[0];
 
@@ -39,12 +37,11 @@ function stripLinks(props: Record<string, unknown> | undefined) {
 	}
 }
 
-/** Removes #fragments from URL properties so keys and shared data never reach analytics. */
-function stripFragments(props: Record<string, unknown> | undefined) {
+/** Scrubs URL properties so split keys, split ids and shared data never reach analytics. */
+function scrubUrls(props: Record<string, unknown> | undefined) {
 	if (!props) return;
-	for (const k of URL_PROPS) {
-		const v = props[k];
-		if (typeof v === "string") props[k] = v.split("#")[0];
+	for (const [k, v] of Object.entries(props)) {
+		if (typeof v === "string" && URL_PROP.test(k)) props[k] = scrubUrl(v);
 	}
 }
 let client: PostHog | null = null;
@@ -107,10 +104,10 @@ export function startPostHog(): void {
 				// to act on, and it floods the exception feed.
 				before_send: (event) => {
 					if (!event) return event;
-					stripFragments(event.properties);
+					scrubUrls(event.properties);
 					stripLinks(event.properties);
-					stripFragments(event.properties?.$set);
-					stripFragments(event.properties?.$set_once);
+					scrubUrls(event.properties?.$set);
+					scrubUrls(event.properties?.$set_once);
 					if (event.event === "$snapshot" && isPrivatePath(window.location.pathname)) return null;
 					if (event.event !== "$exception") return event;
 					const props = event.properties ?? {};
