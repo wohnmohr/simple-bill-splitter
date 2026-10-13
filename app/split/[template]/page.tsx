@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageFrame } from "@/components/PayStory/PageFrame";
-import { SplitStudio } from "@/components/PayStory/SplitStudio";
+import { SplitScene } from "@/components/PayStory/scenes";
 import { TemplateGrid, themeGradient } from "@/components/PayStory/TemplateGrid";
 import { TEMPLATES, findTemplate } from "@/utils/payStory";
 
@@ -45,20 +44,7 @@ export default async function SplitTemplatePage({ params }: { params: Promise<{ 
 	return (
 		<PageFrame>
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-			<section className="px-4 pb-24 pt-8 sm:pb-28 sm:pt-12" style={{ background: themeGradient(t), color: fg }}>
-				<div className="mx-auto max-w-3xl">
-					<nav aria-label="Breadcrumb" className="mb-4 text-sm opacity-80">
-						<Link href="/split" className="underline-offset-2 hover:underline">Splits</Link> / {t.label}
-					</nav>
-					<p aria-hidden className="text-5xl">{t.emoji}</p>
-					<h1 className="mt-2 font-display text-3xl font-semibold leading-tight [text-wrap:balance] sm:text-5xl">{t.headline}</h1>
-					<p className="mt-3 max-w-xl text-base opacity-90 sm:text-lg">{t.sub}</p>
-				</div>
-			</section>
-
-			<div className="mx-auto -mt-16 w-full max-w-3xl min-w-0 px-4 sm:-mt-20">
-				<SplitStudio template={t} />
-			</div>
+			<SplitScene template={t} />
 
 			<div className="mx-auto w-full max-w-3xl min-w-0 space-y-12 px-4 py-12">
 				<section>

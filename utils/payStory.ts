@@ -3,9 +3,13 @@ export interface SplitFaq {
 	a: string;
 }
 
-/** A split type with its own page at /split/<id>: theme, copy and sensible defaults. */
+/** The visual scene a split page is built around. */
+export type SplitLayout = "receipt" | "ledger" | "meter" | "profiles" | "pass" | "scoreboard" | "jar" | "envelope";
+
+/** A split type with its own page at /split/<id>: scene, theme, copy and sensible defaults. */
 export interface SplitTemplate {
 	id: string;
+	layout: SplitLayout;
 	emoji: string;
 	label: string;
 	/** Default title for the request; the organiser can edit it. */
@@ -30,6 +34,7 @@ export interface SplitTemplate {
 export const TEMPLATES: SplitTemplate[] = [
 	{
 		id: "dinner",
+		layout: "receipt",
 		emoji: "🍽️",
 		label: "Dinner / outing",
 		title: "Dinner tonight",
@@ -55,6 +60,7 @@ export const TEMPLATES: SplitTemplate[] = [
 	},
 	{
 		id: "rent",
+		layout: "ledger",
 		emoji: "🔑",
 		label: "Flat rent",
 		title: "This month’s rent",
@@ -80,6 +86,7 @@ export const TEMPLATES: SplitTemplate[] = [
 	},
 	{
 		id: "groceries",
+		layout: "receipt",
 		emoji: "🛒",
 		label: "Groceries",
 		title: "Groceries this week",
@@ -105,6 +112,7 @@ export const TEMPLATES: SplitTemplate[] = [
 	},
 	{
 		id: "electricity",
+		layout: "meter",
 		emoji: "💡",
 		label: "Electricity",
 		title: "Electricity bill",
@@ -130,6 +138,7 @@ export const TEMPLATES: SplitTemplate[] = [
 	},
 	{
 		id: "wifi",
+		layout: "ledger",
 		emoji: "📶",
 		label: "Wi-Fi / utilities",
 		title: "Wi-Fi and utilities",
@@ -155,6 +164,7 @@ export const TEMPLATES: SplitTemplate[] = [
 	},
 	{
 		id: "subscription",
+		layout: "profiles",
 		emoji: "📺",
 		label: "Subscription",
 		title: "Shared subscription",
@@ -180,6 +190,7 @@ export const TEMPLATES: SplitTemplate[] = [
 	},
 	{
 		id: "cab",
+		layout: "pass",
 		emoji: "🚕",
 		label: "Cab / fuel",
 		title: "Cab ride home",
@@ -205,6 +216,7 @@ export const TEMPLATES: SplitTemplate[] = [
 	},
 	{
 		id: "trip",
+		layout: "pass",
 		emoji: "🧳",
 		label: "Trip",
 		title: "Trip advance booking",
@@ -230,6 +242,7 @@ export const TEMPLATES: SplitTemplate[] = [
 	},
 	{
 		id: "sports",
+		layout: "scoreboard",
 		emoji: "🏏",
 		label: "Turf / sports",
 		title: "Turf booking",
@@ -255,6 +268,7 @@ export const TEMPLATES: SplitTemplate[] = [
 	},
 	{
 		id: "lunch",
+		layout: "receipt",
 		emoji: "🥡",
 		label: "Office lunch",
 		title: "Team lunch",
@@ -280,6 +294,7 @@ export const TEMPLATES: SplitTemplate[] = [
 	},
 	{
 		id: "gift",
+		layout: "jar",
 		emoji: "🎁",
 		label: "Group gift",
 		title: "Group gift",
@@ -304,6 +319,7 @@ export const TEMPLATES: SplitTemplate[] = [
 	},
 	{
 		id: "party",
+		layout: "jar",
 		emoji: "🎂",
 		label: "Birthday / party",
 		title: "Birthday cake and party",
@@ -328,6 +344,7 @@ export const TEMPLATES: SplitTemplate[] = [
 	},
 	{
 		id: "shagun",
+		layout: "envelope",
 		emoji: "💌",
 		label: "Shagun / wedding",
 		title: "Shagun for the wedding",
@@ -352,6 +369,7 @@ export const TEMPLATES: SplitTemplate[] = [
 	},
 	{
 		id: "other",
+		layout: "ledger",
 		emoji: "✨",
 		label: "Something else",
 		title: "",
