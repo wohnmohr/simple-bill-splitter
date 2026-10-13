@@ -42,7 +42,8 @@ const SCHEMA = [
 		expires_at  INTEGER NOT NULL,
 		write_hash  TEXT NOT NULL,
 		blob        TEXT NOT NULL,
-		ip_hash     TEXT NOT NULL
+		ip_hash     TEXT NOT NULL,
+		payments    INTEGER NOT NULL DEFAULT 0
 	)`,
 	`CREATE INDEX IF NOT EXISTS splits_ip ON splits (ip_hash, created_at)`,
 	`CREATE INDEX IF NOT EXISTS splits_expiry ON splits (expires_at)`,
@@ -55,7 +56,15 @@ const SCHEMA = [
 	)`,
 	`CREATE INDEX IF NOT EXISTS split_payments_split ON split_payments (split_id, created_at)`,
 	`CREATE INDEX IF NOT EXISTS split_payments_ip ON split_payments (ip_hash, created_at)`,
+	// One row per hour: a global ceiling on new splits, whatever IPs they come from.
+	`CREATE TABLE IF NOT EXISTS split_quota (
+		hour  INTEGER PRIMARY KEY,
+		n     INTEGER NOT NULL
+	)`,
 ];
+
+/** Columns added after a table first shipped; "duplicate column" means it's already there. */
+const MIGRATIONS = ["ALTER TABLE splits ADD COLUMN payments INTEGER NOT NULL DEFAULT 0"];
 
 export class FeedbackUnavailableError extends Error {}
 
@@ -81,7 +90,9 @@ export async function ensureSchema(db: Client): Promise<void> {
 	if (!schemaReady) {
 		schemaReady = db
 			.batch(SCHEMA, "write")
-			.then(() => undefined)
+			.then(async () => {
+				for (const sql of MIGRATIONS) await db.execute(sql).catch(() => undefined);
+			})
 			.catch((err) => {
 				schemaReady = null;
 				throw err;
@@ -92,9 +103,12 @@ export async function ensureSchema(db: Client): Promise<void> {
 
 /** Salted hash of the caller's IP: enough to rate-limit, not enough to identify. */
 export function hashIp(req: Request): string {
+	// Vercel sets these at its edge and overwrites anything the client sends,
+	// so they can't be spoofed to dodge rate limits.
 	const ip =
-		req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+		req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
 		req.headers.get("x-real-ip") ||
+		req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
 		"unknown";
 	const salt = process.env.FEEDBACK_IP_SALT || "splitbiller-dev-salt";
 	return createHash("sha256").update(`${salt}:${ip}`).digest("hex").slice(0, 32);

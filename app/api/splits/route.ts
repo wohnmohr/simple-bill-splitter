@@ -1,40 +1,41 @@
 import { FeedbackUnavailableError, ensureSchema, getDb, hashIp, isRateLimited } from "@/lib/turso";
-import { NO_STORE, SPLIT_ID_RE, SPLIT_TTL_MS, cleanBlob, cleanToken, hashToken, purgeExpired } from "@/lib/splitStore";
+import {
+	SPLIT_ID_RE, SPLIT_TTL_MS, cleanBlob, cleanToken, hashToken, overLimit, purgeExpired, readSmallJson, reply, sameOrigin, takeGlobalSlot,
+} from "@/lib/splitStore";
 
 export const runtime = "nodejs";
 
 /** Stores a new end-to-end encrypted split. The body holds ciphertext and a write token only. */
 export async function POST(req: Request) {
-	let body: Record<string, unknown>;
-	try {
-		body = await req.json();
-	} catch {
-		return Response.json({ error: "Invalid request" }, { status: 400, headers: NO_STORE });
-	}
-	const id = typeof body.id === "string" && SPLIT_ID_RE.test(body.id) ? body.id : null;
-	const token = cleanToken(body.token);
-	const blob = cleanBlob(body.blob, 4000);
-	if (!id || !token || !blob) return Response.json({ error: "Invalid split" }, { status: 400, headers: NO_STORE });
+	if (!sameOrigin(req)) return reply({ error: "Forbidden" }, 403);
+	const ipHash = hashIp(req);
+	if (overLimit(`create:${ipHash}`, 10)) return reply({ error: "Slow down" }, 429, { "Retry-After": "60" });
+
+	const body = await readSmallJson(req);
+	const id = typeof body?.id === "string" && SPLIT_ID_RE.test(body.id) ? body.id : null;
+	const token = cleanToken(body?.token);
+	const blob = cleanBlob(body?.blob, 4000);
+	if (!id || !token || !blob) return reply({ error: "Invalid split" }, 400);
 
 	try {
 		const db = getDb();
 		await ensureSchema(db);
-		const ipHash = hashIp(req);
 		if (await isRateLimited(db, "splits", ipHash, 30)) {
-			return Response.json({ error: "Too many splits this hour. Try again later." }, { status: 429, headers: NO_STORE });
+			return reply({ error: "Too many splits this hour. Try again later." }, 429, { "Retry-After": "3600" });
 		}
+		if (!(await takeGlobalSlot(db))) return reply({ error: "Busy" }, 503, { "Retry-After": "600" });
 		const now = Date.now();
 		const res = await db.execute({
 			sql: `INSERT INTO splits (id, created_at, expires_at, write_hash, blob, ip_hash) VALUES (?, ?, ?, ?, ?, ?)
 			      ON CONFLICT (id) DO NOTHING`,
 			args: [id, now, now + SPLIT_TTL_MS, hashToken(token), blob, ipHash],
 		});
-		if (res.rowsAffected === 0) return Response.json({ error: "Split already exists" }, { status: 409, headers: NO_STORE });
+		if (res.rowsAffected === 0) return reply({ error: "Split already exists" }, 409);
 		await purgeExpired(db).catch((e) => console.error("split purge failed", (e as Error).message));
-		return Response.json({ ok: true, expiresAt: now + SPLIT_TTL_MS }, { status: 201, headers: NO_STORE });
+		return reply({ ok: true, expiresAt: now + SPLIT_TTL_MS }, 201);
 	} catch (err) {
-		if (err instanceof FeedbackUnavailableError) return Response.json({ error: "Offline" }, { status: 503, headers: NO_STORE });
+		if (err instanceof FeedbackUnavailableError) return reply({ error: "Offline" }, 503);
 		console.error("split create failed", (err as Error).message);
-		return Response.json({ error: "Couldn't save the split" }, { status: 500, headers: NO_STORE });
+		return reply({ error: "Couldn't save the split" }, 500);
 	}
 }

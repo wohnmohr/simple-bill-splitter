@@ -21,25 +21,32 @@ export async function createCloudSplit(req: PayRequest): Promise<string> {
 	return cloudPath(id, key);
 }
 
-export type CloudLoad = { status: "ok"; req: PayRequest; expiresAt: number } | { status: "missing" | "locked" | "offline" };
+export type CloudLoad =
+	| { status: "ok"; req: PayRequest; expiresAt: number; version: number }
+	| { status: "unchanged" }
+	| { status: "missing" | "locked" | "offline" };
 
-/** Fetches and decrypts a split and its payments. */
-export async function loadCloudSplit(id: string, key: string): Promise<CloudLoad> {
+/**
+ * Fetches and decrypts a split and its payments. Pass the `version` you already
+ * have and an unchanged split comes back as { status: "unchanged" } (one cheap read).
+ */
+export async function loadCloudSplit(id: string, key: string, version?: number): Promise<CloudLoad> {
 	if (!SPLIT_ID_RE.test(id) || !SPLIT_KEY_RE.test(key)) return { status: "locked" };
 	let res: Response;
 	try {
-		res = await fetch(`/api/splits/${id}`, { cache: "no-store" });
+		res = await fetch(`/api/splits/${id}${version === undefined ? "" : `?v=${version}`}`, { cache: "no-store" });
 	} catch {
 		return { status: "offline" };
 	}
 	if (res.status === 404) return { status: "missing" };
 	if (!res.ok) return { status: "offline" };
-	const body = (await res.json()) as { blob: string; payments: string[]; expiresAt: number };
+	const body = (await res.json()) as { unchanged?: boolean; blob: string; payments: string[]; expiresAt: number; version: number };
+	if (body.unchanged) return { status: "unchanged" };
 	const split = await open(key, id, "split", body.blob);
 	if (!split) return { status: "locked" };
 	const payments = await Promise.all(body.payments.map((b) => open(key, id, "payment", b)));
 	const req = sanitizeRequest({ ...(split as object), paid: payments.map(sanitizePayment).filter(Boolean) });
-	return req ? { status: "ok", req, expiresAt: body.expiresAt } : { status: "locked" };
+	return req ? { status: "ok", req, expiresAt: body.expiresAt, version: body.version } : { status: "locked" };
 }
 
 /** Encrypts and appends one payment. Throws if it couldn't be saved. */
