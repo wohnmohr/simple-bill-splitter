@@ -52,7 +52,7 @@ const Stage = ({ id, label, title, items, muted }: { id: string; label: string; 
 export default function RoadmapPage() {
 	return (
 		<main className="page-shell min-h-screen bg-paper text-ink">
-			<SiteNav />
+			<SiteNav current="roadmap" />
 
 			<header className="px-4 pb-4 pt-12 sm:px-6 sm:pt-16">
 				<div className="mx-auto max-w-5xl">
