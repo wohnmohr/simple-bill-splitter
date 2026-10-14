@@ -14,16 +14,20 @@ export const useGroupMembers = (
   const updateMember = (personId: string, change: (m: Person) => Person) =>
     updateCurrent((g) => ({ ...g, members: g.members.map((m) => (m.id === personId ? change(m) : m)) }));
 
-  /** Adds a member and returns their id, or null if there's no name or group. `id` is pre-made when someone joins. */
-  const addMember = (name: string, upiId?: string, id?: string): string | null => {
+  /**
+   * Adds a member and returns their id, or null if there's no name or group.
+   * Someone joining passes their pre-made id and is marked as joined.
+   */
+  const addMember = (name: string, upiId?: string, joiner?: { id: string }): string | null => {
     if (!name.trim() || !currentGroup) {
       return null;
     }
 
     const newPerson: Person = {
-      id: id ?? newId("person"),
+      id: joiner?.id ?? newId("person"),
       name: name.trim(),
       ...(upiId?.trim() ? { upiId: upiId.trim() } : {}),
+      ...(joiner ? { joined: true as const } : {}),
     };
 
     updateCurrent((g) => ({ ...g, members: [...g.members, newPerson] }));
@@ -34,6 +38,9 @@ export const useGroupMembers = (
     const trimmed = upiId.trim();
     updateMember(personId, ({ upiId: _old, ...rest }) => (trimmed ? { ...rest, upiId: trimmed } : rest));
   };
+
+  /** Marks that someone has joined as this member from a device. */
+  const markJoined = (personId: string): void => updateMember(personId, (m) => (m.joined ? m : { ...m, joined: true }));
 
   /** Renames a member for everyone in the group. */
   const renameMember = (personId: string, name: string): void => {
@@ -66,6 +73,7 @@ export const useGroupMembers = (
     addMember,
     updateMemberUpi,
     renameMember,
+    markJoined,
     setNickname,
     deleteMember,
   };

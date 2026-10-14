@@ -61,13 +61,18 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 							SplitBiller
 						</span>
 					</Link>
-					<TrackedLink
-						href="/dashboard"
-						location="tool_page_nav"
-						className="btn-primary !py-2"
-					>
-						Open app
-					</TrackedLink>
+					<div className="flex items-center gap-1 sm:gap-2">
+						<Link href="/tools" className="btn-ghost">
+							All tools
+						</Link>
+						<TrackedLink
+							href="/dashboard"
+							location="tool_page_nav"
+							className="btn-primary !py-2"
+						>
+							Open app
+						</TrackedLink>
+					</div>
 				</div>
 			</header>
 
@@ -195,6 +200,10 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 			<footer className="px-4 py-8 text-center text-xs text-gray-500">
 				<Link href="/" className="inline-block py-2 text-indigo-600 hover:underline">
 					SplitBiller
+				</Link>
+				{" · "}
+				<Link href="/tools" className="inline-block py-2 text-indigo-600 hover:underline">
+					All tools
 				</Link>
 				{" · "}
 				Free bill splitter · No login · Privacy-first

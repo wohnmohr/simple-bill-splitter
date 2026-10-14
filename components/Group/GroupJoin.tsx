@@ -33,6 +33,13 @@ const openOnDashboard = (router: ReturnType<typeof useRouter>, groupId: string) 
 	router.replace("/dashboard");
 };
 
+/**
+ * A personal link says who's opening it: that member becomes "you" on this
+ * device, unless the device already has someone (a shared phone keeps its own).
+ */
+const asMe = (group: Group, me: string | undefined): Group =>
+	me && group.meId == null && group.members.some((m) => m.id === me) ? { ...group, meId: me } : group;
+
 /** Opens a group link: asks for the passphrase if needed, decrypts, and saves the group on this device. */
 export const GroupJoin = () => {
 	const router = useRouter();
@@ -49,9 +56,14 @@ export const GroupJoin = () => {
 
 	const open = async (sync: GroupSyncLink) => {
 		lastTried.current = sync;
+		const me = link.current?.me;
 		const groups = loadGroupsFromStorage();
 		const existing = groups.find((g) => g.sync?.secret === sync.secret);
-		if (existing) return openOnDashboard(router, existing.id);
+		if (existing) {
+			// Opened again on a device that already has it: same group, same "you". No second join.
+			if (me) saveGroupsToStorage(groups.map((g) => (g === existing ? asMe(g, me) : g)));
+			return openOnDashboard(router, existing.id);
+		}
 		if (groups.length >= MAX_GROUPS) return fail("limit");
 		const localId = newId("group");
 		const result = await joinGroup(sync, localId);
@@ -59,9 +71,9 @@ export const GroupJoin = () => {
 			if (result.reason === "wrong-passphrase") return setState({ step: "passphrase", wrong: true });
 			return fail(result.reason, result.reason === "offline");
 		}
-		const joined: Group = { ...result.group, sync };
+		const joined: Group = asMe({ ...result.group, sync }, me);
 		saveGroupsToStorage([...loadGroupsFromStorage(), joined]);
-		track("group_joined", { passphrase: Boolean(sync.pass), members: joined.members.length });
+		track("group_joined", { passphrase: Boolean(sync.pass), members: joined.members.length, personal: Boolean(me) });
 		openOnDashboard(router, localId);
 	};
 
@@ -72,8 +84,12 @@ export const GroupJoin = () => {
 		link.current = parsed;
 		if (!parsed) return fail("invalid");
 		if (parsed.needsPassphrase) {
-			const known = loadGroupsFromStorage().find((g) => g.sync?.secret === parsed.secret);
-			if (known) return openOnDashboard(router, known.id);
+			const groups = loadGroupsFromStorage();
+			const known = groups.find((g) => g.sync?.secret === parsed.secret);
+			if (known) {
+				if (parsed.me) saveGroupsToStorage(groups.map((g) => (g === known ? asMe(g, parsed.me) : g)));
+				return openOnDashboard(router, known.id);
+			}
 			return setState({ step: "passphrase" });
 		}
 		void open({ secret: parsed.secret });

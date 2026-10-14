@@ -86,6 +86,7 @@ function toPerson(id: string, v: unknown): Person | null {
 	const person: Person = { id, name };
 	const upiId = str(p.upiId, 80).trim();
 	if (upiId) person.upiId = upiId;
+	if (p.joined === true) person.joined = true;
 	return person;
 }
 

@@ -5,7 +5,7 @@ import { TextInput } from "@mantine/core";
 import { Dices, Lock } from "lucide-react";
 import { Modal } from "@/components/UI/Modal";
 import { MemberAvatar } from "@/components/Group/MemberAvatar";
-import type { Group } from "@/types";
+import type { Group, Person } from "@/types";
 import { newIdentity, shownMembers } from "@/utils/identity";
 import { newId } from "@/utils/ids";
 
@@ -42,6 +42,12 @@ export const IdentitySheet = ({ isOpen, group, onJoin, onClaim, onJustLooking, o
 
 	const members = shownMembers(group);
 	const trimmed = name.trim();
+	// Typing a name the group already has is most likely the same person on a new device.
+	const clash = trimmed
+		? group.members.find((m, i) => [m.name, members[i].name].some((n) => n.trim().toLowerCase() === trimmed.toLowerCase()))
+		: undefined;
+	const notJoined = members.filter((m) => !m.joined);
+	const joined = members.filter((m) => m.joined);
 
 	return (
 		<Modal isOpen={isOpen} onClose={onClose} title={`Who are you in ${group.name}?`}>
@@ -50,7 +56,7 @@ export const IdentitySheet = ({ isOpen, group, onJoin, onClaim, onJustLooking, o
 					className="rounded-2xl border border-line bg-paper p-4"
 					onSubmit={(e) => {
 						e.preventDefault();
-						if (trimmed) onJoin(trimmed, identity.id);
+						if (trimmed && !clash) onJoin(trimmed, identity.id);
 					}}
 				>
 					<div className="flex items-center gap-3">
@@ -75,27 +81,37 @@ export const IdentitySheet = ({ isOpen, group, onJoin, onClaim, onJustLooking, o
 							name, and change it any time.
 						</span>
 					</p>
-					<button type="submit" disabled={!trimmed} className="btn-primary mt-4 w-full">
-						Join as {trimmed || "…"}
-					</button>
+					{clash ? (
+						<div role="alert" className="mt-4 rounded-xl bg-brand-50 p-3">
+							<p className="text-sm font-medium text-brand-900">
+								“{clash.name}” is already in this group. If that&apos;s you on another device, use it here; otherwise pick
+								another name.
+							</p>
+							<div className="mt-2 flex gap-2">
+								<button type="button" onClick={() => onClaim(clash.id)} className="btn-primary !py-2">
+									That&apos;s me
+								</button>
+								<button type="button" onClick={shuffle} className="btn-ghost">
+									Another name
+								</button>
+							</div>
+						</div>
+					) : (
+						<button type="submit" disabled={!trimmed} className="btn-primary mt-4 w-full">
+							Join as {trimmed || "…"}
+						</button>
+					)}
 				</form>
 
 				{members.length > 0 && (
-					<div>
-						<p className="label-text mb-2">Already on the list?</p>
-						<div className="flex flex-wrap gap-2">
-							{members.map((m) => (
-								<button
-									key={m.id}
-									type="button"
-									onClick={() => onClaim(m.id)}
-									className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface py-1 pl-1 pr-4 text-sm font-medium text-ink hover:border-brand-400 hover:bg-brand-50"
-								>
-									<MemberAvatar person={m} size="sm" />
-									I&apos;m {m.name}
-								</button>
-							))}
-						</div>
+					<div className="space-y-3">
+						<p className="label-text">Already in the group?</p>
+						{notJoined.length > 0 && <MemberChips label="Not joined yet" people={notJoined} onClaim={onClaim} />}
+						{joined.length > 0 && <MemberChips label="Joined on a device" people={joined} onClaim={onClaim} />}
+						<p className="text-xs text-ink-muted">
+							Joined on another phone? Pick your name, or open your personal link from Share &amp; sync on that phone,
+							so you don&apos;t join twice.
+						</p>
 					</div>
 				)}
 
@@ -106,3 +122,22 @@ export const IdentitySheet = ({ isOpen, group, onJoin, onClaim, onJustLooking, o
 		</Modal>
 	);
 };
+
+const MemberChips = ({ label, people, onClaim }: { label: string; people: Person[]; onClaim: (id: string) => void }) => (
+	<div>
+		<p className="mb-1.5 text-xs font-medium text-ink-muted">{label}</p>
+		<div className="flex flex-wrap gap-2">
+			{people.map((m) => (
+				<button
+					key={m.id}
+					type="button"
+					onClick={() => onClaim(m.id)}
+					className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface py-1 pl-1 pr-4 text-sm font-medium text-ink hover:border-brand-400 hover:bg-brand-50"
+				>
+					<MemberAvatar person={m} size="sm" />
+					I&apos;m {m.name}
+				</button>
+			))}
+		</div>
+	</div>
+);

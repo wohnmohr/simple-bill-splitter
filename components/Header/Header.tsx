@@ -25,9 +25,9 @@ export const Header = ({ onFeedback }: { onFeedback?: () => void }) => {
 					<Sparkles className="h-4 w-4" />
 					<span className="hidden sm:inline">Features</span>
 				</Link>
-				<Link href="/#tools" className="btn-ghost" aria-label="Calculators">
+				<Link href="/tools" className="btn-ghost" aria-label="Tools">
 					<LayoutGrid className="h-4 w-4" />
-					<span className="hidden sm:inline">Calculators</span>
+					<span className="hidden sm:inline">Tools</span>
 				</Link>
 			</div>
 		</header>

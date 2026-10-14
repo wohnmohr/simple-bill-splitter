@@ -3,6 +3,8 @@ export type Person = {
   name: string;
   /** Optional UPI VPA (e.g. name@upi) for INR settlements */
   upiId?: string;
+  /** Someone has joined as this member from a device (shared, so others can tell who's here). */
+  joined?: true;
 };
 
 export type SplitMethod = "equally" | "percentage";

@@ -62,6 +62,20 @@ export const SyncModal = ({ isOpen, onClose, group, status, expiresAt, onEnable,
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState("");
 	const [copied, setCopied] = useState(false);
+	const [copiedMine, setCopiedMine] = useState(false);
+	const me = group.meId ? group.members.find((m) => m.id === group.meId) : undefined;
+	/** Your personal link: your other devices open the group as you instead of joining again. */
+	const copyMine = async () => {
+		if (!sync || !me) return;
+		try {
+			await navigator.clipboard.writeText(groupUrl(sync, me.id));
+			setCopiedMine(true);
+			setTimeout(() => setCopiedMine(false), 2000);
+			track("group_personal_link_copied");
+		} catch {
+			/* clipboard blocked; nothing else to do */
+		}
+	};
 	const [confirm, setConfirm] = useState<null | "reset" | "delete">(null);
 	const [safetyCode, setSafetyCode] = useState("");
 	const [details, setDetails] = useState(false);
@@ -216,6 +230,20 @@ export const SyncModal = ({ isOpen, onClose, group, status, expiresAt, onEnable,
 								</p>
 							)}
 						</div>
+
+						{me && (
+							<div className="rounded-xl border border-line p-3">
+								<p className="label-text">Your other devices</p>
+								<p className="mt-1 text-sm text-ink-muted">
+									Open the group as <b className="font-semibold text-ink">{me.name}</b> on your laptop or another phone, so you
+									don&apos;t join twice. Keep this link to yourself.
+								</p>
+								<button type="button" onClick={copyMine} className="btn-secondary mt-2 w-full">
+									{copiedMine ? <Check className="h-4 w-4 text-positive" /> : <Copy className="h-4 w-4" />}
+									{copiedMine ? "Copied" : "Copy my link"}
+								</button>
+							</div>
+						)}
 
 						{safetyCode && (
 							<div className="rounded-xl bg-paper p-3">
