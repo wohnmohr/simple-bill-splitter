@@ -1,0 +1,2 @@
+Split bills, privately.
+SplitBiller groups are now end-to-end encrypted: everyone adds expenses from their own phone and our server can't read a thing. Join with a made-up name, give each group its own theme, settle by UPI in one tap. No signup, free forever.

@@ -5,13 +5,12 @@ import { Play } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { prefersStillMedia } from "@/utils/media";
 
-// Hosted on Cloudflare R2. Set NEXT_PUBLIC_PROMO_VIDEO_URL to move it (e.g. to a custom domain).
-const SRC =
-	process.env.NEXT_PUBLIC_PROMO_VIDEO_URL ||
-	"https://pub-5d49a949610d47a590f022b4cb5de7e6.r2.dev/video.mp4";
+// Served from our own CDN with the page (2 MB, 720p). Set NEXT_PUBLIC_PROMO_VIDEO_URL to host it elsewhere.
+// Source: brag-output/whats-new (re-render there, then re-encode; see its brag-plan.md).
+const SRC = process.env.NEXT_PUBLIC_PROMO_VIDEO_URL || "/promo/splitbiller-promo.mp4";
 const POSTER = "/promo/splitbiller-promo-poster.jpg";
 const LABEL =
-	"SplitBiller in 30 seconds: add the bills, see who owes whom, settle by UPI, and the free tools";
+	"SplitBiller in 40 seconds: who owes whom, paying by UPI, end-to-end encrypted shared groups, joining without your name, group themes, split links and free tools";
 
 /**
  * The homepage promo, built to cost the page nothing until it's wanted.
