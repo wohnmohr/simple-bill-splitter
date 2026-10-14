@@ -37,6 +37,18 @@ const SCHEMA = [
 	)`,
 	`CREATE INDEX IF NOT EXISTS feature_requests_created ON feature_requests (created_at)`,
 	`CREATE INDEX IF NOT EXISTS feature_requests_ip ON feature_requests (ip_hash, created_at)`,
+	// Messages from the contact page; the email is only for replying.
+	`CREATE TABLE IF NOT EXISTS contact_messages (
+		id          TEXT PRIMARY KEY,
+		created_at  INTEGER NOT NULL,
+		topic       TEXT NOT NULL,
+		message     TEXT NOT NULL,
+		email       TEXT NOT NULL,
+		status      TEXT NOT NULL DEFAULT 'new',
+		ip_hash     TEXT NOT NULL
+	)`,
+	`CREATE INDEX IF NOT EXISTS contact_messages_created ON contact_messages (created_at)`,
+	`CREATE INDEX IF NOT EXISTS contact_messages_ip ON contact_messages (ip_hash, created_at)`,
 	`CREATE TABLE IF NOT EXISTS splits (
 		id          TEXT PRIMARY KEY,
 		created_at  INTEGER NOT NULL,
@@ -157,7 +169,7 @@ export function hashIp(req: Request): string {
 	return createHash("sha256").update(`${salt}:${ip}`).digest("hex").slice(0, 32);
 }
 
-export type RateTable = "feedback" | "feature_requests" | "splits" | "split_payments";
+export type RateTable = "feedback" | "feature_requests" | "contact_messages" | "splits" | "split_payments";
 
 /** Per-IP write budgets: a short burst window and a daily cap, so one source can't flood us all day. */
 export const WRITE_LIMITS: Record<RateTable, { hour: number; day: number }> = {
@@ -165,6 +177,7 @@ export const WRITE_LIMITS: Record<RateTable, { hour: number; day: number }> = {
 	split_payments: { hour: 60, day: 300 },
 	feedback: { hour: 10, day: 30 },
 	feature_requests: { hour: 5, day: 15 },
+	contact_messages: { hour: 5, day: 15 },
 };
 
 /** Counts this IP's writes to `table` in the last day and hour; one indexed read. Batch it with other reads. */

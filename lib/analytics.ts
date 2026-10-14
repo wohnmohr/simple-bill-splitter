@@ -27,6 +27,7 @@ export type AnalyticsEvent =
 	| "feedback_opened"
 	| "feedback_submitted"
 	| "feature_request_submitted"
+	| "contact_message_sent"
 	| "split_link_created"
 	| "split_link_shared"
 	| "split_link_opened"

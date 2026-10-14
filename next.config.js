@@ -1,6 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 	poweredByHeader: false,
+	async redirects() {
+		// Addresses people type when looking for who's behind the site.
+		return [
+			{ source: "/contact-us", destination: "/contact", permanent: true },
+			{ source: "/about-us", destination: "/about", permanent: true },
+		];
+	},
 	async headers() {
 		return [
 			{
