@@ -77,15 +77,25 @@ export async function newGroupSecret(): Promise<string> {
 }
 
 /** What the #fragment of a group link carries. */
-export type GroupLink = { secret: string; needsPassphrase: boolean };
+/**
+ * What a group link's #fragment holds: the secret, a "p." prefix when the
+ * group also needs a passphrase, and, on someone's personal link, "~" and
+ * their member id, so their other devices open the group as them instead of
+ * joining again. The fragment never reaches the server.
+ */
+export type GroupLink = { secret: string; needsPassphrase: boolean; me?: string };
 
-export const linkFragment = (secret: string, needsPassphrase: boolean) => (needsPassphrase ? PASS_PREFIX : "") + secret;
+const MEMBER_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+export const linkFragment = (secret: string, needsPassphrase: boolean, me?: string) =>
+	(needsPassphrase ? PASS_PREFIX : "") + secret + (me ? `~${me}` : "");
 
 export function parseGroupFragment(fragment: string): GroupLink | null {
-	const raw = fragment.replace(/^#/, "");
+	const [raw, me] = fragment.replace(/^#/, "").split("~");
 	const needsPassphrase = raw.startsWith(PASS_PREFIX);
 	const secret = needsPassphrase ? raw.slice(PASS_PREFIX.length) : raw;
-	return GROUP_SECRET_RE.test(secret) ? { secret, needsPassphrase } : null;
+	if (!GROUP_SECRET_RE.test(secret)) return null;
+	return me && MEMBER_ID_RE.test(me) ? { secret, needsPassphrase, me } : { secret, needsPassphrase };
 }
 
 /**

@@ -73,7 +73,8 @@ export const forgetSync = (groupId: string) => {
 	}
 };
 
-export const groupUrl = (link: GroupSyncLink) => `${window.location.origin}/g#${linkFragment(link.secret, Boolean(link.pass))}`;
+/** The group's link; with `me`, a member's personal link that opens the group as them on their other devices. */
+export const groupUrl = (link: GroupSyncLink, me?: string) => `${window.location.origin}/g#${linkFragment(link.secret, Boolean(link.pass), me)}`;
 
 class HttpError extends Error {
 	constructor(readonly status: number, readonly body: Record<string, unknown>) {

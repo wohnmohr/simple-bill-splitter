@@ -78,7 +78,7 @@ export default function Home() {
 	useEffect(() => applyTheme(openTheme), [openTheme]);
 	useEffect(() => () => applyTheme(undefined), []);
 
-	const { addMember, updateMemberUpi, renameMember, setNickname, deleteMember } = useGroupMembers(setGroups, currentGroup);
+	const { addMember, updateMemberUpi, renameMember, markJoined, setNickname, deleteMember } = useGroupMembers(setGroups, currentGroup);
 
 	const { addExpense, updateExpense, deleteExpense, recordPayment } = useExpenses(
 		groups,
@@ -487,12 +487,13 @@ export default function Home() {
 						isOpen={identityOpen}
 						group={currentGroup}
 						onJoin={(name, personId) => {
-							const id = addMember(name, undefined, personId);
+							const id = addMember(name, undefined, { id: personId });
 							if (id) setGroupMe(currentGroup.id, id);
 							finishIdentity("joined");
 						}}
 						onClaim={(id) => {
 							setGroupMe(currentGroup.id, id);
+							markJoined(id);
 							finishIdentity("claimed");
 						}}
 						onJustLooking={() => {

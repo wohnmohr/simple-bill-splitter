@@ -39,7 +39,8 @@ export type AnalyticsEvent =
 	| "group_link_reset"
 	| "group_deleted_for_everyone"
 	| "group_theme_changed"
-	| "group_identity_chosen";
+	| "group_identity_chosen"
+	| "group_personal_link_copied";
 
 type EventProps = Record<string, string | number | boolean | undefined | null>;
 
