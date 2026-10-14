@@ -147,7 +147,7 @@ export async function joinGroup(link: GroupSyncLink, localId: string): Promise<J
 
 /** Uploads a local group as a new encrypted group. Returns the link to store on the group. */
 export async function startSync(group: Group, passphrase?: string): Promise<GroupSyncLink> {
-	const secret = newGroupSecret();
+	const secret = await newGroupSecret();
 	const link: GroupSyncLink = passphrase ? { secret, pass: await stretchPassphrase(secret, passphrase) } : { secret };
 	const keys = await deriveGroupKeys(link.secret, link.pass);
 	const state = emptyState();

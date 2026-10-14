@@ -5,7 +5,7 @@ A modern, user-friendly web application for splitting bills and expenses among g
 ## Features
 
 - **Group Management**: Create and manage multiple expense groups
-- **End-to-end encrypted group sync**: Share a group by link and everyone adds expenses from their own phone. The key lives only in the link's `#fragment`; the server stores padded AES-256-GCM ciphertext, a hash of a write token and an expiry, nothing else. Optional passphrase (PBKDF2, 600k rounds), a safety code to compare, link reset to remove someone, and conflict-free merging so offline edits and simultaneous edits never clash.
+- **End-to-end encrypted group sync**: Share a group by link and everyone adds expenses from their own phone. The key lives only in the link's `#fragment`; the server stores padded XChaCha20-Poly1305 ciphertext (libsodium), a hash of a write token and an expiry, nothing else. Keys are derived with libsodium's BLAKE2b KDF; an optional passphrase is stretched with Argon2id, a safety code to compare, link reset to remove someone, and conflict-free merging so offline edits and simultaneous edits never clash.
 - **Member Management**: Add and remove members from groups
 - **Expense Tracking**: Add expenses with descriptions, amounts, and participants
 - **Balance Calculation**: Automatically calculates who owes what to whom
