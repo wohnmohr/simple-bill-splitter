@@ -127,5 +127,6 @@ export function applyTheme(id?: string) {
 	const greys = theme?.dark ? [theme.colors.paper, theme.colors.line, theme.colors["line-strong"]] : null;
 	MANTINE_DARK_GREYS.forEach((v, i) => (greys ? root.style.setProperty(v, greys[i]) : root.style.removeProperty(v)));
 	root.style.colorScheme = theme?.dark ? "dark" : "";
+	root.toggleAttribute("data-sb-dark", !!theme?.dark);
 	root.dataset.sbTheme = theme?.id ?? DEFAULT_THEME_ID;
 }

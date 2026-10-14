@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ShareViewer } from "@/components/Share/ShareViewer";
+import { LogoMark } from "@/components/UI/LogoMark";
 
 export const metadata: Metadata = {
 	title: "Shared Settlement | SplitBiller",
@@ -18,7 +19,7 @@ export default function SharePage() {
 			<header className="border-b border-line px-4">
 				<div className="max-w-2xl mx-auto flex h-14 items-center gap-2.5 min-w-0">
 					<Link href="/" className="flex items-center gap-2.5 group min-w-0">
-						<img src="/logo-mark.webp" alt="" width={35} height={30} className="h-[30px] w-[35px] shrink-0 object-contain" />
+						<LogoMark />
 						<span className="font-display text-lg font-semibold text-ink truncate">
 							SplitBiller
 						</span>

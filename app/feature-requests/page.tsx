@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { FeatureRequestForm } from "@/components/Feedback/FeatureRequestForm";
+import { LogoMark } from "@/components/UI/LogoMark";
 
 export const metadata: Metadata = {
 	title: "Request a feature | SplitBiller",
@@ -16,7 +17,7 @@ export default function FeatureRequestsPage() {
 			<header className="border-b border-line px-4">
 				<div className="mx-auto flex h-14 max-w-2xl items-center justify-between gap-3">
 					<Link href="/" className="flex items-center gap-2 min-w-0">
-						<img src="/logo-mark.webp" alt="" width={35} height={30} className="h-[30px] w-[35px] shrink-0 object-contain" />
+						<LogoMark />
 						<span className="font-display text-lg font-semibold text-ink">SplitBiller</span>
 					</Link>
 					<Link href="/dashboard" className="btn-ghost">

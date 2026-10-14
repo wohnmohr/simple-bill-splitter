@@ -39,6 +39,7 @@ import { ALL_TOOL_SLUGS, TOOL_PAGES, ToolSlug } from "@/content/tools";
 import { TEMPLATES } from "@/utils/payStory";
 import { SPLIT_TTL_DAYS } from "@/utils/splitCloud";
 import { themeGradient } from "@/components/PayStory/TemplateGrid";
+import { LogoMark } from "@/components/UI/LogoMark";
 
 const TOOL_ICONS: Record<ToolSlug, typeof Receipt> = {
 	"restaurant-bill-splitter": UtensilsCrossed,
@@ -237,7 +238,7 @@ export const LandingPage = () => {
 			<nav className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md">
 				<div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
 					<Link href="/" className="flex items-center gap-2 shrink-0">
-						<img src="/logo-mark.webp" alt="" width={35} height={30} className="h-[30px] w-[35px] shrink-0 object-contain" />
+						<LogoMark />
 						<span className="font-display text-lg font-semibold text-ink">
 							SplitBiller
 						</span>
@@ -547,7 +548,7 @@ export const LandingPage = () => {
 					<div className="grid gap-8 md:grid-cols-[1fr_2fr]">
 						<div>
 							<Link href="/" className="flex items-center gap-2">
-								<img src="/logo-mark.webp" alt="" width={35} height={30} className="h-[30px] w-[35px] shrink-0 object-contain" />
+								<LogoMark />
 								<span className="font-display text-lg font-semibold text-ink">
 									SplitBiller
 								</span>

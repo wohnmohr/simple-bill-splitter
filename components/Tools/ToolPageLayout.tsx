@@ -3,6 +3,7 @@ import { ArrowRight, Lock, ChevronDown } from "lucide-react";
 import { ToolPageConfig, TOOL_PAGES } from "@/content/tools";
 import { ToolCalculator } from "@/components/Tools/ToolCalculator";
 import { TrackedLink } from "@/components/UI/TrackedLink";
+import { LogoMark } from "@/components/UI/LogoMark";
 
 export function ToolJsonLd({ config }: { config: ToolPageConfig }) {
 	const site = process.env.NEXT_PUBLIC_SITE_URL || "https://splitbiller.com";
@@ -55,7 +56,7 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 			<header className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md px-4 sm:px-6">
 				<div className="max-w-5xl mx-auto flex h-14 items-center justify-between gap-3 min-w-0">
 					<Link href="/" className="flex items-center gap-2 group">
-						<img src="/logo-mark.webp" alt="" width={35} height={30} className="h-[30px] w-[35px] shrink-0 object-contain" />
+						<LogoMark />
 						<span className="font-display text-lg font-semibold text-ink">
 							SplitBiller
 						</span>

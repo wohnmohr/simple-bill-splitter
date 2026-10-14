@@ -152,6 +152,15 @@
 }
 
 @layer components {
+	/* The logo mark follows the group theme: dark themes show the light version (utils/themes applyTheme). */
+	.logo-mark-light,
+	html[data-sb-dark] .logo-mark {
+		display: none;
+	}
+	html[data-sb-dark] .logo-mark-light {
+		display: block;
+	}
+
 	/* Text you edit in place on a split scene: underlined, inherits the scene's type and colour */
 	.inline-edit {
 		@apply min-w-0 bg-transparent outline-none;
