@@ -114,10 +114,10 @@ export const FeedbackForm = ({
 							onClick={() => setRating(n)}
 							className={`h-11 rounded-xl text-base font-semibold tabular-nums transition-colors ${
 								rating === n
-									? "bg-ink text-white"
+									? "bg-ink text-on-ink"
 									: rating !== null && n < rating
 									? "border border-ink/20 bg-ink/[0.06] text-ink"
-									: "border border-line-strong bg-white text-ink-soft hover:border-ink-muted"
+									: "border border-line-strong bg-surface text-ink-soft hover:border-ink-muted"
 							}`}
 						>
 							{n}
@@ -142,7 +142,7 @@ export const FeedbackForm = ({
 						rows={3}
 						maxLength={2000}
 						placeholder="Anything — a bug, a confusing step, an idea"
-						className="mt-1.5 w-full resize-y rounded-xl border border-line-strong bg-white px-3 py-2.5 text-base text-ink focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+						className="mt-1.5 w-full resize-y rounded-xl border border-line-strong bg-surface px-3 py-2.5 text-base text-ink focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
 					/>
 					{/* Honeypot for bots: hidden from people and assistive tech. */}
 					<input

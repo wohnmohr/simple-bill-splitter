@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { LayoutGrid, MessageSquare } from "lucide-react";
+import { LayoutGrid, MessageSquare, Sparkles } from "lucide-react";
+import { LogoMark } from "@/components/UI/LogoMark";
 
 export const Header = ({ onFeedback }: { onFeedback?: () => void }) => {
 	return (
@@ -8,7 +9,7 @@ export const Header = ({ onFeedback }: { onFeedback?: () => void }) => {
 				href="/"
 				className="flex items-center gap-2 min-w-0 rounded-lg -ml-1 pl-1 pr-2 py-1"
 			>
-				<img src="/logo-mark.webp" alt="" width={35} height={30} className="h-[30px] w-[35px] shrink-0 object-contain" />
+				<LogoMark />
 				<span className="font-display text-lg font-semibold text-ink leading-none">
 					SplitBiller
 				</span>
@@ -20,6 +21,10 @@ export const Header = ({ onFeedback }: { onFeedback?: () => void }) => {
 						Feedback
 					</button>
 				)}
+				<Link href="/features" className="btn-ghost" aria-label="Features">
+					<Sparkles className="h-4 w-4" />
+					<span className="hidden sm:inline">Features</span>
+				</Link>
 				<Link href="/#tools" className="btn-ghost" aria-label="Calculators">
 					<LayoutGrid className="h-4 w-4" />
 					<span className="hidden sm:inline">Calculators</span>

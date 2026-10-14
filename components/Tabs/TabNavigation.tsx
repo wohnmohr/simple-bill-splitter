@@ -60,7 +60,7 @@ export const TabNavigation = ({
 						onClick={() => onTabChange(tab.id)}
 						className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-semibold transition-all ${
 							active
-								? "bg-white text-ink shadow-card ring-1 ring-line"
+								? "bg-surface text-ink shadow-card ring-1 ring-line"
 								: "text-ink-muted hover:text-ink"
 						}`}
 					>

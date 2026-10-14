@@ -90,7 +90,7 @@ export const UpiSettlementActions = ({
 						value={draftUpi}
 						onChange={(e) => setDraftUpi(e.target.value)}
 						placeholder="name@okaxis"
-						className="h-11 flex-1 min-w-0 rounded-xl border border-line-strong bg-white px-3 text-base text-ink placeholder:text-[#767080] focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+						className="h-11 flex-1 min-w-0 rounded-xl border border-line-strong bg-surface px-3 text-base text-ink placeholder:text-ink-muted focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
 						inputMode="email"
 						autoComplete="off"
 						autoCapitalize="none"

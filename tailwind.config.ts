@@ -1,19 +1,12 @@
 import type { Config } from "tailwindcss";
 
-// Aubergine, taken from the logo. The single brand accent.
-const brand = {
-  50: "#f6f2fa",
-  100: "#ece3f5",
-  200: "#d8c6ea",
-  300: "#bd9fdb",
-  400: "#9d73c7",
-  500: "#7e4fb0",
-  600: "#663a96",
-  700: "#53307b",
-  800: "#432763",
-  900: "#2f1b46",
-  950: "#1f1230",
-};
+// Every color is a CSS variable holding "R G B", so a group theme can swap the
+// palette at runtime (utils/themes.ts) and opacity modifiers like bg-ink/5 still
+// work. The defaults in app/globals.css are the SplitBiller aubergine.
+const token = (name: string) => `rgb(var(--sb-${name}) / <alpha-value>)`;
+const brand = Object.fromEntries(
+  [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((n) => [n, token(`brand-${n}`)])
+);
 
 const config: Config = {
   content: [
@@ -32,23 +25,28 @@ const config: Config = {
         violet: brand,
         purple: brand,
         ink: {
-          DEFAULT: "#1c1826",
-          soft: "#4a4556",
-          muted: "#6b6576",
+          DEFAULT: token("ink"),
+          soft: token("ink-soft"),
+          muted: token("ink-muted"),
         },
-        paper: "#f7f6f3",
+        paper: token("paper"),
+        // Cards, inputs and sheets (white in light themes).
+        surface: token("surface"),
         line: {
-          DEFAULT: "#e7e3ea",
-          strong: "#d4cfd9",
+          DEFAULT: token("line"),
+          strong: token("line-strong"),
         },
         positive: {
-          DEFAULT: "#11754c",
-          soft: "#e8f4ee",
+          DEFAULT: token("positive"),
+          soft: token("positive-soft"),
         },
         negative: {
-          DEFAULT: "#b42318",
-          soft: "#fcecea",
+          DEFAULT: token("negative"),
+          soft: token("negative-soft"),
         },
+        // Text on a brand-colored or ink-colored background.
+        "on-brand": token("on-brand"),
+        "on-ink": token("on-ink"),
       },
       fontFamily: {
         sans: ["var(--font-outfit)", "ui-sans-serif", "system-ui", "sans-serif"],

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "@mantine/hooks";
 import { ChevronLeft, UserPlus } from "lucide-react";
@@ -15,6 +15,9 @@ import { GroupSelector } from "@/components/Group/GroupSelector";
 import { CreateGroupModal } from "@/components/Group/CreateGroupModal";
 import { AddMembersModal } from "@/components/Group/AddMembersModal";
 import { GroupsHome } from "@/components/Group/GroupsHome";
+import { SyncModal } from "@/components/Group/SyncModal";
+import { ThemeModal } from "@/components/Group/ThemeModal";
+import { applyTheme } from "@/utils/themes";
 import { TabNavigation } from "@/components/Tabs/TabNavigation";
 import { ExpenseList } from "@/components/Expense/ExpenseList";
 import { ExpenseFormModal } from "@/components/Expense/ExpenseFormModal";
@@ -37,6 +40,8 @@ export default function Home() {
 	const [showGroupForm, setShowGroupForm] = useState(false);
 	const [showExpenseForm, setShowExpenseForm] = useState(false);
 	const [showMembersModal, setShowMembersModal] = useState(false);
+	const [showSync, setShowSync] = useState(false);
+	const [showTheme, setShowTheme] = useState(false);
 	const [viewingExpenseId, setViewingExpenseId] = useState<string | null>(null);
 	const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 	const [editExpenseData, setEditExpenseData] = useState<{
@@ -58,8 +63,16 @@ export default function Home() {
 		deleteGroup,
 		updateGroupCurrency,
 		setGroupMe,
+		setGroupTheme,
 		setGroups,
+		sync,
 	} = useGroups();
+
+	// An open group paints the whole page (modals included) in its theme;
+	// the group list and the rest of the site keep SplitBiller's colors.
+	const openTheme = selectedGroupId ? currentGroup?.theme : undefined;
+	useEffect(() => applyTheme(openTheme), [openTheme]);
+	useEffect(() => () => applyTheme(undefined), []);
 
 	const { addMember, updateMemberUpi, deleteMember } = useGroupMembers(
 		groups,
@@ -309,6 +322,9 @@ export default function Home() {
 							onSelectGroup={setSelectedGroupId}
 							onDeleteGroup={handleDeleteGroup}
 							onManageMembers={() => setShowMembersModal(true)}
+							onShare={() => setShowSync(true)}
+							onTheme={() => setShowTheme(true)}
+							syncStatus={currentGroup ? sync.status[currentGroup.id] : undefined}
 							onChangeMe={() => {
 								if (!currentGroup) return;
 								setGroupMe(currentGroup.id, undefined);
@@ -447,6 +463,29 @@ export default function Home() {
 					onCreate={handleCreateGroup}
 					groupCount={groups.length}
 				/>
+
+				{currentGroup && (
+					<ThemeModal
+						isOpen={showTheme}
+						onClose={() => setShowTheme(false)}
+						group={currentGroup}
+						onChange={setGroupTheme}
+					/>
+				)}
+
+				{currentGroup && (
+					<SyncModal
+						isOpen={showSync}
+						onClose={() => setShowSync(false)}
+						group={currentGroup}
+						status={sync.status[currentGroup.id]}
+						expiresAt={sync.expiresAt(currentGroup.id)}
+						onEnable={sync.enableSync}
+						onResetLink={sync.resetLink}
+						onDeleteForEveryone={sync.deleteSyncedGroup}
+						onKeepLocal={sync.keepLocalCopy}
+					/>
+				)}
 
 				{currentGroup && (
 					<AddMembersModal

@@ -11,5 +11,6 @@ export const CURRENCIES: Currency[] = [
 /** Default for new groups and calculators — India-first. */
 export const DEFAULT_CURRENCY = CURRENCIES[0];
 
-export const MAX_GROUPS = 3;
+/** Generous: groups live in this browser's storage, and synced groups people join count too. */
+export const MAX_GROUPS = 50;
 export const STORAGE_KEY = "bill-splitter-groups";
