@@ -1,32 +1,24 @@
 "use client";
 
 import { MantineProvider as MantineProviderBase } from "@mantine/core";
-import { createTheme } from "@mantine/core";
+import { createTheme, type MantineColorsTuple } from "@mantine/core";
 
-const brand = [
-	"#f6f2fa",
-	"#ece3f5",
-	"#d8c6ea",
-	"#bd9fdb",
-	"#9d73c7",
-	"#7e4fb0",
-	"#663a96",
-	"#53307b",
-	"#432763",
-	"#2f1b46",
-] as const;
+// Mantine reads the same theme tokens as Tailwind (see app/globals.css), so
+// modals, menus and inputs follow a group's theme too.
+const brand = ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900"].map((n) => `rgb(var(--sb-brand-${n}))`);
 
 const inputStyles = {
 	input: {
-		borderColor: "#d4cfd9",
-		backgroundColor: "#ffffff",
+		borderColor: "rgb(var(--sb-line-strong))",
+		backgroundColor: "rgb(var(--sb-surface))",
+		color: "rgb(var(--sb-ink))",
 		minHeight: 44,
 		fontSize: 16,
 	},
 	label: {
 		fontSize: 13,
 		fontWeight: 600,
-		color: "#4a4556",
+		color: "rgb(var(--sb-ink-soft))",
 		marginBottom: 6,
 	},
 };
@@ -35,10 +27,10 @@ const theme = createTheme({
 	primaryColor: "brand",
 	primaryShade: 7,
 	colors: {
-		brand: [...brand],
+		brand: brand as unknown as MantineColorsTuple,
 		// Legacy callers pass color="indigo"; keep them on-brand.
-		indigo: [...brand],
-		purple: [...brand],
+		indigo: brand as unknown as MantineColorsTuple,
+		purple: brand as unknown as MantineColorsTuple,
 	},
 	black: "#1c1826",
 	defaultRadius: "md",

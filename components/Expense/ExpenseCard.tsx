@@ -2,6 +2,14 @@ import { Expense, Currency } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
 import { Check, Pencil, Trash2 } from "lucide-react";
 
+/**
+ * Edit and delete slide in at the end of a row on hover or keyboard focus,
+ * instead of reserving an empty gap beside every amount. Touch screens open
+ * the expense to edit it.
+ */
+const ROW_ACTIONS =
+	"hidden sm:flex w-0 shrink-0 items-center justify-end gap-0.5 overflow-hidden pr-2 opacity-0 transition-[width,opacity] duration-150 group-hover:opacity-100 group-focus-within:opacity-100";
+
 const shortDate = (ms: number) =>
 	new Date(ms).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
@@ -27,11 +35,11 @@ export const ExpenseCard = ({
 }: ExpenseCardProps) => {
 	if (expense.kind === "payment") {
 		return (
-			<li className="group relative">
+			<li className="group flex items-center bg-paper/60 transition-colors hover:bg-paper">
 				<button
 					type="button"
 					onClick={onClick}
-					className="flex w-full items-center gap-3 bg-paper/60 px-4 py-3 text-left transition-colors hover:bg-paper"
+					className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left"
 				>
 					<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-positive-soft">
 						<Check className="h-3.5 w-3.5 text-positive" strokeWidth={3} aria-hidden />
@@ -40,11 +48,11 @@ export const ExpenseCard = ({
 						<span className="font-medium text-ink">{paidByName}</span> paid{" "}
 						<span className="font-medium text-ink">{toName}</span>
 					</span>
-					<span className="shrink-0 text-sm font-medium tabular-nums text-ink-soft sm:mr-12">
+					<span className="shrink-0 text-sm font-medium tabular-nums text-ink-soft">
 						{formatCurrency(expense.amount, currency)}
 					</span>
 				</button>
-				<div className="absolute right-2 top-1/2 hidden -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 sm:flex">
+				<div className={`${ROW_ACTIONS} group-hover:w-11 group-focus-within:w-11`}>
 					<button
 						onClick={onDelete}
 						className="icon-btn hover:!text-negative"
@@ -66,11 +74,11 @@ export const ExpenseCard = ({
 		: `${formatCurrency(expense.amount / count, currency)} each · ${count} people`;
 
 	return (
-		<li className="group relative">
+		<li className="group flex items-center transition-colors hover:bg-paper">
 			<button
 				type="button"
 				onClick={onClick}
-				className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-paper"
+				className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 text-left"
 			>
 				<span className="min-w-0 flex-1">
 					<span
@@ -84,7 +92,7 @@ export const ExpenseCard = ({
 						<span className="text-ink-soft">{paidByName}</span> paid · {splitLabel}
 					</span>
 				</span>
-				<span className="shrink-0 text-right sm:mr-20">
+				<span className="shrink-0 text-right">
 					<span className="block font-semibold tabular-nums text-ink">
 						{formatCurrency(expense.amount, currency)}
 					</span>
@@ -95,7 +103,7 @@ export const ExpenseCard = ({
 					)}
 				</span>
 			</button>
-			<div className="absolute right-2 top-1/2 hidden -translate-y-1/2 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 sm:flex">
+			<div className={`${ROW_ACTIONS} group-hover:w-20 group-focus-within:w-20`}>
 				<button onClick={onEdit} className="icon-btn" aria-label="Edit expense">
 					<Pencil className="h-4 w-4" />
 				</button>

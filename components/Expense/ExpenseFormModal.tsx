@@ -301,8 +301,8 @@ export const ExpenseFormModal = ({
 									onClick={() => setPaidBy(person.id)}
 									className={`min-h-10 rounded-full px-4 text-sm font-medium transition-colors ${
 										selected
-											? "bg-ink text-white"
-											: "border border-line-strong bg-white text-ink-soft hover:border-ink-muted hover:text-ink"
+											? "bg-ink text-on-ink"
+											: "border border-line-strong bg-surface text-ink-soft hover:border-ink-muted hover:text-ink"
 									}`}
 								>
 									{person.name}
@@ -359,8 +359,8 @@ export const ExpenseFormModal = ({
 										<span
 											className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
 												selected
-													? "border-brand-700 bg-brand-700 text-white"
-													: "border-line-strong bg-white"
+													? "border-brand-700 bg-brand-700 text-on-brand"
+													: "border-line-strong bg-surface"
 											}`}
 											aria-hidden
 										>
@@ -417,7 +417,7 @@ export const ExpenseFormModal = ({
 					)}
 				</fieldset>
 
-				<div className="sticky bottom-0 -mx-4 flex gap-2 border-t border-line bg-white px-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+				<div className="sticky bottom-0 -mx-4 flex gap-2 border-t border-line bg-surface px-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
 					<Button variant="secondary" type="button" onClick={onClose} className="flex-1" size="md">
 						Cancel
 					</Button>

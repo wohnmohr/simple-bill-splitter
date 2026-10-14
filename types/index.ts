@@ -3,6 +3,8 @@ export type Person = {
   name: string;
   /** Optional UPI VPA (e.g. name@upi) for INR settlements */
   upiId?: string;
+  /** Someone has joined as this member from a device (shared, so others can tell who's here). */
+  joined?: true;
 };
 
 export type SplitMethod = "equally" | "percentage";
@@ -32,6 +34,25 @@ export type Group = {
    * never included in share links. undefined = not asked yet; null = just viewing.
    */
   meId?: string | null;
+  /**
+   * Present when the group is end-to-end encrypted and synced. Holds the link
+   * secret (and the stretched passphrase, if the group has one); both stay on
+   * this device and in the link's #fragment, never on the server.
+   */
+  sync?: GroupSyncLink;
+  /** Theme id from utils/themes. Shared with everyone in a synced group. */
+  theme?: string;
+  /**
+   * Nicknames this device gives members, by person id. They never leave the
+   * device: not synced, not in share links. See utils/identity shownMembers.
+   */
+  nicknames?: Record<string, string>;
+};
+
+export type GroupSyncLink = {
+  secret: string;
+  /** Argon2id output of the group passphrase; the passphrase itself is never stored. */
+  pass?: string;
 };
 
 export type Balance = {

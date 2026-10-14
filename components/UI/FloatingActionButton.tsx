@@ -18,7 +18,7 @@ export const FloatingActionButton = ({
 			<div className="mx-auto flex max-w-2xl justify-end px-4 lg:max-w-5xl lg:px-6">
 				<button
 					onClick={onClick}
-					className={`pointer-events-auto inline-flex h-14 items-center gap-2 rounded-full bg-brand-700 pl-5 pr-6 text-base font-semibold text-white shadow-raised transition-[background-color,transform] hover:bg-brand-800 active:scale-[0.97] ${
+					className={`pointer-events-auto inline-flex h-14 items-center gap-2 rounded-full bg-brand-700 pl-5 pr-6 text-base font-semibold text-on-brand shadow-raised transition-[background-color,transform] hover:bg-brand-800 active:scale-[0.97] ${
 						showTooltip ? "ring-4 ring-brand-200" : ""
 					}`}
 				>

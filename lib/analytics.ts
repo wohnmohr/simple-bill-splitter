@@ -31,7 +31,16 @@ export type AnalyticsEvent =
 	| "split_link_shared"
 	| "split_link_opened"
 	| "split_open_failed"
-	| "split_payment_marked";
+	| "split_payment_marked"
+	| "group_sync_enabled"
+	| "group_sync_link_shared"
+	| "group_joined"
+	| "group_join_failed"
+	| "group_link_reset"
+	| "group_deleted_for_everyone"
+	| "group_theme_changed"
+	| "group_identity_chosen"
+	| "group_personal_link_copied";
 
 type EventProps = Record<string, string | number | boolean | undefined | null>;
 
@@ -48,6 +57,7 @@ export function pageArea(): string {
 	if (typeof window === "undefined") return "unknown";
 	const seg = window.location.pathname.split("/")[1] || "home";
 	if (seg === "s" || seg === "pay-story") return "split_view";
+	if (seg === "g") return "group_join";
 	if (seg === "split") return "split_create";
 	return seg === "dashboard" || seg === "share" || seg === "home" ? seg : "tool";
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SecretSantaReveal } from "@/components/Tools/SecretSantaReveal";
+import { LogoMark } from "@/components/UI/LogoMark";
 
 export const metadata: Metadata = {
 	title: "Your Secret Santa match | SplitBiller",
@@ -14,7 +15,7 @@ export default function SecretSantaPage() {
 			<header className="border-b border-line px-4">
 				<div className="mx-auto flex h-14 max-w-2xl items-center">
 					<Link href="/" className="flex min-w-0 items-center gap-2.5">
-						<img src="/logo-mark.webp" alt="" width={35} height={30} className="h-[30px] w-[35px] shrink-0 object-contain" />
+						<LogoMark />
 						<span className="truncate font-display text-lg font-semibold text-ink">SplitBiller</span>
 					</Link>
 				</div>

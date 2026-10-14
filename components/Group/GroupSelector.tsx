@@ -1,8 +1,9 @@
 import { Menu } from "@mantine/core";
-import { MoreHorizontal, Trash2, UserRound, Users } from "lucide-react";
+import { Lock, MoreHorizontal, Palette, Share2, Trash2, UserRound, Users } from "lucide-react";
 import { Group } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
 import { calculateBalances, totalSpent } from "@/utils/calculations";
+import type { SyncStatus } from "@/utils/groupSync";
 
 interface GroupSelectorProps {
 	groups: Group[];
@@ -11,7 +12,20 @@ interface GroupSelectorProps {
 	onDeleteGroup: (groupId: string) => void;
 	onManageMembers?: () => void;
 	onChangeMe?: () => void;
+	/** Opens sharing: turn on sync, or see the link of a synced group. */
+	onShare?: () => void;
+	/** Opens the theme picker. */
+	onTheme?: () => void;
+	syncStatus?: SyncStatus;
 }
+
+const SYNC_LABEL: Record<SyncStatus, string> = {
+	synced: "Shared · synced",
+	syncing: "Shared · syncing…",
+	offline: "Shared · offline, will sync",
+	gone: "Link reset or deleted",
+	locked: "Can't open the group",
+};
 
 /** The viewer's net position in a group, or null when we don't know who they are. */
 export const myBalance = (group: Group): number | null => {
@@ -60,6 +74,9 @@ export const GroupSelector = ({
 	onDeleteGroup,
 	onManageMembers,
 	onChangeMe,
+	onShare,
+	onTheme,
+	syncStatus,
 }: GroupSelectorProps) => {
 	if (groups.length === 0) return null;
 
@@ -81,8 +98,8 @@ export const GroupSelector = ({
 										onClick={() => onSelectGroup(group.id)}
 										className={`rounded-full px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
 											active
-												? "bg-ink text-white"
-												: "border border-line-strong bg-white text-ink-soft hover:text-ink"
+												? "bg-ink text-on-ink"
+												: "border border-line-strong bg-surface text-ink-soft hover:text-ink"
 										}`}
 									>
 										<span className="block truncate max-w-[140px] sm:max-w-[180px]">
@@ -114,6 +131,16 @@ export const GroupSelector = ({
 										Members & UPI IDs
 									</Menu.Item>
 								)}
+								{onShare && (
+									<Menu.Item leftSection={<Share2 className="h-4 w-4" />} onClick={onShare}>
+										{selectedGroup.sync ? "Group link & privacy" : "Share & sync"}
+									</Menu.Item>
+								)}
+								{onTheme && (
+									<Menu.Item leftSection={<Palette className="h-4 w-4" />} onClick={onTheme}>
+										Theme
+									</Menu.Item>
+								)}
 								{onChangeMe && selectedGroup.members.length > 0 && (
 									<Menu.Item leftSection={<UserRound className="h-4 w-4" />} onClick={onChangeMe}>
 										Change who you are
@@ -125,11 +152,28 @@ export const GroupSelector = ({
 									leftSection={<Trash2 className="h-4 w-4" />}
 									onClick={() => onDeleteGroup(selectedGroup.id)}
 								>
-									Delete group
+									{selectedGroup.sync ? "Remove from this device" : "Delete group"}
 								</Menu.Item>
 							</Menu.Dropdown>
 						</Menu>
 					</div>
+
+					{onShare && (
+						<button
+							type="button"
+							onClick={onShare}
+							className={`mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+								!selectedGroup.sync
+									? "bg-brand-50 text-brand-700 hover:bg-brand-100"
+									: syncStatus === "gone" || syncStatus === "locked"
+										? "bg-negative-soft text-negative"
+										: "bg-positive-soft text-positive hover:brightness-95"
+							}`}
+						>
+							{selectedGroup.sync ? <Lock className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
+							{selectedGroup.sync ? SYNC_LABEL[syncStatus ?? "syncing"] : "Share & sync, end-to-end encrypted"}
+						</button>
+					)}
 
 					<div className="mt-3 flex items-end justify-between gap-3">
 						<div className="min-w-0">

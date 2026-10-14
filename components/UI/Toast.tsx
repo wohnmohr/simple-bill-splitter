@@ -39,7 +39,7 @@ export const Toast = ({ toast, onDismiss, raised = false }: ToastProps) => {
 			{toast && (
 				<div
 					key={toast.id}
-					className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-xl bg-ink py-2.5 pl-4 pr-2 text-sm text-white shadow-raised animate-[fade-in-up_0.2s_ease-out]"
+					className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-xl bg-ink py-2.5 pl-4 pr-2 text-sm text-on-ink shadow-raised animate-[fade-in-up_0.2s_ease-out]"
 				>
 					<span className="min-w-0 flex-1">{toast.message}</span>
 					{toast.actionLabel && toast.onAction && (
@@ -49,7 +49,7 @@ export const Toast = ({ toast, onDismiss, raised = false }: ToastProps) => {
 								toast.onAction?.();
 								onDismiss();
 							}}
-							className="shrink-0 rounded-lg px-3 py-1.5 font-semibold text-brand-200 hover:bg-white/10"
+							className="shrink-0 rounded-lg px-3 py-1.5 font-semibold text-brand-200 hover:bg-on-ink/10"
 						>
 							{toast.actionLabel}
 						</button>
@@ -57,7 +57,7 @@ export const Toast = ({ toast, onDismiss, raised = false }: ToastProps) => {
 					<button
 						type="button"
 						onClick={onDismiss}
-						className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white"
+						className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-on-ink/60 hover:bg-on-ink/10 hover:text-on-ink"
 						aria-label="Dismiss"
 					>
 						<X className="h-4 w-4" />
