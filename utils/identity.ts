@@ -2,39 +2,46 @@ import type { Group, Person } from "@/types";
 
 /**
  * Anonymous identities for group members. Someone joining a shared group gets
- * an animal avatar and a two-word handle ("Teal Otter") instead of having to
- * give their name. They can rename themselves for everyone, and anyone can
- * give a member a nickname that stays on their own device.
+ * a made-up, pronounceable name ("Zuvoka", "Brelix") instead of having to give
+ * their own. They can rename themselves for everyone, and anyone can give a
+ * member a nickname that stays on their own device.
  */
 
-const ANIMALS: Record<string, string> = {
-	"🦊": "Fox", "🐼": "Panda", "🦉": "Owl", "🐯": "Tiger", "🦦": "Otter",
-	"🐙": "Octopus", "🦜": "Parrot", "🐳": "Whale", "🦔": "Hedgehog", "🐨": "Koala",
-	"🦩": "Flamingo", "🐢": "Turtle", "🦁": "Lion", "🐧": "Penguin", "🦄": "Unicorn",
-	"🐝": "Bee", "🦋": "Butterfly", "🐬": "Dolphin", "🦒": "Giraffe", "🐸": "Frog",
-};
-const ADJECTIVES = [
-	"Teal", "Saffron", "Amber", "Coral", "Indigo", "Jade", "Ruby", "Misty", "Sunny", "Swift",
-	"Quiet", "Brave", "Lucky", "Clever", "Gentle", "Bold", "Cosmic", "Breezy", "Mellow", "Zesty",
-];
+// Two syllables and an optional ending: 20 × 6 × 20 × 6 × 8 ≈ 115,000 names.
+const ONSETS = ["b", "d", "f", "g", "j", "k", "l", "m", "n", "p", "r", "s", "t", "v", "z", "bl", "br", "dr", "kr", "pl"];
+const VOWELS = ["a", "e", "i", "o", "u", "oo"];
+const ENDINGS = ["", "", "", "n", "x", "r", "sh", "k"];
 
-export const AVATARS = Object.keys(ANIMALS);
-export const isAvatar = (v: unknown): v is string => typeof v === "string" && v in ANIMALS;
+/**
+ * Rejects made-up names that spell or sound like something rude, in English
+ * or Hindi. Generous on purpose: losing a harmless name costs nothing.
+ */
+const RUDE =
+	/fuk|fuc|fak|sex|seks|dik|dic|cok|kok|cum|kum|tit|ass|arse|anus|pis|poo|shit|sht|crap|cunt|kunt|twat|fag|nig|neg|rap|kil|die|ded|dum|bum|butt|porn|nud|pee|vag|bobo|boob|nipl|homo|gay|kut|chut|lun|lund|lond|gand|gaan|ran|rand|bhen|mada|madar|chod|bsdk|bhos|loda|lode|lavd|lawd|gadh|kame|haram|tatt|jhat|pad|mut|suar|sur|kutt/;
 
 const pick = <T,>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)];
 
-/** A fresh avatar and handle, avoiding avatars and names already in the group where possible. */
-export function newIdentity(members: Person[]): { name: string; avatar: string } {
-	const usedAvatars = new Set(members.map((m) => m.avatar));
-	const usedNames = new Set(members.map((m) => m.name.toLowerCase()));
-	const free = AVATARS.filter((a) => !usedAvatars.has(a));
-	const avatar = pick(free.length ? free : AVATARS);
-	let name = "";
-	for (let i = 0; i < 20 && (!name || usedNames.has(name.toLowerCase())); i++) name = `${pick(ADJECTIVES)} ${ANIMALS[avatar]}`;
-	return { name, avatar };
+const madeUpName = () => {
+	const word = pick(ONSETS) + pick(VOWELS) + pick(ONSETS) + pick(VOWELS) + pick(ENDINGS);
+	return word.charAt(0).toUpperCase() + word.slice(1);
+};
+
+/** A fresh made-up name for someone joining, never one the group already has. */
+export function newIdentity(members: Person[]): { name: string } {
+	const used = new Set(members.map((m) => m.name.trim().toLowerCase()));
+	for (let i = 0; i < 200; i++) {
+		const name = madeUpName();
+		if (!used.has(name.toLowerCase()) && !RUDE.test(name.toLowerCase())) return { name };
+	}
+	// Practically unreachable (a group would need tens of thousands of members); add a number.
+	let base = madeUpName();
+	while (RUDE.test(base.toLowerCase())) base = madeUpName();
+	let n = 2;
+	while (used.has(`${base} ${n}`.toLowerCase())) n++;
+	return { name: `${base} ${n}` };
 }
 
-/** A stable hue for a member, from their id, so two people with the same name still look different. */
+/** A stable hue for a member, from their id, so two people with the same initial or name still look different. */
 export function memberHue(id: string): number {
 	let h = 0;
 	for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;

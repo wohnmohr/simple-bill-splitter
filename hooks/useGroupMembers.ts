@@ -14,17 +14,16 @@ export const useGroupMembers = (
   const updateMember = (personId: string, change: (m: Person) => Person) =>
     updateCurrent((g) => ({ ...g, members: g.members.map((m) => (m.id === personId ? change(m) : m)) }));
 
-  /** Adds a member and returns their id, or null if there's no name or group. */
-  const addMember = (name: string, upiId?: string, avatar?: string): string | null => {
+  /** Adds a member and returns their id, or null if there's no name or group. `id` is pre-made when someone joins. */
+  const addMember = (name: string, upiId?: string, id?: string): string | null => {
     if (!name.trim() || !currentGroup) {
       return null;
     }
 
     const newPerson: Person = {
-      id: newId("person"),
+      id: id ?? newId("person"),
       name: name.trim(),
       ...(upiId?.trim() ? { upiId: upiId.trim() } : {}),
-      ...(avatar ? { avatar } : {}),
     };
 
     updateCurrent((g) => ({ ...g, members: [...g.members, newPerson] }));

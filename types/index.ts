@@ -3,8 +3,6 @@ export type Person = {
   name: string;
   /** Optional UPI VPA (e.g. name@upi) for INR settlements */
   upiId?: string;
-  /** Animal emoji picked when someone joins a shared group (utils/identity). */
-  avatar?: string;
 };
 
 export type SplitMethod = "equally" | "percentage";

@@ -14,7 +14,6 @@
 import { CURRENCIES, DEFAULT_CURRENCY } from "@/constants";
 import type { Currency, Expense, Group, Person } from "@/types";
 import { isThemeId } from "@/utils/themes";
-import { isAvatar } from "@/utils/identity";
 
 export type EntityKind = "m" | "e" | "g";
 /** One change. `v: null` deletes the entity. */
@@ -87,7 +86,6 @@ function toPerson(id: string, v: unknown): Person | null {
 	const person: Person = { id, name };
 	const upiId = str(p.upiId, 80).trim();
 	if (upiId) person.upiId = upiId;
-	if (isAvatar(p.avatar)) person.avatar = p.avatar;
 	return person;
 }
 
