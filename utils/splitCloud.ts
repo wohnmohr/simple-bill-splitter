@@ -34,7 +34,8 @@ export async function loadCloudSplit(id: string, key: string, version?: number):
 	if (!SPLIT_ID_RE.test(id) || !SPLIT_KEY_RE.test(key)) return { status: "locked" };
 	let res: Response;
 	try {
-		res = await fetch(`/api/splits/${id}${version === undefined ? "" : `?v=${version}`}`, { cache: "no-store" });
+		// The first load takes the response the page preloaded; the server marks every answer no-store.
+		res = await fetch(`/api/splits/${id}${version === undefined ? "" : `?v=${version}`}`);
 	} catch {
 		return { status: "offline" };
 	}

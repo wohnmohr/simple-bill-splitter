@@ -1,7 +1,7 @@
 import "server-only";
 import type { Client } from "@libsql/client";
-import { FeedbackUnavailableError, ensureSchema, getDb, hashIp } from "@/lib/turso";
-import { cleanToken, overLimit, reply, sameOrigin, tokenMatches } from "@/lib/splitStore";
+import { FeedbackUnavailableError, hashIp, withDb } from "@/lib/turso";
+import { cleanToken, hashToken, overLimit, reply, sameOrigin, tokenMatches } from "@/lib/splitStore";
 
 /**
  * Guard rails for synced groups. Like split links, the server can't read what
@@ -46,19 +46,80 @@ async function readJson(req: Request, max: number): Promise<Record<string, unkno
 	}
 }
 
-/** Takes one unit from a counter; false once it passes `limit`. */
-async function takeQuota(db: Client, bucket: string, limit: number): Promise<boolean> {
-	const res = await db.execute({
-		sql: "INSERT INTO api_quota (bucket, at, n) VALUES (?, ?, 1) ON CONFLICT (bucket) DO UPDATE SET n = n + 1 RETURNING n",
-		args: [bucket, Date.now()],
-	});
-	return Number(res.rows[0]?.n ?? 0) <= limit;
+const today = () => Math.floor(Date.now() / 86_400_000);
+
+/** Adds one to a quota counter and returns the new count. */
+const bump = (bucket: string, now: number) => ({
+	sql: "INSERT INTO api_quota (bucket, at, n) VALUES (?, ?, 1) ON CONFLICT (bucket) DO UPDATE SET n = n + 1 RETURNING n",
+	args: [bucket, now],
+});
+
+/**
+ * Creates a group in one transaction: counts it against this IP's daily
+ * quota, then (only if that has room) the global one, and inserts the row
+ * only if both do.
+ */
+export async function insertGroup(
+	db: Client,
+	g: { ip: string; id: string; token: string; blob: string; expiresAt: number }
+): Promise<"created" | "exists" | "quota"> {
+	const now = Date.now();
+	const mine = `g:new:${g.ip}:${today()}`;
+	const all = `g:new:${today()}`;
+	const [existing, , , inserted] = await db.batch(
+		[
+			{ sql: "SELECT 1 FROM groups WHERE id = ?", args: [g.id] },
+			bump(mine, now),
+			{
+				sql: `INSERT INTO api_quota (bucket, at, n) SELECT ?, ?, 1 WHERE (SELECT n FROM api_quota WHERE bucket = ?) <= ?
+				      ON CONFLICT (bucket) DO UPDATE SET n = n + 1`,
+				args: [all, now, mine, NEW_GROUPS_PER_IP_PER_DAY],
+			},
+			{
+				sql: `INSERT INTO groups (id, auth_hash, expires_at, snapshot)
+				      SELECT ?, ?, ?, ? WHERE (SELECT n FROM api_quota WHERE bucket = ?) <= ? AND (SELECT n FROM api_quota WHERE bucket = ?) <= ?
+				      ON CONFLICT (id) DO NOTHING`,
+				args: [g.id, hashToken(g.token), g.expiresAt, g.blob, mine, NEW_GROUPS_PER_IP_PER_DAY, all, NEW_GROUPS_PER_DAY],
+			},
+		],
+		"write"
+	);
+	if (inserted.rowsAffected) return "created";
+	return existing.rows.length ? "exists" : "quota";
 }
 
-const today = () => Math.floor(Date.now() / 86_400_000);
-export const quotaNewGroup = async (db: Client, ip: string) =>
-	(await takeQuota(db, `g:new:${ip}:${today()}`, NEW_GROUPS_PER_IP_PER_DAY)) && (await takeQuota(db, `g:new:${today()}`, NEW_GROUPS_PER_DAY));
-export const quotaPush = (db: Client, ip: string) => takeQuota(db, `g:push:${ip}:${today()}`, PUSHES_PER_IP_PER_DAY);
+/**
+ * Appends one encrypted batch of changes in a single transaction, and so a
+ * single round trip: the token, the daily push quota and the compaction cap
+ * are all checked by the insert itself. Comparing SHA-256 digests in SQL
+ * leaks nothing an attacker can use, as a matching digest can't be built up
+ * byte by byte. On refusal, the group row read first says why.
+ */
+export async function appendOps(db: Client, g: { ip: string; id: string; token: string; blob: string }): Promise<Response> {
+	const now = Date.now();
+	const bucket = `g:push:${g.ip}:${today()}`;
+	const [group, quota, inserted, head] = await db.batch(
+		[
+			{ sql: "SELECT auth_hash, head_seq, snapshot_seq FROM groups WHERE id = ? AND expires_at > ?", args: [g.id, now] },
+			bump(bucket, now),
+			{
+				sql: `INSERT INTO group_ops (group_id, seq, blob) SELECT id, head_seq + 1, ? FROM groups
+				      WHERE id = ? AND expires_at > ? AND auth_hash = ? AND head_seq - snapshot_seq < ? AND (SELECT n FROM api_quota WHERE bucket = ?) <= ?`,
+				args: [g.blob, g.id, now, hashToken(g.token), MAX_UNCOMPACTED, bucket, PUSHES_PER_IP_PER_DAY],
+			},
+			// Parallel pushes queue behind each other, so none is lost or numbered twice,
+			// and a reader never sees the head ahead of the rows.
+			{ sql: "UPDATE groups SET head_seq = head_seq + 1, expires_at = ? WHERE id = ? AND changes() = 1 RETURNING head_seq", args: [now + GROUP_TTL_MS, g.id] },
+		],
+		"write"
+	);
+	if (inserted.rowsAffected && head.rows[0]) return reply({ ok: true, seq: Number(head.rows[0].head_seq) }, 201);
+	const auth = checkAuth(group.rows[0], g.token);
+	if (!auth.ok) return auth.error;
+	if (auth.head - auth.snapshotSeq >= MAX_UNCOMPACTED) return reply({ error: "Compact first", compact: true }, 409);
+	if (Number(quota.rows[0]?.n ?? 0) > PUSHES_PER_IP_PER_DAY) return reply({ error: "Too many changes today. Try again tomorrow." }, 429, { "Retry-After": "86400" });
+	return reply({ error: "Not found" }, 404);
+}
 
 /** Deletes groups nobody has changed for GROUP_TTL_MS, with their changes, and stale quota counters. */
 export async function purgeExpiredGroups(db: Client): Promise<void> {
@@ -91,9 +152,7 @@ export function groupRoute(opts: { maxBody: number; perMinute: number; key: stri
 		const token = cleanToken(body?.token);
 		if (!body || !id || !token) return reply({ error: "Invalid request" }, 400);
 		try {
-			const db = getDb();
-			await ensureSchema(db);
-			return await handler({ db, body, ip, id, token });
+			return await withDb((db) => handler({ db, body, ip, id, token }));
 		} catch (err) {
 			if (err instanceof FeedbackUnavailableError) return reply({ error: "Offline" }, 503);
 			console.error(`group ${opts.key} failed`, (err as Error).message);
@@ -105,15 +164,19 @@ export function groupRoute(opts: { maxBody: number; perMinute: number; key: stri
 /** Loads a live group and checks the token. 404: no such group (or deleted). 403: wrong token, e.g. a wrong passphrase. */
 type Authorized = { ok: true; head: number; snapshotSeq: number; expiresAt: number } | { ok: false; error: Response };
 
+/** Checks a group row (auth_hash, head_seq, snapshot_seq[, expires_at]) against the caller's token. */
+export function checkAuth(row: Record<string, unknown> | undefined, token: string): Authorized {
+	if (!row) return { ok: false, error: reply({ error: "Not found" }, 404) };
+	if (!tokenMatches(token, String(row.auth_hash))) return { ok: false, error: reply({ error: "Wrong key" }, 403) };
+	return { ok: true, head: Number(row.head_seq), snapshotSeq: Number(row.snapshot_seq), expiresAt: Number(row.expires_at) };
+}
+
 export async function authorize(db: Client, id: string, token: string): Promise<Authorized> {
 	const res = await db.execute({
 		sql: "SELECT auth_hash, head_seq, snapshot_seq, expires_at FROM groups WHERE id = ? AND expires_at > ?",
 		args: [id, Date.now()],
 	});
-	const row = res.rows[0];
-	if (!row) return { ok: false, error: reply({ error: "Not found" }, 404) };
-	if (!tokenMatches(token, String(row.auth_hash))) return { ok: false, error: reply({ error: "Wrong key" }, 403) };
-	return { ok: true, head: Number(row.head_seq), snapshotSeq: Number(row.snapshot_seq), expiresAt: Number(row.expires_at) };
+	return checkAuth(res.rows[0], token);
 }
 
 export { MAX_OPS_PER_PULL, MAX_OPS_BLOB, MAX_SNAPSHOT_BLOB };

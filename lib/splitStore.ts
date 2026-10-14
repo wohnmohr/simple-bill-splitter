@@ -96,14 +96,33 @@ const bump = (bucket: string, now: number) => ({
 	args: [bucket, now],
 });
 
-/** Takes one slot from this hour's and today's global quotas; false when either is full. */
-export async function takeGlobalSlot(db: Client): Promise<boolean> {
-	const now = Date.now();
-	const [hour, day] = await db.batch(
-		[bump(`splits:h:${Math.floor(now / 3_600_000)}`, now), bump(`splits:d:${Math.floor(now / 86_400_000)}`, now)],
+/**
+ * Stores a new split in one transaction: takes a slot from this hour's and
+ * today's global quotas and inserts the row only if both still have room.
+ */
+export async function insertSplit(
+	db: Client,
+	row: { id: string; writeHash: string; blob: string; ipHash: string; now: number }
+): Promise<"created" | "exists" | "busy"> {
+	const { id, writeHash, blob, ipHash, now } = row;
+	const hourBucket = `splits:h:${Math.floor(now / 3_600_000)}`;
+	const dayBucket = `splits:d:${Math.floor(now / 86_400_000)}`;
+	const [hour, day, inserted] = await db.batch(
+		[
+			bump(hourBucket, now),
+			bump(dayBucket, now),
+			{
+				sql: `INSERT INTO splits (id, created_at, expires_at, write_hash, blob, ip_hash)
+				      SELECT ?, ?, ?, ?, ?, ? WHERE (SELECT n FROM api_quota WHERE bucket = ?) <= ? AND (SELECT n FROM api_quota WHERE bucket = ?) <= ?
+				      ON CONFLICT (id) DO NOTHING`,
+				args: [id, now, now + SPLIT_TTL_MS, writeHash, blob, ipHash, hourBucket, GLOBAL_SPLITS_PER_HOUR, dayBucket, GLOBAL_SPLITS_PER_DAY],
+			},
+		],
 		"write"
 	);
-	return Number(hour.rows[0]?.n ?? 0) <= GLOBAL_SPLITS_PER_HOUR && Number(day.rows[0]?.n ?? 0) <= GLOBAL_SPLITS_PER_DAY;
+	if (inserted.rowsAffected) return "created";
+	const full = Number(hour.rows[0]?.n ?? 0) > GLOBAL_SPLITS_PER_HOUR || Number(day.rows[0]?.n ?? 0) > GLOBAL_SPLITS_PER_DAY;
+	return full ? "busy" : "exists";
 }
 
 /**

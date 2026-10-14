@@ -3,10 +3,9 @@ import {
 	FeedbackUnavailableError,
 	cleanContext,
 	cleanText,
-	ensureSchema,
-	getDb,
 	hashIp,
 	rateLimitHit,
+	withDb,
 } from "@/lib/turso";
 
 import { sameOrigin } from "@/lib/splitStore";
@@ -39,22 +38,22 @@ export async function POST(req: Request) {
 		: "manual";
 
 	try {
-		const db = getDb();
-		await ensureSchema(db);
-		const ipHash = hashIp(req);
-		const hit = await rateLimitHit(db, "feedback", ipHash);
-		if (hit) {
-			return Response.json(
-				{ error: `Thanks — we've got plenty from you ${hit === "day" ? "today" : "this hour"}. Try again later.` },
-				{ status: 429, headers: { "Retry-After": hit === "day" ? "86400" : "3600" } }
-			);
-		}
-		await db.execute({
-			sql: `INSERT INTO feedback (id, created_at, rating, comment, trigger, context, ip_hash)
-			      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-			args: [randomUUID(), Date.now(), rating, comment, trigger, cleanContext(body.context), ipHash],
+		return await withDb(async (db) => {
+			const ipHash = hashIp(req);
+			const hit = await rateLimitHit(db, "feedback", ipHash);
+			if (hit) {
+				return Response.json(
+					{ error: `Thanks — we've got plenty from you ${hit === "day" ? "today" : "this hour"}. Try again later.` },
+					{ status: 429, headers: { "Retry-After": hit === "day" ? "86400" : "3600" } }
+				);
+			}
+			await db.execute({
+				sql: `INSERT INTO feedback (id, created_at, rating, comment, trigger, context, ip_hash)
+				      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+				args: [randomUUID(), Date.now(), rating, comment, trigger, cleanContext(body.context), ipHash],
+			});
+			return Response.json({ ok: true });
 		});
-		return Response.json({ ok: true });
 	} catch (err) {
 		if (err instanceof FeedbackUnavailableError) {
 			return Response.json({ error: "Feedback is offline right now." }, { status: 503 });

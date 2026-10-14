@@ -9,8 +9,8 @@ const nextConfig = {
 				headers: [{ key: "Cache-Control", value: "public, max-age=604800" }],
 			},
 			{
-				// Unhashed static images and icons: a day fresh, then served stale while revalidating.
-				source: "/:all*(png|jpg|jpeg|webp|svg|ico)",
+				// Unhashed static images, icons and feature clips: a day fresh, then served stale while revalidating.
+				source: "/:all*(png|jpg|jpeg|webp|svg|ico|mp4)",
 				headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
 			},
 		];
