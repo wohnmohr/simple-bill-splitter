@@ -2,7 +2,7 @@
 import { BASE, beat, browser, capture, encode, phone, type } from "./rec.mjs";
 
 /** Builds a group off camera, the fast way, and leaves the page on it. */
-async function setupGroup(page, { name = "Goa trip", members, expenses = [] }) {
+async function setupGroup(page, { name = "Goa trip", members, expenses = [], me }) {
 	await page.goto(`${BASE}/dashboard`);
 	await page.getByRole("button", { name: /create/i }).first().click();
 	await page.getByLabel("Group name").fill(name);
@@ -23,10 +23,30 @@ async function setupGroup(page, { name = "Goa trip", members, expenses = [] }) {
 		await d.getByRole("button", { name: "Add expense" }).click();
 		await d.waitFor({ state: "detached" });
 	}
+	// "Who are you" on this device, as if they'd joined; saves the question popping up mid-clip.
+	if (me) await page.evaluate((me) => {
+		const groups = JSON.parse(localStorage.getItem("bill-splitter-groups"));
+		const person = groups.at(-1).members.find((m) => m.name === me);
+		person.joined = true;
+		groups.at(-1).meId = person.id;
+		localStorage.setItem("bill-splitter-groups", JSON.stringify(groups));
+	}, me);
 	await page.reload();
 	await page.getByRole("button", { name: new RegExp(name) }).first().click().catch(() => {});
 	await page.evaluate(() => document.fonts.ready);
 	await beat(page, 500);
+}
+
+const whoAreYou = (page) => page.getByRole("dialog", { name: /Who are you in/ });
+
+/** Turns on sync off camera and returns the group link. */
+async function shareGroup(page) {
+	await page.getByRole("button", { name: /Share & sync, end-to-end encrypted/ }).click();
+	await page.getByRole("button", { name: "Turn on sync" }).click();
+	await page.locator("#group-link").waitFor();
+	const link = await page.locator("#group-link").inputValue();
+	await page.keyboard.press("Escape");
+	return link;
 }
 
 const MEMBERS = [["Asha", "asha@okaxis"], ["Ben"], ["Chen"], ["Dev"]];
@@ -151,7 +171,7 @@ const CLIPS = {
 
 	async sync() {
 		const a = await phone(), b = await phone();
-		await setupGroup(a, { members: MEMBERS.slice(0, 3), expenses: EXPENSES.slice(0, 2).map(([x, d, w]) => [x, d, w === "Dev" ? "Asha" : w]) });
+		await setupGroup(a, { members: MEMBERS.slice(0, 3), expenses: EXPENSES.slice(0, 2).map(([x, d, w]) => [x, d, w === "Dev" ? "Asha" : w]), me: "Asha" });
 		await b.goto(`${BASE}/dashboard`);
 		await b.evaluate(() => document.fonts.ready);
 		await beat(a, 400);
@@ -164,10 +184,13 @@ const CLIPS = {
 		await beat(a, 1600);
 		const link = await a.locator("#group-link").inputValue();
 		await b.goto(link);
-		await b.getByRole("heading", { name: "Goa trip" }).waitFor();
+		await whoAreYou(b).waitFor();
 		await beat(a, 700);
 		await a.keyboard.press("Escape");
-		await beat(a, 900);
+		await beat(b, 600);
+		await whoAreYou(b).getByRole("button", { name: "I'm Ben" }).click();
+		await whoAreYou(b).waitFor({ state: "detached" });
+		await beat(b, 900);
 		const d = b.getByRole("dialog");
 		await b.getByRole("button", { name: "Add expense" }).first().click();
 		await beat(b, 500);
@@ -182,6 +205,31 @@ const CLIPS = {
 		}
 		await beat(a, 2200);
 		return encode("sync", [await ra.stop(), await rb.stop()]);
+	},
+
+	async join() {
+		const a = await phone(), b = await phone();
+		await setupGroup(a, { members: MEMBERS.slice(0, 3), expenses: EXPENSES.slice(0, 2).map(([x, d, w]) => [x, d, w === "Dev" ? "Asha" : w]), me: "Asha" });
+		const link = await shareGroup(a);
+		await b.goto(link);
+		await whoAreYou(b).waitFor();
+		await b.evaluate(() => document.fonts.ready);
+		await beat(b, 300);
+		const rec = await capture(b);
+		await beat(b, 1300);
+		for (let i = 0; i < 2; i++) {
+			await whoAreYou(b).getByRole("button", { name: "Suggest another anonymous name" }).click();
+			await beat(b, 800);
+		}
+		await beat(b, 400);
+		await whoAreYou(b).getByRole("button", { name: /^Join as/ }).click();
+		await whoAreYou(b).waitFor({ state: "detached" });
+		await beat(b, 1300);
+		await b.getByRole("button", { name: "Group options" }).click();
+		await beat(b, 400);
+		await b.getByRole("menuitem", { name: /Members/ }).click();
+		await beat(b, 2200);
+		return encode("join", [await rec.stop()], { posterAt: 1.2 }); // poster: the "Who are you?" sheet
 	},
 
 	async themes() {

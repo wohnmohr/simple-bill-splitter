@@ -85,6 +85,19 @@ export const FEATURES: Feature[] = [
 		cta: { href: "/dashboard", label: "Share a group" },
 	},
 	{
+		id: "join",
+		eyebrow: "Join",
+		title: "Join without giving your name",
+		body: "Open a group's link and you're asked who you are. Keep a made-up name like “Mikoox”, pick yours from the list, or just look. Change it any time.",
+		points: [
+			"Tens of thousands of made-up names, never repeated in a group",
+			"Give anyone a nickname that only your device shows",
+			"Your personal link opens the group as you on your other devices",
+		],
+		clip: { name: "join", ...PHONE, label: "Opening a group link, shuffling made-up names and joining as Mikoox" },
+		cta: { href: "/dashboard", label: "Start a group" },
+	},
+	{
 		id: "themes",
 		eyebrow: "Make it yours",
 		title: "Give every group its own look",

@@ -37,3 +37,7 @@ next-env.d.ts
 
 # local feedback database (dev fallback when TURSO_DATABASE_URL is unset)
 .turso-dev.db*
+
+# Rendered video masters rebuild from their composition (see brag-plan.md); the site serves public/promo.
+brag-output/whats-new/brag.mp4
+brag-output/whats-new/raw.mp4
