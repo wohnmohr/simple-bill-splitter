@@ -9,12 +9,12 @@ const LINKS: [string, string][] = [
 	["/features", "Features"],
 	["/tools", "Tools"],
 	["/split", "Split links"],
-	["/feature-requests", "Request a feature"],
+	["/roadmap", "Roadmap"],
 	["/about", "About"],
 	["/contact", "Contact"],
 ];
 
-/** Footer of the marketing pages (home, features, tools, about, contact). */
+/** Footer of the marketing pages (home, features, tools, roadmap, about, contact). */
 export const SiteFooter = () => (
 	<footer className="border-t border-line px-4 sm:px-6 py-10">
 		<div className="mx-auto flex max-w-6xl flex-col gap-8 md:flex-row md:items-start md:justify-between">

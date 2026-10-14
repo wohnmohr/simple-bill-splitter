@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { track } from "@/lib/analytics";
-import { TALLY_FORM_ID, TALLY_FORM_URL } from "@/content/contact";
+import { track, type AnalyticsEvent } from "@/lib/analytics";
 
 const EMBED_SCRIPT = "https://tally.so/widgets/embed.js";
 
@@ -17,11 +16,23 @@ function loadEmbeds() {
 	});
 }
 
+type Props = {
+	formId: string;
+	/** Accessible name of the frame. */
+	title: string;
+	/** Fills the form's hidden "source" field, so we know which page a submission came from. */
+	source: string;
+	/** Counted when the form is submitted. */
+	event: AnalyticsEvent;
+	/** Room to reserve before Tally sizes the frame to the form. */
+	height?: number;
+};
+
 /**
- * The contact form, embedded from Tally on a transparent background so it
- * sits in our card, styled in SplitBiller's colours in Tally itself.
+ * A Tally form embedded on a transparent background so it sits in our card;
+ * its colours and font are set to SplitBiller's in Tally itself.
  */
-export const TallyForm = ({ source }: { source: string }) => {
+export const TallyForm = ({ formId, title, source, event, height = 560 }: Props) => {
 	useEffect(() => {
 		if ((window as TallyWindow).Tally) loadEmbeds();
 		else if (!document.querySelector(`script[src="${EMBED_SCRIPT}"]`)) {
@@ -34,11 +45,12 @@ export const TallyForm = ({ source }: { source: string }) => {
 
 		const onMessage = (e: MessageEvent) => {
 			if (e.origin !== "https://tally.so" || typeof e.data !== "string" || !e.data.includes("Tally.FormSubmitted")) return;
-			track("contact_message_sent", { source });
+			if (!e.data.includes(formId)) return;
+			track(event, { source });
 		};
 		window.addEventListener("message", onMessage);
 		return () => window.removeEventListener("message", onMessage);
-	}, [source]);
+	}, [formId, source, event]);
 
 	const params = new URLSearchParams({
 		alignLeft: "1",
@@ -51,16 +63,16 @@ export const TallyForm = ({ source }: { source: string }) => {
 	return (
 		<>
 			<iframe
-				data-tally-src={`https://tally.so/embed/${TALLY_FORM_ID}?${params}`}
+				data-tally-src={`https://tally.so/embed/${formId}?${params}`}
 				loading="lazy"
 				width="100%"
-				height={560}
-				title="Contact SplitBiller"
+				height={height}
+				title={title}
 				className="block w-full border-0"
 			/>
 			<noscript>
-				<a href={TALLY_FORM_URL} className="btn-primary">
-					Open the contact form
+				<a href={`https://tally.so/r/${formId}`} className="btn-primary">
+					Open the form
 				</a>
 			</noscript>
 		</>

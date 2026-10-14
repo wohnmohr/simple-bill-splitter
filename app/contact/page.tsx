@@ -3,8 +3,8 @@ import Link from "next/link";
 import { ArrowRight, CalendarClock, HelpCircle, Lightbulb, Mail, Users } from "lucide-react";
 import { SiteNav } from "@/components/Landing/SiteNav";
 import { SiteFooter } from "@/components/Landing/SiteFooter";
-import { TallyForm } from "@/components/Contact/TallyForm";
-import { BOOKING_URL, CONTACT_EMAIL, TALLY_FORM_URL } from "@/content/contact";
+import { TallyForm } from "@/components/UI/TallyForm";
+import { BOOKING_URL, CONTACT_EMAIL, CONTACT_FORM_ID } from "@/content/contact";
 
 export const metadata: Metadata = {
 	title: "Contact SplitBiller",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 const ELSEWHERE = [
 	{ href: "/#faq", icon: HelpCircle, title: "Quick answers", body: "Common questions about splitting, UPI and privacy." },
-	{ href: "/feature-requests", icon: Lightbulb, title: "Request a feature", body: "Tell us what SplitBiller should do next." },
+	{ href: "/roadmap", icon: Lightbulb, title: "Roadmap", body: "What we’re building next, and where to request a feature." },
 	{ href: "/about", icon: Users, title: "About SplitBiller", body: "Who makes it and how it handles your money and data." },
 ];
 
@@ -33,11 +33,11 @@ export default function ContactPage() {
 						reply by email, or reach us directly.
 					</p>
 					<div className="surface mt-8 px-3 py-4 sm:px-5 sm:py-6">
-						<TallyForm source="contact" />
+						<TallyForm formId={CONTACT_FORM_ID} title="Contact SplitBiller" source="contact" event="contact_message_sent" />
 					</div>
 					<p className="mt-3 text-sm text-ink-muted">
 						The form is run by Tally and comes straight to our inbox.{" "}
-						<a href={TALLY_FORM_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-ink">
+						<a href={`https://tally.so/r/${CONTACT_FORM_ID}`} target="_blank" rel="noopener noreferrer" className="underline hover:text-ink">
 							Open it in a new tab
 						</a>
 						.

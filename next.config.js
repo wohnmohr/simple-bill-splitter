@@ -6,6 +6,8 @@ const nextConfig = {
 		return [
 			{ source: "/contact-us", destination: "/contact", permanent: true },
 			{ source: "/about-us", destination: "/about", permanent: true },
+			// Feature requests moved onto the roadmap.
+			{ source: "/feature-requests", destination: "/roadmap#request", permanent: true },
 		];
 	},
 	async headers() {

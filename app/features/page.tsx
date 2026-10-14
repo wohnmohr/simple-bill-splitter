@@ -99,7 +99,7 @@ export default function FeaturesPage() {
 					</TrackedLink>
 					<p className="mt-6 text-sm text-ink-muted">
 						Missing something?{" "}
-						<Link href="/feature-requests" className="font-medium text-brand-700 hover:underline">
+						<Link href="/roadmap#request" className="font-medium text-brand-700 hover:underline">
 							Request a feature
 						</Link>
 					</p>

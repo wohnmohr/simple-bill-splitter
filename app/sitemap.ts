@@ -52,7 +52,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 			priority: 0.7,
 		},
 		{
-			url: `${baseUrl}/feature-requests`,
+			url: `${baseUrl}/roadmap`,
 			lastModified: new Date(),
 			changeFrequency: "monthly",
 			priority: 0.4,
