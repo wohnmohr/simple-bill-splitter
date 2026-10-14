@@ -1,7 +1,8 @@
 import React from "react";
 import { TextInput } from "@mantine/core";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Modal } from "@/components/UI/Modal";
+import { MemberAvatar } from "@/components/Group/MemberAvatar";
 import { Group, Person } from "@/types";
 import { isValidUpiId } from "@/utils/upi";
 
@@ -11,20 +12,41 @@ interface AddMembersModalProps {
 	group: Group;
 	onAddMember: (name: string, upiId?: string) => void;
 	onUpdateMemberUpi?: (personId: string, upiId: string) => void;
+	/** Renames a member for everyone. */
+	onRenameMember: (personId: string, name: string) => void;
+	/** Sets the nickname only this device shows (empty clears it). */
+	onSetNickname: (personId: string, nickname: string) => void;
 	onDeleteMember: (personId: string) => void;
 }
 
+/**
+ * Who's in the group. In a shared group you rename yourself for everyone and
+ * give others nicknames only you see; in a group on this device alone, a
+ * rename is just a rename.
+ */
 export const AddMembersModal = ({
 	isOpen,
 	onClose,
 	group,
 	onAddMember,
 	onUpdateMemberUpi,
+	onRenameMember,
+	onSetNickname,
 	onDeleteMember,
 }: AddMembersModalProps) => {
 	const [memberName, setMemberName] = React.useState("");
 	const [memberUpi, setMemberUpi] = React.useState("");
+	const [editing, setEditing] = React.useState<{ id: string; value: string } | null>(null);
 	const nameRef = React.useRef<HTMLInputElement>(null);
+	const shared = !!group.sync;
+	/** Whose name the pencil changes for everyone; for anyone else in a shared group it's a private nickname. */
+	const renamesForEveryone = (m: Person) => !shared || m.id === group.meId;
+	const saveEdit = (m: Person) => {
+		if (!editing) return;
+		if (renamesForEveryone(m)) onRenameMember(m.id, editing.value);
+		else onSetNickname(m.id, editing.value === m.name ? "" : editing.value);
+		setEditing(null);
+	};
 
 	const handleSubmit = () => {
 		if (memberName.trim() && !upiError(memberUpi)) {
@@ -39,6 +61,7 @@ export const AddMembersModal = ({
 	const handleClose = () => {
 		setMemberName("");
 		setMemberUpi("");
+		setEditing(null);
 		onClose();
 	};
 
@@ -103,12 +126,62 @@ export const AddMembersModal = ({
 						</p>
 					) : (
 						<ul className="divide-y divide-line rounded-xl border border-line">
-							{group.members.map((member: Person) => (
+							{group.members.map((member: Person) => {
+								const nickname = group.nicknames?.[member.id];
+								const isMe = member.id === group.meId;
+								const forEveryone = renamesForEveryone(member);
+								const isEditing = editing?.id === member.id;
+								return (
 								<li key={member.id} className="px-3.5 py-3 space-y-2">
-									<div className="flex items-center justify-between gap-2">
-										<span className="truncate font-medium text-ink">
-											{member.name}
-										</span>
+									<div className="flex items-center gap-3">
+										<MemberAvatar person={member} />
+										{isEditing ? (
+											<form
+												className="flex min-w-0 flex-1 gap-2"
+												onSubmit={(e) => {
+													e.preventDefault();
+													saveEdit(member);
+												}}
+											>
+												<TextInput
+													className="min-w-0 flex-1"
+													aria-label={forEveryone ? `New name for ${member.name}` : `Nickname for ${member.name}`}
+													value={editing.value}
+													onChange={(e) => setEditing({ id: member.id, value: e.target.value })}
+													placeholder={forEveryone ? "Name" : member.name}
+													maxLength={40}
+													size="sm"
+													styles={{ input: { minHeight: 38, fontSize: 15 } }}
+													data-autofocus
+													autoFocus
+												/>
+												<button type="submit" className="btn-primary !px-3 !py-2" disabled={forEveryone && !editing.value.trim()}>
+													Save
+												</button>
+											</form>
+										) : (
+											<span className="min-w-0 flex-1">
+												<span className="flex items-center gap-2">
+													<span className="truncate font-medium text-ink">{nickname || member.name}</span>
+													{isMe && (
+														<span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-800">You</span>
+													)}
+												</span>
+												{nickname && (
+													<span className="block truncate text-xs text-ink-muted">Others see “{member.name}”</span>
+												)}
+											</span>
+										)}
+										{!isEditing && (
+											<button
+												type="button"
+												onClick={() => setEditing({ id: member.id, value: forEveryone ? member.name : nickname || "" })}
+												className="icon-btn !h-8 !w-8"
+												aria-label={isMe ? "Change your name" : forEveryone ? `Rename ${member.name}` : `Nickname for ${member.name}`}
+											>
+												<Pencil className="h-4 w-4" />
+											</button>
+										)}
 										<button
 											type="button"
 											onClick={() => onDeleteMember(member.id)}
@@ -118,6 +191,15 @@ export const AddMembersModal = ({
 											<Trash2 className="h-4 w-4" />
 										</button>
 									</div>
+									{isEditing && (
+										<p className="text-xs text-ink-muted">
+											{isMe && shared
+												? "Everyone in the group sees this name. It stays end-to-end encrypted."
+												: forEveryone
+													? "This is the name in the group and in share links."
+													: `Only on this device. The group still sees “${member.name}”. Leave it empty to use that.`}
+										</p>
+									)}
 									{isInr && onUpdateMemberUpi && (
 										<TextInput
 											aria-label={`${member.name}'s UPI ID`}
@@ -135,13 +217,15 @@ export const AddMembersModal = ({
 										/>
 									)}
 								</li>
-							))}
+								);
+							})}
 						</ul>
 					)}
 					{isInr && group.members.length > 0 && (
 						<p className="mt-2 text-xs text-ink-muted">
-							UPI IDs stay on this device and travel only inside encrypted share
-							links.
+							{shared
+								? "Names and UPI IDs are shared with the group, end-to-end encrypted."
+								: "UPI IDs stay on this device and travel only inside encrypted share links."}
 						</p>
 					)}
 				</div>

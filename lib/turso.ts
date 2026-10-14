@@ -1,6 +1,7 @@
 import "server-only";
-import { createClient, type Client } from "@libsql/client";
+import { createClient, type Client, type InStatement } from "@libsql/client";
 import { createHash } from "crypto";
+import { after } from "next/server";
 
 /**
  * Turso holds feedback, feature requests, and end-to-end encrypted split links
@@ -107,7 +108,7 @@ export function getDb(): Client {
 	return client;
 }
 
-export async function ensureSchema(db: Client): Promise<void> {
+function ensureSchema(db: Client): Promise<void> {
 	if (!schemaReady) {
 		schemaReady = db
 			.batch(SCHEMA, "write")
@@ -120,6 +121,27 @@ export async function ensureSchema(db: Client): Promise<void> {
 			});
 	}
 	return schemaReady;
+}
+
+const MISSING_SCHEMA = /no such (table|column)/i;
+
+/**
+ * Runs `fn` against the database without waiting for schema setup, which
+ * would otherwise cost every new server instance a write transaction before
+ * its first answer. The schema is brought up to date once per instance after
+ * the response is sent; on a brand-new database, where a table or column is
+ * missing, it's created on the spot and `fn` runs once more.
+ */
+export async function withDb<T>(fn: (db: Client) => Promise<T>): Promise<T> {
+	const db = getDb();
+	if (!schemaReady) after(() => ensureSchema(db).catch((e) => console.error("schema update failed", (e as Error).message)));
+	try {
+		return await fn(db);
+	} catch (err) {
+		if (!MISSING_SCHEMA.test((err as Error)?.message ?? "")) throw err;
+		await ensureSchema(db);
+		return fn(db);
+	}
 }
 
 /** Salted hash of the caller's IP: enough to rate-limit, not enough to identify. */
@@ -145,21 +167,27 @@ export const WRITE_LIMITS: Record<RateTable, { hour: number; day: number }> = {
 	feature_requests: { hour: 5, day: 15 },
 };
 
-/**
- * Which window this IP has used up in `table`, or null if it may write.
- * One indexed query covers both the hourly and the daily budget.
- */
-export async function rateLimitHit(db: Client, table: RateTable, ipHash: string): Promise<"hour" | "day" | null> {
+/** Counts this IP's writes to `table` in the last day and hour; one indexed read. Batch it with other reads. */
+export function rateLimitQuery(table: RateTable, ipHash: string): InStatement {
 	const now = Date.now();
-	const { hour, day } = WRITE_LIMITS[table];
-	const res = await db.execute({
+	return {
 		sql: `SELECT COUNT(*) AS day, COALESCE(SUM(created_at > ?), 0) AS hour FROM ${table} WHERE ip_hash = ? AND created_at > ?`,
 		args: [now - 3_600_000, ipHash, now - 86_400_000],
-	});
-	const row = res.rows[0];
+	};
+}
+
+/** Which window the counts from rateLimitQuery have used up, or null if the IP may write. */
+export function rateLimitVerdict(table: RateTable, row: Record<string, unknown> | undefined): "hour" | "day" | null {
+	const { hour, day } = WRITE_LIMITS[table];
 	if (Number(row?.day ?? 0) >= day) return "day";
 	if (Number(row?.hour ?? 0) >= hour) return "hour";
 	return null;
+}
+
+/** Which window this IP has used up in `table`, or null if it may write. */
+export async function rateLimitHit(db: Client, table: RateTable, ipHash: string): Promise<"hour" | "day" | null> {
+	const res = await db.execute(rateLimitQuery(table, ipHash));
+	return rateLimitVerdict(table, res.rows[0]);
 }
 
 /** A 429 that says when to come back. */

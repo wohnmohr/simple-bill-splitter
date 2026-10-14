@@ -41,12 +41,13 @@ export const GroupsHome = ({
 				)}
 			</div>
 
-			<ul className="surface divide-y divide-line overflow-hidden">
+			{/* A list on phones; a grid of cards on wide screens. */}
+			<ul className="surface divide-y divide-line overflow-hidden lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none">
 				{groups.map((group) => {
 					const total = totalSpent(group.expenses);
 					const mine = myBalance(group);
 					return (
-						<li key={group.id} className="group/row relative flex items-center">
+						<li key={group.id} className="group/row relative flex items-center lg:surface lg:overflow-hidden">
 							<button
 								onClick={() => onSelectGroup(group.id)}
 								className="flex flex-1 min-w-0 items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-paper"
