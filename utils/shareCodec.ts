@@ -1,6 +1,7 @@
 import { CURRENCIES } from "@/constants";
 import { Currency, Expense, Person } from "@/types";
 import { CompactSharePayload, ShareSnapshot } from "@/types/share";
+import { splitWeights } from "@/utils/calculations";
 
 const SHARE_PREFIX = "sb1";
 const SHARE_PATH = "/share";
@@ -80,12 +81,9 @@ function toCompact(snapshot: ShareSnapshot): CompactSharePayload {
 				t: e.participants,
 			};
 			if (e.description) item.d = e.description;
-			if (e.splitMethod === "percentage") {
-				item.s = "p";
-				if (e.percentages) item.r = e.percentages;
-			} else {
-				item.s = "e";
-			}
+			item.s = e.splitMethod === "percentage" ? "p" : e.splitMethod === "exact" ? "x" : "e";
+			const weights = splitWeights(e);
+			if (weights) item.r = weights;
 			if (e.kind === "payment") item.k = "s";
 			if (e.createdAt) item.at = Math.round(e.createdAt / 1000);
 			return item;
@@ -109,8 +107,8 @@ function fromCompact(payload: CompactSharePayload): ShareSnapshot {
 		paidBy: e.p,
 		participants: e.t,
 		description: e.d,
-		splitMethod: e.s === "p" ? "percentage" : "equally",
-		percentages: e.r,
+		splitMethod: e.s === "p" ? "percentage" : e.s === "x" ? "exact" : "equally",
+		...(e.s === "p" ? { percentages: e.r } : e.s === "x" ? { amounts: e.r } : {}),
 		...(e.k === "s" ? { kind: "payment" as const } : {}),
 		...(e.at ? { createdAt: e.at * 1000 } : {}),
 	}));

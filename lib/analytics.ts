@@ -40,7 +40,14 @@ export type AnalyticsEvent =
 	| "group_deleted_for_everyone"
 	| "group_theme_changed"
 	| "group_identity_chosen"
-	| "group_personal_link_copied";
+	| "group_personal_link_copied"
+	| "invite_nudge_shown"
+	| "invite_nudge_clicked"
+	| "invite_nudge_dismissed"
+	| "install_prompt_shown"
+	| "install_prompt_clicked"
+	| "install_prompt_dismissed"
+	| "app_installed";
 
 type EventProps = Record<string, string | number | boolean | undefined | null>;
 

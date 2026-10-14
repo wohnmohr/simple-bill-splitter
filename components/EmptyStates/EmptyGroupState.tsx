@@ -6,7 +6,7 @@ interface EmptyGroupStateProps {
 
 const STEPS = [
 	["Create a group", "A trip, a flat, a dinner — anything shared."],
-	["Add who paid what", "Split equally or by percentage."],
+	["Add who paid what", "Split equally, by percentage or exact amounts."],
 	["Settle in fewest payments", "One-tap UPI links for every transfer."],
 ] as const;
 

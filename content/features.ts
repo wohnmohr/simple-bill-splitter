@@ -37,8 +37,8 @@ export const FEATURES: Feature[] = [
 	{
 		id: "expenses",
 		eyebrow: "Track",
-		title: "Split equally, or by percentage",
-		body: "Log what it was, who paid and who shared it. Split evenly, or set percentages when orders differ. SplitBiller checks they add up to 100%.",
+		title: "Split equally, by percentage or exact amounts",
+		body: "Log what it was, who paid and who shared it. Split evenly, or set percentages or exact amounts when orders differ. SplitBiller checks they add up.",
 		points: ["Pick exactly who shared each expense", "Edit or delete anything later", "A running total for the group"],
 		clip: { name: "expenses", ...PHONE, label: "Adding a hotel bill split equally, then a dinner split 50/25/25" },
 		cta: { href: "/dashboard", label: "Add your first expense" },

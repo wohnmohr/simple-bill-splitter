@@ -1,6 +1,13 @@
 import { Expense, Group, SplitMethod } from "@/types";
 import { newId } from "@/utils/ids";
 
+/** A custom split is stored in the field its method reads: percentages or exact amounts. */
+const splitFields = (splitMethod: SplitMethod, weights?: Record<string, number>) => ({
+  splitMethod,
+  percentages: splitMethod === "percentage" ? weights : undefined,
+  amounts: splitMethod === "exact" ? weights : undefined,
+});
+
 export const useExpenses = (
   groups: Group[],
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>,
@@ -12,7 +19,7 @@ export const useExpenses = (
     participants: Set<string>,
     description?: string,
     splitMethod: SplitMethod = "equally",
-    percentages?: Record<string, number>,
+    weights?: Record<string, number>,
     date?: number
   ): boolean => {
     if (amount <= 0 || !paidBy || participants.size === 0 || !currentGroup) {
@@ -26,8 +33,7 @@ export const useExpenses = (
       paidBy,
       participants: Array.from(participants),
       description,
-      splitMethod,
-      percentages: splitMethod === "percentage" ? percentages : undefined,
+      ...splitFields(splitMethod, weights),
       createdAt: date ?? Date.now(),
     };
 
@@ -48,7 +54,7 @@ export const useExpenses = (
     participants: Set<string>,
     description?: string,
     splitMethod: SplitMethod = "equally",
-    percentages?: Record<string, number>,
+    weights?: Record<string, number>,
     date?: number
   ): boolean => {
     if (amount <= 0 || !paidBy || participants.size === 0 || !currentGroup) {
@@ -68,8 +74,7 @@ export const useExpenses = (
                 paidBy,
                 participants: Array.from(participants),
                 description,
-                splitMethod,
-                percentages: splitMethod === "percentage" ? percentages : undefined,
+                ...splitFields(splitMethod, weights),
               }
               : e
           ),
