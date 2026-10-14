@@ -14,6 +14,7 @@
 import { CURRENCIES, DEFAULT_CURRENCY } from "@/constants";
 import type { Currency, Expense, Group, Person } from "@/types";
 import { isThemeId } from "@/utils/themes";
+import { isAvatar } from "@/utils/identity";
 
 export type EntityKind = "m" | "e" | "g";
 /** One change. `v: null` deletes the entity. */
@@ -83,8 +84,11 @@ function toPerson(id: string, v: unknown): Person | null {
 	const p = v as Partial<Person>;
 	const name = str(p?.name, 60).trim();
 	if (!name) return null;
+	const person: Person = { id, name };
 	const upiId = str(p.upiId, 80).trim();
-	return upiId ? { id, name, upiId } : { id, name };
+	if (upiId) person.upiId = upiId;
+	if (isAvatar(p.avatar)) person.avatar = p.avatar;
+	return person;
 }
 
 function toExpense(id: string, v: unknown, members: Set<string>): Expense | null {
@@ -117,8 +121,8 @@ const live = (table: Record<string, Cell>) =>
 		.filter(([, c]) => c.v !== null)
 		.sort(([a, x], [b, y]) => x.c - y.c || (a < b ? -1 : 1));
 
-/** The group this state describes. Device-only fields (local id, "who am I", sync link) come from `local`. */
-export function materialize(state: SyncState, local: Pick<Group, "id" | "meId" | "sync">): Group {
+/** The group this state describes. Device-only fields (local id, "who am I", sync link, nicknames) come from `local`. */
+export function materialize(state: SyncState, local: Pick<Group, "id" | "meId" | "sync" | "nicknames">): Group {
 	const members = live(state.m).map(([id, c]) => toPerson(id, c.v)).filter((p): p is Person => !!p);
 	const ids = new Set(members.map((m) => m.id));
 	const expenses = live(state.e)
@@ -133,6 +137,7 @@ export function materialize(state: SyncState, local: Pick<Group, "id" | "meId" |
 		...(isThemeId(state.g.theme?.v) ? { theme: state.g.theme.v as string } : {}),
 		...(local.meId !== undefined ? { meId: local.meId } : {}),
 		...(local.sync ? { sync: local.sync } : {}),
+		...(local.nicknames ? { nicknames: local.nicknames } : {}),
 	};
 }
 

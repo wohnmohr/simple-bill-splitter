@@ -3,6 +3,8 @@ export type Person = {
   name: string;
   /** Optional UPI VPA (e.g. name@upi) for INR settlements */
   upiId?: string;
+  /** Animal emoji picked when someone joins a shared group (utils/identity). */
+  avatar?: string;
 };
 
 export type SplitMethod = "equally" | "percentage";
@@ -40,6 +42,11 @@ export type Group = {
   sync?: GroupSyncLink;
   /** Theme id from utils/themes. Shared with everyone in a synced group. */
   theme?: string;
+  /**
+   * Nicknames this device gives members, by person id. They never leave the
+   * device: not synced, not in share links. See utils/identity shownMembers.
+   */
+  nicknames?: Record<string, string>;
 };
 
 export type GroupSyncLink = {

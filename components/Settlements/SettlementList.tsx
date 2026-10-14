@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Settlement, Person, Currency, Expense } from "@/types";
+import { MemberAvatar } from "@/components/Group/MemberAvatar";
 import { formatCurrency } from "@/utils/formatting";
 import { ArrowRight, Check, CircleCheck, MessageCircle } from "lucide-react";
 import { ShareSettlementActions } from "@/components/Share/ShareSettlementActions";
@@ -25,6 +26,8 @@ interface SettlementListProps {
 	onRecordPayment?: (settlement: Settlement) => void;
 	/** Shown under the "settled" finish, e.g. a request for a review. */
 	settledSlot?: React.ReactNode;
+	/** Names for share links when `people` carries this device's private nicknames. */
+	sharePeople?: Person[];
 }
 
 type Pending = { from: string; to: string; amount: number };
@@ -44,6 +47,7 @@ export const SettlementList = ({
 	onSetMe,
 	onRecordPayment,
 	settledSlot,
+	sharePeople = people,
 }: SettlementListProps) => {
 	const getPerson = (personId: string) => people.find((p) => p.id === personId);
 	// If "you" was removed from the group, ask again rather than guessing.
@@ -104,8 +108,9 @@ export const SettlementList = ({
 						key={p.id}
 						type="button"
 						onClick={() => onSetMe(p.id)}
-						className="rounded-full border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-ink hover:border-brand-400 hover:bg-brand-50"
+						className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface py-1 pl-1 pr-4 text-sm font-medium text-ink hover:border-brand-400 hover:bg-brand-50"
 					>
+						<MemberAvatar person={p} size="sm" />
 						{p.name}
 					</button>
 				))}
@@ -179,7 +184,7 @@ export const SettlementList = ({
 						</p>
 						<ShareSettlementActions
 							name={groupName}
-							people={people}
+							people={sharePeople}
 							expenses={expenses}
 							currency={currency}
 							primary
@@ -399,7 +404,7 @@ export const SettlementList = ({
 					</p>
 					<ShareSettlementActions
 						name={groupName}
-						people={people}
+						people={sharePeople}
 						expenses={expenses}
 						currency={currency}
 						primary

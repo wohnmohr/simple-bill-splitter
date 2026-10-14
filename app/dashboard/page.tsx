@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "@mantine/hooks";
-import { ChevronLeft, UserPlus } from "lucide-react";
+import { ChevronLeft, Link2, Plus, UserPlus } from "lucide-react";
 import { Tab, Currency, Expense, Settlement } from "@/types";
 import { DEFAULT_CURRENCY } from "@/constants";
 import { calculateBalances, calculateSettlements } from "@/utils/calculations";
@@ -17,6 +17,8 @@ import { AddMembersModal } from "@/components/Group/AddMembersModal";
 import { GroupsHome } from "@/components/Group/GroupsHome";
 import { SyncModal } from "@/components/Group/SyncModal";
 import { ThemeModal } from "@/components/Group/ThemeModal";
+import { IdentitySheet } from "@/components/Group/IdentitySheet";
+import { shownMembers } from "@/utils/identity";
 import { applyTheme } from "@/utils/themes";
 import { TabNavigation } from "@/components/Tabs/TabNavigation";
 import { ExpenseList } from "@/components/Expense/ExpenseList";
@@ -42,6 +44,8 @@ export default function Home() {
 	const [showMembersModal, setShowMembersModal] = useState(false);
 	const [showSync, setShowSync] = useState(false);
 	const [showTheme, setShowTheme] = useState(false);
+	/** "pick": who are you? "invite": the same, then share the group. */
+	const [identityAsk, setIdentityAsk] = useState<"pick" | "invite" | null>(null);
 	const [viewingExpenseId, setViewingExpenseId] = useState<string | null>(null);
 	const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 	const [editExpenseData, setEditExpenseData] = useState<{
@@ -74,11 +78,7 @@ export default function Home() {
 	useEffect(() => applyTheme(openTheme), [openTheme]);
 	useEffect(() => () => applyTheme(undefined), []);
 
-	const { addMember, updateMemberUpi, deleteMember } = useGroupMembers(
-		groups,
-		setGroups,
-		currentGroup
-	);
+	const { addMember, updateMemberUpi, renameMember, setNickname, deleteMember } = useGroupMembers(setGroups, currentGroup);
 
 	const { addExpense, updateExpense, deleteExpense, recordPayment } = useExpenses(
 		groups,
@@ -86,7 +86,8 @@ export default function Home() {
 		currentGroup
 	);
 
-	const people = currentGroup?.members || [];
+	// Display names: this device's private nicknames in place of shared names.
+	const people = currentGroup ? shownMembers(currentGroup) : [];
 	const expenses = currentGroup?.expenses || [];
 	const balances = calculateBalances(people, expenses);
 	const settlements = calculateSettlements(people, expenses);
@@ -151,6 +152,15 @@ export default function Home() {
 		const ok = addMember(memberName, upiId);
 		if (ok) track("dashboard_member_added");
 		return ok;
+	};
+
+	// Who you are in this group. Opening a shared group for the first time asks
+	// (joining anonymously is the default); "Invite with a link" asks, then shares.
+	const identityOpen = !!currentGroup && (identityAsk !== null || (!!currentGroup.sync && currentGroup.meId === undefined && !showSync));
+	const finishIdentity = (how: "joined" | "claimed" | "looking" | "closed") => {
+		if (currentGroup && how !== "closed") track("group_identity_chosen", { how, synced: !!currentGroup.sync });
+		if (identityAsk === "invite") setShowSync(true);
+		setIdentityAsk(null);
 	};
 
 	const handleTabChange = (tab: Tab) => {
@@ -285,10 +295,9 @@ export default function Home() {
 
 	return (
 		<main className="page-shell min-h-screen bg-paper pb-28 safe-pb">
+			{/* One width for every screen, so the header never shifts between the list and a group. */}
 			<div
-				className={`w-full mx-auto px-4 py-3 sm:py-5 min-w-0 ${
-					selectedGroupId && inGroup ? "max-w-2xl lg:max-w-5xl lg:px-6" : "max-w-2xl"
-				}`}
+				className="w-full mx-auto min-w-0 max-w-2xl px-4 py-3 sm:py-5 lg:max-w-5xl lg:px-6"
 			>
 				<Header
 					onFeedback={() => {
@@ -307,15 +316,16 @@ export default function Home() {
 						onCreateGroup={() => setShowGroupForm(true)}
 					/>
 				) : (
-					<div className="lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
+					<>
+					<button
+						onClick={() => setSelectedGroupId(null)}
+						className="btn-ghost -ml-2.5 mb-2"
+					>
+						<ChevronLeft className="h-4 w-4" />
+						All groups
+					</button>
+					<div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
 					<div className="min-w-0">
-						<button
-							onClick={() => setSelectedGroupId(null)}
-							className="btn-ghost -ml-2.5 mb-2"
-						>
-							<ChevronLeft className="h-4 w-4" />
-							All groups
-						</button>
 						<GroupSelector
 							groups={groups}
 							selectedGroupId={selectedGroupId}
@@ -325,11 +335,7 @@ export default function Home() {
 							onShare={() => setShowSync(true)}
 							onTheme={() => setShowTheme(true)}
 							syncStatus={currentGroup ? sync.status[currentGroup.id] : undefined}
-							onChangeMe={() => {
-								if (!currentGroup) return;
-								setGroupMe(currentGroup.id, undefined);
-								handleTabChange("settlements");
-							}}
+							onChangeMe={() => setIdentityAsk("pick")}
 						/>
 
 						{currentGroup && (
@@ -337,17 +343,20 @@ export default function Home() {
 								{currentGroup.members.length === 0 && (
 									<div className="surface px-6 py-10 text-center">
 										<p className="font-semibold text-ink">Who&apos;s in this group?</p>
-										<p className="mx-auto mt-1 max-w-xs text-sm text-ink-muted">
-											Add everyone who shares costs. You can add UPI IDs now
-											or when it&apos;s time to settle.
+										<p className="mx-auto mt-1 max-w-sm text-sm text-ink-muted">
+											Add everyone yourself, or send a link and let each person join from their own
+											phone, anonymously if they like.
 										</p>
-										<button
-											onClick={() => setShowMembersModal(true)}
-											className="btn-primary mt-5"
-										>
-											<UserPlus className="h-4 w-4" />
-											Add members
-										</button>
+										<div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
+											<button onClick={() => setIdentityAsk("invite")} className="btn-primary">
+												<Link2 className="h-4 w-4" />
+												Invite with a link
+											</button>
+											<button onClick={() => setShowMembersModal(true)} className="btn-secondary">
+												<UserPlus className="h-4 w-4" />
+												Add members
+											</button>
+										</div>
 									</div>
 								)}
 
@@ -396,6 +405,7 @@ export default function Home() {
 												expenses={expenses}
 												onUpdateMemberUpi={updateMemberUpi}
 												meId={currentGroup.meId}
+												sharePeople={currentGroup.members}
 												onSetMe={(id) => setGroupMe(currentGroup.id, id)}
 												onRecordPayment={handleRecordPayment}
 												settledSlot={
@@ -414,10 +424,13 @@ export default function Home() {
 										)}
 										</div>
 
-										<FloatingActionButton
-											onClick={() => setShowExpenseForm(true)}
-											showTooltip={expenses.length === 0}
-										/>
+										{/* On wide screens "Add expense" sits at the top of the side panel instead. */}
+										{!isWide && (
+											<FloatingActionButton
+												onClick={() => setShowExpenseForm(true)}
+												showTooltip={expenses.length === 0}
+											/>
+										)}
 									</>
 								)}
 							</>
@@ -425,20 +438,25 @@ export default function Home() {
 					</div>
 
 					{isWide && inGroup && currentGroup && (
-						<aside className="sticky top-5 mt-[3.25rem]" aria-labelledby="balances-heading">
-							<h2 id="balances-heading" className="label-text mb-2 px-1">
+						<aside className="sticky top-5 space-y-3" aria-labelledby="balances-heading">
+							<button onClick={() => setShowExpenseForm(true)} className="btn-primary w-full !py-3 !text-base">
+								<Plus className="h-5 w-5" strokeWidth={2.5} />
+								Add expense
+							</button>
+							<h2 id="balances-heading" className="label-text px-1 pt-2">
 								Balances
 							</h2>
 							<BalanceList balances={balances} people={people} currency={currency} />
 						</aside>
 					)}
 					</div>
+					</>
 				)}
 
 				<Toast
 					toast={toast}
 					onDismiss={dismissToast}
-					raised={!!currentGroup && currentGroup.members.length > 0}
+					raised={!isWide && !!currentGroup && currentGroup.members.length > 0}
 				/>
 
 				<Modal isOpen={showFeedback} onClose={() => setShowFeedback(false)} title="Feedback">
@@ -463,6 +481,31 @@ export default function Home() {
 					onCreate={handleCreateGroup}
 					groupCount={groups.length}
 				/>
+
+				{currentGroup && (
+					<IdentitySheet
+						isOpen={identityOpen}
+						group={currentGroup}
+						onJoin={(name, avatar) => {
+							const id = addMember(name, undefined, avatar);
+							if (id) setGroupMe(currentGroup.id, id);
+							finishIdentity("joined");
+						}}
+						onClaim={(id) => {
+							setGroupMe(currentGroup.id, id);
+							finishIdentity("claimed");
+						}}
+						onJustLooking={() => {
+							setGroupMe(currentGroup.id, null);
+							finishIdentity("looking");
+						}}
+						onClose={() => {
+							// Closing a first-time ask means "just looking", so it doesn't come straight back.
+							if (currentGroup.meId === undefined) setGroupMe(currentGroup.id, null);
+							finishIdentity("closed");
+						}}
+					/>
+				)}
 
 				{currentGroup && (
 					<ThemeModal
@@ -494,6 +537,8 @@ export default function Home() {
 						group={currentGroup}
 						onAddMember={handleAddMember}
 						onUpdateMemberUpi={updateMemberUpi}
+						onRenameMember={renameMember}
+						onSetNickname={setNickname}
 						onDeleteMember={handleDeleteMember}
 					/>
 				)}

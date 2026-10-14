@@ -1,5 +1,6 @@
 import { Balance, Person, Currency } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
+import { MemberAvatar } from "@/components/Group/MemberAvatar";
 
 interface BalanceListProps {
 	balances: Balance[];
@@ -12,9 +13,7 @@ export const BalanceList = ({
 	people,
 	currency,
 }: BalanceListProps) => {
-	const getPersonName = (personId: string) => {
-		return people.find((p) => p.id === personId)?.name || "Unknown";
-	};
+	const getPerson = (personId: string): Person => people.find((p) => p.id === personId) ?? { id: personId, name: "Unknown" };
 
 	// Largest creditors first, then debtors, so the list reads top-down.
 	const ordered = [...balances].sort((a, b) => b.balance - a.balance);
@@ -28,10 +27,12 @@ export const BalanceList = ({
 					const owes = balance.balance < -0.004;
 					const width = `${(Math.abs(balance.balance) / maxAbs) * 100}%`;
 					return (
-						<li key={balance.personId} className="px-4 py-3.5">
+						<li key={balance.personId} className="flex items-center gap-3 px-4 py-3.5">
+							<MemberAvatar person={getPerson(balance.personId)} size="sm" />
+							<div className="min-w-0 flex-1">
 							<div className="flex items-baseline justify-between gap-3">
 								<span className="min-w-0 truncate font-semibold text-ink">
-									{getPersonName(balance.personId)}
+									{getPerson(balance.personId).name}
 								</span>
 								<span className="shrink-0 text-right">
 									<span
@@ -54,6 +55,7 @@ export const BalanceList = ({
 									}`}
 									style={{ width: isOwed || owes ? width : 0 }}
 								/>
+							</div>
 							</div>
 						</li>
 					);
