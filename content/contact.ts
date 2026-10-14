@@ -11,3 +11,7 @@ export type ContactTopic = (typeof CONTACT_TOPICS)[number]["id"];
 
 export const isContactTopic = (v: unknown): v is ContactTopic =>
 	typeof v === "string" && CONTACT_TOPICS.some((t) => t.id === v);
+
+/** Direct lines to the people behind SplitBiller. */
+export const CONTACT_EMAIL = "tech@wohnmohr.com";
+export const BOOKING_URL = "https://cal.com/wohnmohr/15min";

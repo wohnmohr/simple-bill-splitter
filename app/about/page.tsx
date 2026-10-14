@@ -4,6 +4,7 @@ import { ArrowRight, BarChart3, IndianRupee, Lock, MapPin, Smartphone } from "lu
 import { SiteNav } from "@/components/Landing/SiteNav";
 import { SiteFooter } from "@/components/Landing/SiteFooter";
 import { TrackedLink } from "@/components/UI/TrackedLink";
+import { BOOKING_URL, CONTACT_EMAIL } from "@/content/contact";
 
 export const metadata: Metadata = {
 	title: "About SplitBiller | Who makes it and how it handles your money",
@@ -79,6 +80,17 @@ export default function AboutPage() {
 						</Link>{" "}
 						and feature requests go straight to the people who build it, and much of what&apos;s in the app today
 						started as one.
+					</p>
+					<p className="mt-3 text-ink-soft">
+						Email{" "}
+						<a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-brand-700 underline hover:text-brand-800">
+							{CONTACT_EMAIL}
+						</a>{" "}
+						or{" "}
+						<a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-700 underline hover:text-brand-800">
+							book a 15-minute call
+						</a>
+						.
 					</p>
 				</div>
 			</section>
