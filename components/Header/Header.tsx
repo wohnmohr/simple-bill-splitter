@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutGrid, MessageSquare } from "lucide-react";
+import { LayoutGrid, MessageSquare, Sparkles } from "lucide-react";
 import { LogoMark } from "@/components/UI/LogoMark";
 
 export const Header = ({ onFeedback }: { onFeedback?: () => void }) => {
@@ -21,6 +21,10 @@ export const Header = ({ onFeedback }: { onFeedback?: () => void }) => {
 						Feedback
 					</button>
 				)}
+				<Link href="/features" className="btn-ghost" aria-label="Features">
+					<Sparkles className="h-4 w-4" />
+					<span className="hidden sm:inline">Features</span>
+				</Link>
 				<Link href="/#tools" className="btn-ghost" aria-label="Calculators">
 					<LayoutGrid className="h-4 w-4" />
 					<span className="hidden sm:inline">Calculators</span>

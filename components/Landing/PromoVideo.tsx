@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Play } from "lucide-react";
 import { track } from "@/lib/analytics";
+import { prefersStillMedia } from "@/utils/media";
 
 // Hosted on Cloudflare R2. Set NEXT_PUBLIC_PROMO_VIDEO_URL to move it (e.g. to a custom domain).
 const SRC =
@@ -11,13 +12,6 @@ const SRC =
 const POSTER = "/promo/splitbiller-promo-poster.jpg";
 const LABEL =
 	"SplitBiller in 30 seconds: add the bills, see who owes whom, settle by UPI, and the free tools";
-
-/** True when the visitor asked for less data, or is on a very slow connection. */
-const savingData = () => {
-	const c = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } })
-		.connection;
-	return !!c && (c.saveData === true || /(^|-)2g$/.test(c.effectiveType ?? ""));
-};
 
 /**
  * The homepage promo, built to cost the page nothing until it's wanted.
@@ -53,7 +47,7 @@ export const PromoVideo = () => {
 	useEffect(() => {
 		const el = box.current;
 		if (!el) return;
-		const manual = savingData() || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		const manual = prefersStillMedia();
 		setManualOnly(manual);
 		if (!("IntersectionObserver" in window)) {
 			setNear(true);

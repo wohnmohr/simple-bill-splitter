@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { TrackedLink } from "@/components/UI/TrackedLink";
 import { StickyCta } from "@/components/Landing/StickyCta";
+import { SiteNav } from "@/components/Landing/SiteNav";
 import { PromoVideo } from "@/components/Landing/PromoVideo";
 import { ALL_TOOL_SLUGS, TOOL_PAGES, ToolSlug } from "@/content/tools";
 import { TEMPLATES } from "@/utils/payStory";
@@ -234,32 +235,7 @@ export const LandingPage = () => {
 				</span>
 			</TrackedLink>
 
-			{/* Site nav */}
-			<nav className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md">
-				<div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
-					<Link href="/" className="flex items-center gap-2 shrink-0">
-						<LogoMark />
-						<span className="font-display text-lg font-semibold text-ink">
-							SplitBiller
-						</span>
-					</Link>
-					<div className="flex items-center gap-1 sm:gap-2">
-						<a href="#tools" className="btn-ghost hidden sm:inline-flex">
-							Calculators
-						</a>
-						<a href="#faq" className="btn-ghost hidden sm:inline-flex">
-							FAQ
-						</a>
-						<TrackedLink
-							href="/dashboard"
-							className="btn-primary !py-2"
-							location="nav"
-						>
-							Open app
-						</TrackedLink>
-					</div>
-				</div>
-			</nav>
+			<SiteNav />
 
 			{/* Hero Section */}
 			<header className="px-4 sm:px-6 pt-10 pb-16 sm:pt-16 sm:pb-24">
@@ -566,8 +542,14 @@ export const LandingPage = () => {
 								Find us on Product Hunt
 							</a>
 							<Link
-								href="/feature-requests"
+								href="/features"
 								className="mt-1 block py-2 text-sm font-medium text-brand-700 hover:underline"
+							>
+								See everything SplitBiller does
+							</Link>
+							<Link
+								href="/feature-requests"
+								className="block py-2 text-sm font-medium text-brand-700 hover:underline"
 							>
 								Missing something? Request a feature
 							</Link>
