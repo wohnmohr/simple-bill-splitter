@@ -6,10 +6,11 @@ import { CURRENCIES } from "@/constants";
 import { calculateSettlements } from "@/utils/calculations";
 import { formatCurrency } from "@/utils/formatting";
 import { ShareSettlementActions } from "@/components/Share/ShareSettlementActions";
-import { ArrowRight, Check } from "lucide-react";
-import Link from "next/link";
+import { ArrowRight, Check, FolderPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { track } from "@/lib/analytics";
+import { IMPORT_LIMIT_MESSAGE, importShareSnapshot } from "@/utils/shareImport";
 
 export function makePeople(names: string[]): Person[] {
 	return names
@@ -39,7 +40,7 @@ type ResultPanelProps = {
 	people: Person[];
 	expenses: Expense[];
 	currency: Currency;
-	ctaHref?: string;
+	/** Label for the button that saves this split as a group in the app. */
 	ctaLabel?: string;
 	extra?: ReactNode;
 	tool?: string;
@@ -50,12 +51,31 @@ export const CalculatorResult = ({
 	people,
 	expenses,
 	currency,
-	ctaHref = "/dashboard",
-	ctaLabel = "Continue in SplitBiller",
+	ctaLabel = "Save as a group",
 	extra,
 	tool = "calculator",
 }: ResultPanelProps) => {
 	const trackedKey = useRef<string | null>(null);
+	const router = useRouter();
+	const [saveError, setSaveError] = useState<string | null>(null);
+	const [saved, setSaved] = useState(false);
+
+	/** Carry the split into the app as a new group and open it there. */
+	const saveAsGroup = () => {
+		const me = people.find((p) => p.name.trim().toLowerCase() === "you");
+		const result = importShareSnapshot(
+			{ name: title, currency, members: people, expenses: expenses.map((e) => ({ ...e, createdAt: Date.now() })) },
+			me?.id
+		);
+		if (!result.ok) {
+			track("calculator_save_failed", { tool, reason: result.reason });
+			setSaveError(result.reason === "limit" ? IMPORT_LIMIT_MESSAGE : "Add at least one person first.");
+			return;
+		}
+		setSaved(true); // one tap, one group, while the dashboard loads
+		track("calculator_saved_as_group", { tool, member_count: people.length, expense_count: expenses.length, currency: currency.code });
+		router.push("/dashboard");
+	};
 
 	useEffect(() => {
 		if (people.length < 2 || expenses.length === 0) return;
@@ -136,15 +156,21 @@ export const CalculatorResult = ({
 				source={`tool:${tool}`}
 			/>
 
-			<Link
-				href={ctaHref}
-				onClick={() =>
-					track("calculator_continue_clicked", { tool, destination: ctaHref })
-				}
-				className="block text-center text-sm font-medium text-indigo-600 hover:text-indigo-800"
-			>
-				{ctaLabel} →
-			</Link>
+			<div className="border-t border-line pt-4">
+				<button type="button" onClick={saveAsGroup} disabled={saved} className="btn-secondary w-full !justify-center !py-3">
+					<FolderPlus className="h-4 w-4" />
+					{ctaLabel}
+				</button>
+				{saveError ? (
+					<p className="mt-2 text-center text-sm text-negative" role="alert">
+						{saveError}
+					</p>
+				) : (
+					<p className="mt-2 text-center text-xs text-ink-muted">
+						Opens in SplitBiller with all of this filled in, to add more later. No signup.
+					</p>
+				)}
+			</div>
 		</div>
 	);
 };

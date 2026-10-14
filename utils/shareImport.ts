@@ -8,11 +8,15 @@ export type ImportResult =
 	| { ok: true; groupId: string }
 	| { ok: false; reason: "limit" | "empty" };
 
+/** What to tell someone whose import hit MAX_GROUPS. */
+export const IMPORT_LIMIT_MESSAGE = `You already have ${MAX_GROUPS} groups saved. Delete one in the app, then try again.`;
+
 /**
- * Imports a shared snapshot into localStorage as a new group.
- * Does not send data to any server.
+ * Imports a shared snapshot into localStorage as a new group, and has the
+ * dashboard open it next. `meId` says which member is on this device, when
+ * that's already known. Does not send data to any server.
  */
-export function importShareSnapshot(snapshot: ShareSnapshot): ImportResult {
+export function importShareSnapshot(snapshot: ShareSnapshot, meId?: string): ImportResult {
 	if (!snapshot.members.length) {
 		return { ok: false, reason: "empty" };
 	}
@@ -31,6 +35,7 @@ export function importShareSnapshot(snapshot: ShareSnapshot): ImportResult {
 			id: `exp-${Date.now()}-${i}`,
 		})),
 		currency: snapshot.currency,
+		...(meId && snapshot.members.some((m) => m.id === meId) ? { meId } : {}),
 	};
 
 	saveGroupsToStorage([...existing, group]);

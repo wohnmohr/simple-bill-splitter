@@ -8,6 +8,8 @@ export type AnalyticsEvent =
 	| "tool_calculator_engaged"
 	| "calculator_result_viewed"
 	| "calculator_continue_clicked"
+	| "calculator_saved_as_group"
+	| "calculator_save_failed"
 	| "share_settlement_clicked"
 	| "share_settlement_succeeded"
 	| "share_settlement_failed"

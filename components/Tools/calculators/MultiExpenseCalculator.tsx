@@ -179,11 +179,7 @@ export const MultiExpenseCalculator = ({
 				tool={
 					variant === "trip" ? "trip-expense-splitter" : "roommate-expense-splitter"
 				}
-				ctaLabel={
-					variant === "trip"
-						? "Track the whole trip in SplitBiller"
-						: "Manage monthly splits in SplitBiller"
-				}
+				ctaLabel={variant === "trip" ? "Save the trip as a group" : "Save as a group for the flat"}
 			/>
 		</div>
 	);

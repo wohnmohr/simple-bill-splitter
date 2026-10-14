@@ -112,11 +112,6 @@ export const SimpleSplitCalculator = ({
 						? "split-bill-without-signup"
 						: "splitwise-alternative"
 				}
-				ctaLabel={
-					emphasis === "privacy"
-						? "Start without signup"
-						: "Try SplitBiller free"
-				}
 			/>
 		</div>
 	);

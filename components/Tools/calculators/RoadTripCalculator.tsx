@@ -209,7 +209,7 @@ export const RoadTripCalculator = () => {
 				currency={INR}
 				extra={extra}
 				tool="road-trip-cost-splitter"
-				ctaLabel="Track the whole trip in SplitBiller"
+				ctaLabel="Save the trip as a group"
 			/>
 		</div>
 	);
