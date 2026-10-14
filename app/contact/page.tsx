@@ -3,8 +3,8 @@ import Link from "next/link";
 import { ArrowRight, CalendarClock, HelpCircle, Lightbulb, Mail, Users } from "lucide-react";
 import { SiteNav } from "@/components/Landing/SiteNav";
 import { SiteFooter } from "@/components/Landing/SiteFooter";
-import { ContactForm } from "@/components/Contact/ContactForm";
-import { BOOKING_URL, CONTACT_EMAIL } from "@/content/contact";
+import { TallyForm } from "@/components/Contact/TallyForm";
+import { BOOKING_URL, CONTACT_EMAIL, TALLY_FORM_URL } from "@/content/contact";
 
 export const metadata: Metadata = {
 	title: "Contact SplitBiller",
@@ -32,9 +32,16 @@ export default function ContactPage() {
 						Questions, something not working, a privacy request or a partnership: send a message here and we&apos;ll
 						reply by email, or reach us directly.
 					</p>
-					<div className="mt-8">
-						<ContactForm />
+					<div className="surface mt-8 px-3 py-4 sm:px-5 sm:py-6">
+						<TallyForm source="contact" />
 					</div>
+					<p className="mt-3 text-sm text-ink-muted">
+						The form is run by Tally and comes straight to our inbox.{" "}
+						<a href={TALLY_FORM_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-ink">
+							Open it in a new tab
+						</a>
+						.
+					</p>
 				</div>
 
 				<aside aria-label="Other ways to reach us" className="space-y-6 lg:pt-24">
