@@ -45,3 +45,6 @@ brag-output/youtube/preview-*.png
 # Shorts: compositions and videos rebuild from build.py
 brag-output/shorts/*/
 brag-output/shorts/*.mp4
+
+# On-device OCR engine and model, copied from node_modules at build
+public/ocr/

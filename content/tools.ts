@@ -42,7 +42,8 @@ export type CalculatorKind =
 	| "name-picker"
 	| "team-generator"
 	| "gst"
-	| "discount";
+	| "discount"
+	| "order";
 
 export type ToolFaq = { q: string; a: string };
 
@@ -648,44 +649,52 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 	},
 	"split-swiggy-zomato-bill": {
 		slug: "split-swiggy-zomato-bill",
-		calculator: "restaurant",
+		calculator: "order",
 		title: "Split Swiggy / Zomato Bill",
-		metaTitle: "Split a Swiggy or Zomato Group Order — Delivery Fee, GST & Discounts",
+		metaTitle: "Split a Swiggy or Zomato Order from a Screenshot — Delivery Fee, GST & Discounts",
 		metaDescription:
-			"Split a Swiggy or Zomato group order fairly including delivery fee, platform fee and GST. Instant per-person ₹ amounts and a UPI-ready settlement link.",
+			"Scan your Swiggy, Zomato or Instamart order screenshot, tap who had what, and get each person’s fair share with delivery fee, GST and discounts included. Read on your phone, free, no signup.",
 		headline: "Split a Swiggy or Zomato order fairly",
 		subhead:
-			"Add the final amount you paid, count the people, and get each person’s share in seconds.",
+			"Scan the order screenshot, tap who had what, and everyone’s share comes out right, with fees, GST and discounts shared fairly.",
 		intro: [
-			"Group food orders get messy: item prices, delivery fee, platform fee, GST and discounts all land on one person’s card. The simplest fair method is to split the final amount you actually paid — everything included.",
-			"Enter that amount, add any extra fixed charge, choose how many people ordered, and share the result. If orders differ a lot, use the unequal splitter so each person pays for their own items. SplitBiller isn’t affiliated with Swiggy or Zomato.",
+			"Group food orders get messy: item prices, delivery fee, platform fee, GST and discounts all land on one person’s card. Splitting the total equally is unfair when one person ordered a biryani and another a lime soda.",
+			"Scan a screenshot of the order summary and SplitBiller reads the items, fees, taxes and discount for you. The screenshot is read on your phone and never uploaded. Tap who had each item, and fees, GST and discounts are shared in proportion to what each person ordered. It works for Instamart, Blinkit and Zepto orders too. SplitBiller isn’t affiliated with Swiggy, Zomato or any of them.",
 		],
 		howTo: [
 			{
-				title: "Enter what you paid",
-				body: "Use the final total from the order summary, after discounts, taxes and fees.",
+				title: "Scan the order",
+				body: "Take a screenshot of the order summary in the Swiggy or Zomato app and pick it here. Or type the items yourself.",
 			},
 			{
-				title: "Add anything extra",
-				body: "A tip for the delivery partner can be added as a fixed amount or a percentage.",
+				title: "Tap who had what",
+				body: "Every item starts as shared by everyone. Tap names to give an item to just those people.",
 			},
 			{
 				title: "Share and settle",
-				body: "Send the link in your group chat and everyone pays you their share by UPI.",
+				body: "Send the result in your group chat and everyone pays their exact share by UPI.",
 			},
 		],
 		faqs: [
 			{
-				q: "How do I split delivery fee and GST?",
-				a: "If everyone ordered similar amounts, split the final total equally. If not, split items by person and share fees and GST in proportion, or use the unequal splitter.",
+				q: "Is my screenshot uploaded anywhere?",
+				a: "No. It’s read on your own phone or computer, and the image never leaves it. Only the text it finds fills in the form.",
 			},
 			{
-				q: "What about a coupon or discount?",
-				a: "Use the final amount after the discount, so everyone benefits from it equally.",
+				q: "How are the delivery fee, GST and discounts split?",
+				a: "In proportion to what each person ordered. If you had a third of the food, you pay a third of the fees and taxes and get a third of the discount.",
+			},
+			{
+				q: "What if it reads something wrong?",
+				a: "Every item and amount can be edited, and a check shows whether everything adds up to what you paid, so a misread number stands out.",
+			},
+			{
+				q: "Does it work for Instamart, Blinkit or Zepto?",
+				a: "Yes. Any order summary that lists items with prices and a total works, including grocery orders split with flatmates.",
 			},
 			{
 				q: "How do friends pay me back?",
-				a: "Share the settlement link and have them send their share by UPI. Person-to-person UPI transfers are free.",
+				a: "Share the result and have them send their share by UPI. Person-to-person UPI transfers are free.",
 			},
 		],
 		related: ["restaurant-bill-splitter", "split-bill-unequally", "upi-bill-splitter"],

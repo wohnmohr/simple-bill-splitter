@@ -4,7 +4,7 @@
  * checkboxes in Tally (form REQUEST_FORM_ID) in step with NEXT and LATER.
  */
 
-export type RoadmapIcon = "repeat" | "list" | "scan" | "globe" | "download" | "languages";
+export type RoadmapIcon = "repeat" | "scan" | "globe" | "download" | "languages";
 
 export type PlannedItem = { title: string; body: string; icon: RoadmapIcon };
 export type ShippedItem = { title: string; href: string };
@@ -17,14 +17,14 @@ export const NEXT: PlannedItem[] = [
 		body: "Rent, Wi-Fi and subscriptions that come round every month, added to the group for you.",
 	},
 	{
-		icon: "list",
-		title: "Split a bill by item",
-		body: "Everyone ticks what they had, and tax and service charge are shared out in proportion.",
+		icon: "scan",
+		title: "Scan paper restaurant bills",
+		body: "Take a photo of a printed bill at the table and SplitBiller fills in the items, the way it reads app screenshots today.",
 	},
 	{
-		icon: "scan",
-		title: "Scan a bill",
-		body: "Take a photo of the bill and SplitBiller fills in the total and the items.",
+		icon: "download",
+		title: "Export a group",
+		body: "Download every expense and settlement as a spreadsheet or a PDF.",
 	},
 ];
 
@@ -34,11 +34,6 @@ export const LATER: PlannedItem[] = [
 		icon: "globe",
 		title: "Trips in more than one currency",
 		body: "Add expenses in dollars, euros or baht on a trip abroad, and settle up in rupees.",
-	},
-	{
-		icon: "download",
-		title: "Export a group",
-		body: "Download every expense and settlement as a spreadsheet or a PDF.",
 	},
 	{
 		icon: "languages",
@@ -52,6 +47,8 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "Scan Swiggy, Zomato and Instamart screenshots", href: "/split-swiggy-zomato-bill" },
+			{ title: "Split a bill item by item", href: "/split-swiggy-zomato-bill" },
 			{ title: "Split by exact amounts", href: "/features#expenses" },
 			{ title: "Install SplitBiller as an app", href: "/features" },
 			{ title: "Join a group without giving your name", href: "/features#join" },

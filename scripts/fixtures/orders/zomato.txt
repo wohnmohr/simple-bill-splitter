@@ -1,0 +1,19 @@
+Pizza Hut
+
+Indiranagar - This order was delivered
+
+Your order
+
+[e] 2 Xx Margherita Pizza (Medium)             X598
+[oe] 1 x Garlic Breadsticks                        X129
+[e] 1 x Choco Volcano Cake                 F119 X99
+Bill Summary
+
+Item total                                  F546 826
+GST                                               41.30
+Restaurant packaging charges                   20
+Delivery partner fee                              X30
+Platform fee                                        6
+Discount (ZOMATO50)                          -X125
+Grand Total                             798.30
+Paid via Google Pay UPI - You saved 145
