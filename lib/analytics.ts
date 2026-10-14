@@ -37,7 +37,8 @@ export type AnalyticsEvent =
 	| "group_joined"
 	| "group_join_failed"
 	| "group_link_reset"
-	| "group_deleted_for_everyone";
+	| "group_deleted_for_everyone"
+	| "group_theme_changed";
 
 type EventProps = Record<string, string | number | boolean | undefined | null>;
 

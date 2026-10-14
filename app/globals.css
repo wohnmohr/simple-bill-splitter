@@ -3,13 +3,49 @@
 @tailwind utilities;
 
 @layer base {
+	/*
+	 * Color tokens as "R G B" channels (see tailwind.config.ts). These are the
+	 * SplitBiller aubergine defaults; a group theme overrides them on <html>
+	 * while that group is open (utils/themes.ts keeps the same values).
+	 */
 	:root {
-		--sb-paper: #f7f6f3;
-		--sb-ink: #1c1826;
-		--sb-brand: #53307b;
-		--sb-brand-soft: #ece3f5;
-		--sb-line: #e7e3ea;
+		--sb-brand-50: 246 242 250;
+		--sb-brand-100: 236 227 245;
+		--sb-brand-200: 216 198 234;
+		--sb-brand-300: 189 159 219;
+		--sb-brand-400: 157 115 199;
+		--sb-brand-500: 126 79 176;
+		--sb-brand-600: 102 58 150;
+		--sb-brand-700: 83 48 123;
+		--sb-brand-800: 67 39 99;
+		--sb-brand-900: 47 27 70;
+		--sb-brand-950: 31 18 48;
+		--sb-ink: 28 24 38;
+		--sb-ink-soft: 74 69 86;
+		--sb-ink-muted: 107 101 118;
+		--sb-paper: 247 246 243;
+		--sb-surface: 255 255 255;
+		--sb-line: 231 227 234;
+		--sb-line-strong: 212 207 217;
+		--sb-positive: 17 117 76;
+		--sb-positive-soft: 232 244 238;
+		--sb-negative: 180 35 24;
+		--sb-negative-soft: 252 236 234;
+		--sb-on-brand: 255 255 255;
+		--sb-on-ink: 255 255 255;
 		color-scheme: light;
+	}
+
+	/* Mantine (modals, menus, inputs) follows the same tokens. */
+	html:root[data-mantine-color-scheme] {
+		--mantine-color-body: rgb(var(--sb-surface));
+		--mantine-color-text: rgb(var(--sb-ink));
+		--mantine-color-dimmed: rgb(var(--sb-ink-muted));
+		--mantine-color-placeholder: rgb(var(--sb-ink-muted));
+		--mantine-color-default: rgb(var(--sb-surface));
+		--mantine-color-default-hover: rgb(var(--sb-paper));
+		--mantine-color-default-color: rgb(var(--sb-ink));
+		--mantine-color-default-border: rgb(var(--sb-line-strong));
 	}
 
 	html {
@@ -39,23 +75,23 @@
 		overflow-x: clip;
 		max-width: 100%;
 		position: relative;
-		caret-color: var(--sb-brand);
+		caret-color: rgb(var(--sb-brand-700));
 	}
 
 	/* Placeholders are examples, but they still have to be readable (4.5:1). */
 	::placeholder,
 	.mantine-Input-input::placeholder {
-		color: #767080;
+		color: rgb(var(--sb-ink-muted));
 		opacity: 1;
 	}
 
 	::selection {
-		background: var(--sb-brand-soft);
-		color: var(--sb-ink);
+		background: rgb(var(--sb-brand-100));
+		color: rgb(var(--sb-ink));
 	}
 
 	:focus-visible {
-		outline: 2px solid var(--sb-brand);
+		outline: 2px solid rgb(var(--sb-brand-700));
 		outline-offset: 2px;
 	}
 
@@ -110,7 +146,7 @@
 	}
 
 	* {
-		scrollbar-color: #d4cfd9 transparent;
+		scrollbar-color: rgb(var(--sb-line-strong)) transparent;
 		scrollbar-width: thin;
 	}
 }
@@ -135,15 +171,15 @@
 
 	/* Flat, bordered surface — the one container used across the app */
 	.surface {
-		@apply rounded-2xl border border-line bg-white shadow-card;
+		@apply rounded-2xl border border-line bg-surface shadow-card;
 	}
 
 	.btn-primary {
-		@apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-800 active:bg-brand-900 disabled:cursor-not-allowed disabled:bg-ink/10 disabled:text-ink-muted;
+		@apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-800 active:bg-brand-900 disabled:cursor-not-allowed disabled:bg-ink/10 disabled:text-ink-muted;
 	}
 
 	.btn-secondary {
-		@apply inline-flex items-center justify-center gap-2 rounded-xl border border-line-strong bg-white px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-paper active:bg-line disabled:cursor-not-allowed disabled:opacity-50;
+		@apply inline-flex items-center justify-center gap-2 rounded-xl border border-line-strong bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-paper active:bg-line disabled:cursor-not-allowed disabled:opacity-50;
 	}
 
 	.btn-ghost {

@@ -131,7 +131,7 @@ async function mergeResponse(keys: GroupKeys, saved: Saved, res: Record<string, 
 
 export type JoinResult = { ok: true; group: Group } | { ok: false; reason: "wrong-passphrase" | "gone" | "offline" };
 
-/** Opens a group link on this device. `stretched` is the PBKDF2 output of the passphrase, if any. */
+/** Opens a group link on this device. `link.pass` is the Argon2id output of the passphrase, if any. */
 export async function joinGroup(link: GroupSyncLink, localId: string): Promise<JoinResult> {
 	try {
 		const keys = await deriveGroupKeys(link.secret, link.pass);

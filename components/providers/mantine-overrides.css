@@ -4,14 +4,24 @@
  * line height (1.55 instead of the site's 1.5); keep the site's paper, ink and leading.
  */
 body {
-	background-color: var(--sb-paper);
-	color: var(--sb-ink);
+	background-color: rgb(var(--sb-paper));
+	color: rgb(var(--sb-ink));
 	line-height: inherit;
 }
 
 /* Placeholders stay readable (4.5:1) — Mantine's lighter default must not win on these routes. */
 ::placeholder,
 .mantine-Input-input::placeholder {
-	color: #767080;
+	color: rgb(var(--sb-ink-muted));
 	opacity: 1;
+}
+
+/* Menus and select dropdowns follow the group theme (Mantine paints them plain white). */
+.mantine-Menu-dropdown,
+.mantine-Popover-dropdown,
+.mantine-Combobox-dropdown,
+.mantine-Select-dropdown {
+	background-color: rgb(var(--sb-surface));
+	border-color: rgb(var(--sb-line));
+	color: rgb(var(--sb-ink));
 }

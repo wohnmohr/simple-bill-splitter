@@ -104,7 +104,7 @@ export const SettlementList = ({
 						key={p.id}
 						type="button"
 						onClick={() => onSetMe(p.id)}
-						className="rounded-full border border-line-strong bg-white px-4 py-2 text-sm font-medium text-ink hover:border-brand-400 hover:bg-brand-50"
+						className="rounded-full border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-ink hover:border-brand-400 hover:bg-brand-50"
 					>
 						{p.name}
 					</button>
@@ -146,8 +146,8 @@ export const SettlementList = ({
 		return (
 			<div className="space-y-4">
 				{earned ? (
-					<section className="overflow-hidden rounded-2xl bg-brand-900 px-6 py-10 text-center text-white">
-						<span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
+					<section className="overflow-hidden rounded-2xl bg-brand-800 px-6 py-10 text-center text-on-brand">
+						<span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-on-brand/10">
 							<Check className="h-6 w-6 text-brand-200" strokeWidth={2.5} />
 						</span>
 						<h2 className="mt-4 font-display text-3xl font-semibold">

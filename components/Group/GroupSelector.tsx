@@ -1,5 +1,5 @@
 import { Menu } from "@mantine/core";
-import { Lock, MoreHorizontal, Share2, Trash2, UserRound, Users } from "lucide-react";
+import { Lock, MoreHorizontal, Palette, Share2, Trash2, UserRound, Users } from "lucide-react";
 import { Group } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
 import { calculateBalances, totalSpent } from "@/utils/calculations";
@@ -14,6 +14,8 @@ interface GroupSelectorProps {
 	onChangeMe?: () => void;
 	/** Opens sharing: turn on sync, or see the link of a synced group. */
 	onShare?: () => void;
+	/** Opens the theme picker. */
+	onTheme?: () => void;
 	syncStatus?: SyncStatus;
 }
 
@@ -73,6 +75,7 @@ export const GroupSelector = ({
 	onManageMembers,
 	onChangeMe,
 	onShare,
+	onTheme,
 	syncStatus,
 }: GroupSelectorProps) => {
 	if (groups.length === 0) return null;
@@ -95,8 +98,8 @@ export const GroupSelector = ({
 										onClick={() => onSelectGroup(group.id)}
 										className={`rounded-full px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
 											active
-												? "bg-ink text-white"
-												: "border border-line-strong bg-white text-ink-soft hover:text-ink"
+												? "bg-ink text-on-ink"
+												: "border border-line-strong bg-surface text-ink-soft hover:text-ink"
 										}`}
 									>
 										<span className="block truncate max-w-[140px] sm:max-w-[180px]">
@@ -131,6 +134,11 @@ export const GroupSelector = ({
 								{onShare && (
 									<Menu.Item leftSection={<Share2 className="h-4 w-4" />} onClick={onShare}>
 										{selectedGroup.sync ? "Group link & privacy" : "Share & sync"}
+									</Menu.Item>
+								)}
+								{onTheme && (
+									<Menu.Item leftSection={<Palette className="h-4 w-4" />} onClick={onTheme}>
+										Theme
 									</Menu.Item>
 								)}
 								{onChangeMe && selectedGroup.members.length > 0 && (

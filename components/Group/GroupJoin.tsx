@@ -117,7 +117,7 @@ export const GroupJoin = () => {
 						onChange={(e) => setPassphrase(e.target.value)}
 						aria-invalid={state.wrong || undefined}
 						aria-describedby={state.wrong ? "pass-error" : undefined}
-						className="mt-4 w-full rounded-xl border border-line-strong bg-white px-3 py-2.5 text-base text-ink focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+						className="mt-4 w-full rounded-xl border border-line-strong bg-surface px-3 py-2.5 text-base text-ink focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
 					/>
 					{state.wrong && (
 						<p id="pass-error" role="alert" className="mt-2 text-sm text-negative">

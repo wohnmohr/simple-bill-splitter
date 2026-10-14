@@ -13,6 +13,7 @@
  */
 import { CURRENCIES, DEFAULT_CURRENCY } from "@/constants";
 import type { Currency, Expense, Group, Person } from "@/types";
+import { isThemeId } from "@/utils/themes";
 
 export type EntityKind = "m" | "e" | "g";
 /** One change. `v: null` deletes the entity. */
@@ -129,6 +130,7 @@ export function materialize(state: SyncState, local: Pick<Group, "id" | "meId" |
 		members,
 		expenses,
 		currency: toCurrency(state.g.currency?.v),
+		...(isThemeId(state.g.theme?.v) ? { theme: state.g.theme.v as string } : {}),
 		...(local.meId !== undefined ? { meId: local.meId } : {}),
 		...(local.sync ? { sync: local.sync } : {}),
 	};
@@ -167,6 +169,7 @@ export function diffGroup(before: Group, after: Group): Change[] {
 	const out: Change[] = [];
 	if (before.name !== after.name) out.push({ k: "g", e: "name", v: after.name });
 	if (before.currency.code !== after.currency.code) out.push({ k: "g", e: "currency", v: { code: after.currency.code } });
+	if ((before.theme ?? null) !== (after.theme ?? null)) out.push({ k: "g", e: "theme", v: after.theme ?? null });
 	diffTable("m", before.members, after.members, out);
 	diffTable("e", before.expenses, after.expenses, out);
 	return out;
@@ -176,4 +179,4 @@ export function diffGroup(before: Group, after: Group): Change[] {
 export const groupAsChanges = (g: Group): Change[] => diffGroup({ ...g, name: "", currency: { code: "", symbol: "", name: "" }, members: [], expenses: [] }, g);
 
 /** The parts of a group that are shared with everyone (device-only fields stripped). */
-export const sharedView = (g: Group) => canon([g.name, g.currency.code, g.members, g.expenses]);
+export const sharedView = (g: Group) => canon([g.name, g.currency.code, g.theme ?? null, g.members, g.expenses]);

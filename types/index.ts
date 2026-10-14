@@ -38,11 +38,13 @@ export type Group = {
    * this device and in the link's #fragment, never on the server.
    */
   sync?: GroupSyncLink;
+  /** Theme id from utils/themes. Shared with everyone in a synced group. */
+  theme?: string;
 };
 
 export type GroupSyncLink = {
   secret: string;
-  /** PBKDF2 output of the group passphrase; the passphrase itself is never stored. */
+  /** Argon2id output of the group passphrase; the passphrase itself is never stored. */
   pass?: string;
 };
 

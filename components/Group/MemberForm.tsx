@@ -19,7 +19,7 @@ export const MemberForm = ({ group, onAddMember }: MemberFormProps) => {
 	};
 
 	return (
-		<div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6">
+		<div className="bg-surface/80 backdrop-blur-sm rounded-2xl shadow-lg border border-surface/50 p-6">
 			<h2 className="text-xl font-bold text-gray-800 mb-4">
 				Add Members to {group.name}
 			</h2>

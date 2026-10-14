@@ -110,7 +110,7 @@ export const FeatureRequestForm = () => {
 							key={idea}
 							type="button"
 							onClick={() => setTitle(idea)}
-							className="rounded-full border border-line-strong bg-white px-3 py-1 text-sm text-ink-soft hover:border-ink-muted hover:text-ink"
+							className="rounded-full border border-line-strong bg-surface px-3 py-1 text-sm text-ink-soft hover:border-ink-muted hover:text-ink"
 						>
 							{idea}
 						</button>
@@ -130,7 +130,7 @@ export const FeatureRequestForm = () => {
 					rows={5}
 					maxLength={4000}
 					placeholder="Tell us the situation — the trip, the flat, the dinner — and what you'd expect to happen."
-					className="mt-1.5 w-full resize-y rounded-xl border border-line-strong bg-white px-3 py-2.5 text-base text-ink focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+					className="mt-1.5 w-full resize-y rounded-xl border border-line-strong bg-surface px-3 py-2.5 text-base text-ink focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
 				/>
 			</div>
 
