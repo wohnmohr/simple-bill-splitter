@@ -7,12 +7,13 @@ import { Modal } from "@/components/UI/Modal";
 import { MemberAvatar } from "@/components/Group/MemberAvatar";
 import type { Group } from "@/types";
 import { newIdentity, shownMembers } from "@/utils/identity";
+import { newId } from "@/utils/ids";
 
 type Props = {
 	isOpen: boolean;
 	group: Group;
-	/** Join as a new member with this name and avatar. */
-	onJoin: (name: string, avatar: string) => void;
+	/** Join as a new member with this name and id (pre-made, so the preview's colour is theirs). */
+	onJoin: (name: string, id: string) => void;
 	/** "That's me": an existing member. */
 	onClaim: (personId: string) => void;
 	/** "Just looking": no identity in this group. */
@@ -21,15 +22,16 @@ type Props = {
 };
 
 /**
- * Who you are in a group. Joining suggests an anonymous identity (an animal
- * and a two-word name) so nobody has to give their real name; it's
- * end-to-end encrypted with the group either way, and can be changed later.
+ * Who you are in a group. Joining suggests an anonymous, made-up name so
+ * nobody has to give their real one; it's end-to-end encrypted with the group
+ * either way, and can be changed later.
  */
 export const IdentitySheet = ({ isOpen, group, onJoin, onClaim, onJustLooking, onClose }: Props) => {
-	const [identity, setIdentity] = useState(() => newIdentity(group.members));
+	const suggest = () => ({ ...newIdentity(group.members), id: newId("person") });
+	const [identity, setIdentity] = useState(suggest);
 	const [name, setName] = useState(identity.name);
 	const shuffle = () => {
-		const next = newIdentity(group.members);
+		const next = suggest();
 		setIdentity(next);
 		setName(next.name);
 	};
@@ -48,11 +50,11 @@ export const IdentitySheet = ({ isOpen, group, onJoin, onClaim, onJustLooking, o
 					className="rounded-2xl border border-line bg-paper p-4"
 					onSubmit={(e) => {
 						e.preventDefault();
-						if (trimmed) onJoin(trimmed, identity.avatar);
+						if (trimmed) onJoin(trimmed, identity.id);
 					}}
 				>
 					<div className="flex items-center gap-3">
-						<MemberAvatar person={{ id: "", name, avatar: identity.avatar }} size="lg" />
+						<MemberAvatar person={{ id: identity.id, name: name || identity.name }} size="lg" />
 						<div className="min-w-0 flex-1">
 							<TextInput
 								aria-label="Your name in this group"

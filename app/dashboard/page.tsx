@@ -486,8 +486,8 @@ export default function Home() {
 					<IdentitySheet
 						isOpen={identityOpen}
 						group={currentGroup}
-						onJoin={(name, avatar) => {
-							const id = addMember(name, undefined, avatar);
+						onJoin={(name, personId) => {
+							const id = addMember(name, undefined, personId);
 							if (id) setGroupMe(currentGroup.id, id);
 							finishIdentity("joined");
 						}}
