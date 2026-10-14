@@ -7,7 +7,7 @@ Shared groups that everyone edits from their own phone, end-to-end encrypted. Jo
 "Split bills, privately." Privacy is the thread through every new feature: the server can't read the group, and you don't have to give it your name. The video is the real app, recorded from the feature clips, with the product's own copy.
 
 ## Format
-Landscape 1920x1080, 30fps, 42s. It uses the same look, fonts, music bed and SFX as `../brag.mp4` and `../split-links/brag.mp4`, so the three read as a series.
+Landscape 1920x1080, 30fps, 42s. It uses the same look, fonts and SFX as `../brag.mp4` and `../split-links/brag.mp4`, so the three read as a series, with its own original track.
 
 The homepage serves a 720p web encode (`public/promo/splitbiller-promo.mp4`, about 2 MB) with a poster taken at 15.5s.
 
@@ -27,24 +27,44 @@ The label sits on the left and the real app runs in a phone frame on the right. 
 | 9 | Outro | 37–42s | "Split bills, privately." Chips: No signup · End-to-end encrypted · UPI ready · Free forever. Then the logo and "splitbiller.com". | — |
 
 ## Audio
-- **Music:** the `happy-beats-business-moves-vol-1` bed at 0.4, with a 1s fade-in and a 2.5s fade-out.
-- **Beat grid:** every 0.5s. Scene entrances land on beats (x.02 / x.52).
+- **Music:** `composition/assets/music/splitbiller-groove.mp3`, an original track written in code (`music/compose.py`), so there's no licence to track.
+  - 120 BPM house-pop in C major, IV–V–iii–vi with a V–I ending.
+  - Instruments: four-on-the-floor kick, claps on 2 and 4, off-beat hats, a pumping sidechained bass and pad, and syncopated supersaw chord stabs.
+  - A pluck arp with a dotted-8th delay plays under the "New" scenes.
+  - Parts are mixed to fader levels against the kick, so the balance holds when a sound changes.
+- **Arrangement:** follows the storyboard.
+  - A filtered intro opens up, and a clap roll and riser lead into the drop at 4s as "Who owes whom" lands.
+  - Crash at 12s for the "New" scenes.
+  - One-beat break at 36s, and back in at 37s for the outro title.
+  - A last hit on C at 40s rings out under the logo.
+  - The track starts 20ms in, so its downbeats sit on the SFX grid (x.02 / x.52).
+- **In the composition:** the music bed plays at 0.5, with a 0.3s fade-in and a 0.5s fade-out. The track ends on its own.
 - **SFX** (under the bed):
   - a card slide per scene;
   - a bong on each "New" badge;
   - clicks as the tool pills arrive;
   - a bell on the outro title;
   - a bong on the logo.
-- **Background glows:** bass and mids are re-extracted for 42s into `composition/assets/audio-data.js` and make the glows breathe.
+- **Glows:** bass and mids from the track (`music/audio_data.py` → `composition/assets/audio-data.js`) make the background glows breathe.
+- **Loudness:** the renderer mixes to about −23 LUFS. The final files are normalised to −16 LUFS with a −1.5 dBTP ceiling, the usual level for web and social video.
 
 ## Data note
 Names and amounts are illustrative: Asha, Ben, Chen, Dev, a Goa trip, and the made-up name "Mikoox". On-screen UI is the real app, recorded by `scripts/feature-clips/clips.mjs`. No user data appears.
 
 ## Rebuild
-1. Re-record the clips if the UI changed (`node scripts/feature-clips/clips.mjs`), then copy the ones used into `composition/assets/clips/`.
-2. Check and render:
-   `cd composition && npx --yes hyperframes@0.8.137 check && npx --yes hyperframes@0.8.137 render -q delivery -o ../brag.mp4 .`
-3. Web encode and poster for the homepage, from the repo root:
+1. If the UI changed, re-record the clips (`node scripts/feature-clips/clips.mjs`) and copy the ones used into `composition/assets/clips/`.
+2. If the music changed, from this folder:
+   ```
+   python3 -I music/compose.py /tmp/groove.wav
+   ffmpeg -i /tmp/groove.wav -af loudnorm=I=-15.9:TP=-1.5:LRA=11 -c:a libmp3lame -b:a 192k composition/assets/music/splitbiller-groove.mp3
+   python3 -I music/audio_data.py composition/assets/music/splitbiller-groove.mp3 composition/assets/audio-data.js
+   ```
+3. Check and render, then bring the loudness up to −16 LUFS:
+   ```
+   cd composition && npx --yes hyperframes@0.8.137 check && npx --yes hyperframes@0.8.137 render -q delivery -o ../raw.mp4 . && cd ..
+   ffmpeg -i raw.mp4 -c:v copy -af loudnorm=I=-16:TP=-1.5:LRA=11 -ar 48000 -c:a aac -b:a 192k -movflags +faststart brag.mp4
+   ```
+4. Make the web encode and poster for the homepage, from the repo root:
    ```
    ffmpeg -i brag-output/whats-new/brag.mp4 -vf scale=1280:720:flags=lanczos -c:v libx264 -profile:v high -preset slow -crf 25 -pix_fmt yuv420p -c:a aac -b:a 96k -movflags +faststart public/promo/splitbiller-promo.mp4
    ffmpeg -ss 15.5 -i brag-output/whats-new/brag.mp4 -frames:v 1 -vf scale=1280:720:flags=lanczos -q:v 4 public/promo/splitbiller-promo-poster.jpg
