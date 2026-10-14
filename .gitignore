@@ -41,10 +41,6 @@ next-env.d.ts
 # Rendered video masters rebuild from their composition (see brag-plan.md); the site serves public/promo.
 brag-output/whats-new/brag.mp4
 brag-output/whats-new/raw.mp4
-brag-output/youtube/preview-*.png
-# Shorts: compositions and videos rebuild from build.py
-brag-output/shorts/*/
-brag-output/shorts/*.mp4
 
 # On-device OCR engine and model, copied from node_modules at build
 public/ocr/
