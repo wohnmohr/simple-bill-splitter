@@ -1,172 +1,51 @@
-import Link from "next/link";
-import {
-	Receipt,
-	UserX,
-	Globe,
-	Lock,
-	ArrowRightLeft,
-	Zap,
-	ArrowRight,
-	UtensilsCrossed,
-	Luggage,
-	Home,
-	Check,
-	Minus,
-	Percent,
-	Scale,
-	IndianRupee,
-	UserMinus,
-	ChevronDown,
-	ShieldCheck,
-	Calculator,
-	Lightbulb,
-	Bike,
-	Split,
-	QrCode,
-	Car,
-	HandCoins,
-	Gift,
-	Dices,
-	Users,
-	BadgePercent,
-	Tag,
-	Link2,
-} from "lucide-react";
+import { ArrowRight, Check, ChevronDown, IndianRupee, Lock, Scale, Wrench } from "lucide-react";
 import { TrackedLink } from "@/components/UI/TrackedLink";
 import { StickyCta } from "@/components/Landing/StickyCta";
 import { SiteNav } from "@/components/Landing/SiteNav";
+import { SiteFooter } from "@/components/Landing/SiteFooter";
 import { PromoVideo } from "@/components/Landing/PromoVideo";
-import { ALL_TOOL_SLUGS, TOOL_PAGES, ToolSlug } from "@/content/tools";
+import { ALL_TOOL_SLUGS } from "@/content/tools";
 import { TEMPLATES } from "@/utils/payStory";
 import { SPLIT_TTL_DAYS } from "@/utils/splitCloud";
-import { themeGradient } from "@/components/PayStory/TemplateGrid";
-import { LogoMark } from "@/components/UI/LogoMark";
 
-const TOOL_ICONS: Record<ToolSlug, typeof Receipt> = {
-	"restaurant-bill-splitter": UtensilsCrossed,
-	"trip-expense-splitter": Luggage,
-	"roommate-expense-splitter": Home,
-	"upi-bill-splitter": IndianRupee,
-	"split-bill-with-tip": Percent,
-	"split-bill-with-tax": Receipt,
-	"split-bill-unequally": Scale,
-	"split-bill-without-signup": UserMinus,
-	"splitwise-alternative": ArrowRightLeft,
-	"upi-charges-above-2000": ShieldCheck,
-	"upi-mdr-calculator": Calculator,
-	"upi-payment-split-planner": Split,
-	"upi-qr-code-generator": QrCode,
-	"road-trip-cost-splitter": Car,
-	"group-contribution-collector": HandCoins,
-	"secret-santa-generator": Gift,
-	"split-electricity-bill": Lightbulb,
-	"split-swiggy-zomato-bill": Bike,
-	"random-name-picker": Dices,
-	"random-team-generator": Users,
-	"gst-calculator": BadgePercent,
-	"discount-calculator": Tag,
-};
-
-const TOOL_BLURBS: Record<ToolSlug, string> = {
-	"restaurant-bill-splitter":
-		"Dinner bill + tip or service charge, split among friends.",
-	"trip-expense-splitter": "Hotels, rides, meals — settle the whole trip.",
-	"roommate-expense-splitter": "Rent, utilities, and groceries without the spreadsheet.",
-	"upi-bill-splitter": "Split in ₹ and open UPI pay links for each settlement.",
-	"split-bill-with-tip": "Add a tip %, then divide fairly.",
-	"split-bill-with-tax": "Include GST/sales tax in each person’s share.",
-	"split-bill-unequally": "Custom amounts or percentages when orders differ.",
-	"split-bill-without-signup": "Instant split — no account, no app download.",
-	"splitwise-alternative": "Who owes whom, without forcing friends onto an app.",
-	"upi-charges-above-2000": "New 0.4% UPI fee above ₹2,000 — who actually pays?",
-	"upi-mdr-calculator": "Merchant fee on UPI payments above ₹2,000, instantly.",
-	"upi-payment-split-planner": "Split up to ₹20,000 into ₹2,000 payments — see if it pays off.",
-	"upi-qr-code-generator": "A UPI QR and pay link with your amount — free.",
-	"road-trip-cost-splitter": "Fuel, tolls and parking, split per person.",
-	"group-contribution-collector": "Collect equal shares for gifts and festivals.",
-	"secret-santa-generator": "Private draw links — nobody sees who got whom.",
-	"split-electricity-bill": "Fair shares by usage, AC hours or room.",
-	"split-swiggy-zomato-bill": "Delivery fee, GST and discounts, split fairly.",
-	"random-name-picker": "Spin a wheel to pick a name — who pays?",
-	"random-team-generator": "Shuffle names into fair, even teams.",
-	"gst-calculator": "Add or remove GST with CGST/SGST breakup.",
-	"discount-calculator": "True price after stacked discounts.",
-};
-
-const PH_ICON =
-	"https://ph-files.imgix.net/e82f50fe-9e12-48be-b029-948fa71563cd.png?auto=compress,format&codec=mozjpeg&cs=strip&fit=crop&h=32&w=32";
-
-const WHY = [
-	{ icon: Receipt, label: "Split bills online instantly" },
-	{ icon: UserX, label: "No account, no app, no signup" },
-	{ icon: Globe, label: "Works entirely in your browser" },
-	{ icon: Lock, label: "Privacy-first — your groups stay on your device" },
-	{ icon: ArrowRightLeft, label: 'Simple "who owes whom" result' },
-	{ icon: Zap, label: "Lightweight & fast" },
+const PROMISES = [
+	{ icon: Scale, title: "Who owes whom, in seconds", body: "Split equally or by percentage, and settle in the fewest payments." },
+	{ icon: IndianRupee, title: "Settle in one tap on UPI", body: "GPay, PhonePe, Paytm or any UPI app, with the amount filled in." },
+	{ icon: Lock, title: "Private by design", body: "No signup. Groups stay on your device, and sharing is end-to-end encrypted." },
 ];
 
 const STEPS = [
-	"Add people involved in the expense",
-	"Enter each expense and who paid",
-	"Select who shared that expense",
-	"Instantly see who owes whom and how much",
-];
-
-const COMPARISON: { feature: string; us: boolean | string; them: boolean | string }[] = [
-	{ feature: "Login required", us: false, them: true },
-	{ feature: "App download", us: false, them: true },
-	{ feature: "Account data stored", us: false, them: true },
-	{ feature: "One-time use", us: true, them: false },
-	{ feature: "Instant results", us: true, them: "Often slow" },
-];
+	["Add the people", "Everyone who shares the costs, or send a link and let them join."],
+	["Add who paid what", "Each expense, who paid it and who it was for."],
+	["Settle up", "See the fewest payments and pay each one by UPI."],
+] as const;
 
 const FAQS = [
 	{
 		q: "How do I split expenses among friends?",
-		a: "Add everyone involved, enter who paid, select participants, and the calculator shows who owes whom.",
+		a: "Add everyone involved, enter who paid, select participants, and SplitBiller shows who owes whom.",
 	},
 	{
 		q: "Can I split expenses without creating an account?",
-		a: "Yes. This tool works without login or signup.",
+		a: "Yes. SplitBiller works without login or signup.",
 	},
 	{
 		q: "Is this better than Splitwise?",
-		a: "If you need long-term tracking, use Splitwise. If you want instant bill splitting without login, this is faster and simpler.",
+		a: "If you need long-term tracking with accounts, use Splitwise. If you want to split without anyone signing up, and keep it private, SplitBiller is faster and simpler.",
 	},
 	{
 		q: "Can I use this on mobile?",
-		a: "Yes. It's fully mobile-friendly and works in any browser.",
+		a: "Yes. It works in any browser, on any phone.",
 	},
 	{
 		q: "Does it support different currencies?",
-		a: "Yes. The calculator works with any currency.",
+		a: "Yes: rupees by default, plus dollars, euros, pounds and yen.",
 	},
 	{
 		q: "Do split pages store my data on a server?",
-		a: `Yes, but end-to-end encrypted. Split pages (dinner, rent, trip and the rest) are saved on our server so payments update live for everyone with the link. Each split is encrypted in your browser before upload, and the key stays in your link, which browsers never send to us. Our server only holds scrambled data that we can’t read, and every split is deleted automatically ${SPLIT_TTL_DAYS} days after it’s made. Groups you make in the main app never leave your device.`,
+		a: `Yes, but end-to-end encrypted. Split pages are saved on our server so payments update live for everyone with the link. Each split is encrypted in your browser before upload, and the key stays in your link, which browsers never send to us. Our server only holds scrambled data that we can’t read, and every split is deleted automatically ${SPLIT_TTL_DAYS} days after it’s made. Groups you make in the app stay on your device unless you choose to share them, end-to-end encrypted.`,
 	},
 ];
-
-const Cell = ({ value, strong }: { value: boolean | string; strong?: boolean }) => {
-	if (typeof value === "string") {
-		return <span className="text-ink-muted">{value}</span>;
-	}
-	// Every SplitBiller answer is the favourable one, so it always gets the check.
-	if (strong) {
-		return (
-			<span className="inline-flex items-center gap-1.5 font-semibold text-ink">
-				<Check className="h-4 w-4 text-positive" strokeWidth={2.5} />
-				{value ? "Yes" : "No"}
-			</span>
-		);
-	}
-	return (
-		<span className="inline-flex items-center gap-1.5 text-ink-muted">
-			<Minus className="h-4 w-4" />
-			{value ? "Yes" : "No"}
-		</span>
-	);
-};
 
 /** A faithful, static preview of the settle-up screen. */
 const SettlementPreview = () => (
@@ -215,6 +94,13 @@ const SettlementPreview = () => (
 	</div>
 );
 
+const SectionHeading = ({ children, sub }: { children: React.ReactNode; sub?: string }) => (
+	<div className="mx-auto mb-10 max-w-2xl text-center">
+		<h2 className="font-display text-3xl font-semibold text-ink sm:text-4xl">{children}</h2>
+		{sub && <p className="mt-3 text-lg text-ink-soft">{sub}</p>}
+	</div>
+);
+
 export const LandingPage = () => {
 	return (
 		<main className="page-shell min-h-screen bg-paper text-ink pb-20 sm:pb-0">
@@ -237,7 +123,7 @@ export const LandingPage = () => {
 
 			<SiteNav />
 
-			{/* Hero Section */}
+			{/* Hero */}
 			<header className="px-4 sm:px-6 pt-10 pb-16 sm:pt-16 sm:pb-24">
 				<div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
 					<div className="text-center lg:text-left">
@@ -245,8 +131,7 @@ export const LandingPage = () => {
 							Split bills in ₹, settle&nbsp;with&nbsp;UPI
 						</h1>
 						<p className="mx-auto mt-5 max-w-xl text-lg text-ink-soft lg:mx-0">
-							Who owes whom in seconds — share privately, pay via UPI. No signup,
-							no app download.
+							Who owes whom in seconds — share privately, pay via UPI. No signup, no app download.
 						</p>
 						<div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
 							<TrackedLink
@@ -258,9 +143,9 @@ export const LandingPage = () => {
 								Split a bill now — free
 								<ArrowRight className="h-4 w-4" />
 							</TrackedLink>
-							<a href="#tools" className="btn-secondary w-full sm:w-auto !px-6 !py-3.5 !text-base">
+							<TrackedLink href="/tools" location="hero_tools" className="btn-secondary w-full sm:w-auto !px-6 !py-3.5 !text-base">
 								Try a quick calculator
-							</a>
+							</TrackedLink>
 						</div>
 						<ul className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-ink-muted lg:justify-start">
 							{["Free forever", "No sign-up", "Takes ~30 seconds"].map((t) => (
@@ -275,216 +160,104 @@ export const LandingPage = () => {
 				</div>
 			</header>
 
-			{/* Quick tools — primary navigation to SEO pages */}
-			<section id="tools" className="scroll-mt-16 border-t border-line bg-white px-4 sm:px-6 py-16 sm:py-20">
+			{/* Three promises */}
+			<section className="border-t border-line bg-surface px-4 sm:px-6 py-14 sm:py-16">
 				<div className="mx-auto max-w-6xl">
-					<div className="mb-8 max-w-2xl">
-						<h2 className="font-display text-3xl sm:text-4xl font-semibold text-ink">
-							Quick calculators
-						</h2>
-						<p className="mt-2 text-ink-soft">
-							Jump into a tool for your exact situation — then share the
-							settlement with friends.
-						</p>
-					</div>
-					<ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-						{ALL_TOOL_SLUGS.map((slug) => {
-							const config = TOOL_PAGES[slug];
-							const Icon = TOOL_ICONS[slug];
-							return (
-								<li key={slug} className="overflow-hidden rounded-xl border border-line bg-white">
-									<TrackedLink
-										href={`/${slug}`}
-										location="tools_grid" properties={{ tool: slug }}
-										className="group flex h-full items-start gap-3.5 p-5 transition-colors hover:bg-paper"
-									>
-										<Icon className="mt-0.5 h-5 w-5 shrink-0 text-brand-700" strokeWidth={1.75} />
-										<span className="min-w-0">
-											<span className="flex items-center gap-1 font-semibold text-ink">
-												{config.title}
-												<ArrowRight className="h-4 w-4 text-ink-muted opacity-0 -translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0" />
-											</span>
-											<span className="mt-1 block text-sm leading-snug text-ink-muted">
-												{TOOL_BLURBS[slug]}
-											</span>
-										</span>
-									</TrackedLink>
-								</li>
-							);
-						})}
-					</ul>
-				</div>
-			</section>
-
-			{/* Shareable splits — one themed page per situation */}
-			<section id="splits" className="scroll-mt-16 px-4 sm:px-6 py-16 sm:py-20">
-				<div className="mx-auto max-w-6xl">
-					<div className="mb-8 max-w-2xl">
-						<h2 className="font-display text-3xl sm:text-4xl font-semibold text-ink">
-							Split it. Share one link. Get paid.
-						</h2>
-						<p className="mt-2 text-ink-soft">
-							Pick what you are splitting. Friends pay you straight through UPI and everyone sees who has paid,
-							live, from the same link.
-						</p>
-						<p className="mt-4 inline-flex items-start gap-2 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink-soft">
-							<Lock className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" strokeWidth={2} />
-							<span>
-								<b className="font-semibold text-ink">Split pages use our server, end-to-end encrypted.</b> That’s how payments
-								update live for everyone. Each split is locked in your browser before it’s saved, and the key stays in your link,
-								so our server only ever holds scrambled data. Only people you share the link with can read it. Not even we can.
-								To keep it free and private, splits are deleted automatically {SPLIT_TTL_DAYS} days after they’re made.
-							</span>
-						</p>
-					</div>
-					<ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-						{TEMPLATES.map((t) => (
-							<li key={t.id} className="min-w-0">
-								<TrackedLink
-									href={`/split/${t.id}`}
-									location="splits_section" properties={{ tool: t.id }}
-									className="group flex h-full flex-col overflow-hidden rounded-xl border border-line bg-white transition-shadow hover:shadow-card"
-								>
-									<span aria-hidden className="flex h-14 items-center justify-center text-2xl" style={{ background: themeGradient(t) }}>
-										{t.emoji}
-									</span>
-									<span className="p-2.5 text-sm font-semibold leading-snug text-ink group-hover:text-brand-700">
-										{t.label}
-									</span>
-								</TrackedLink>
+					<h2 className="sr-only">Why SplitBiller</h2>
+					<ul className="grid gap-8 sm:grid-cols-3 sm:gap-10">
+						{PROMISES.map(({ icon: Icon, title, body }) => (
+							<li key={title}>
+								<span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50">
+									<Icon className="h-5 w-5 text-brand-700" strokeWidth={1.75} />
+								</span>
+								<h3 className="mt-4 font-semibold text-ink">{title}</h3>
+								<p className="mt-1 text-ink-soft">{body}</p>
 							</li>
 						))}
 					</ul>
-					<TrackedLink href="/split" location="splits_section" className="btn-primary mt-6">
-						Create a split link <ArrowRight className="h-4 w-4" />
-					</TrackedLink>
+					<div className="mt-10 text-center">
+						<TrackedLink href="/features" location="promises" className="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline">
+							See everything SplitBiller does <ArrowRight className="h-4 w-4" />
+						</TrackedLink>
+					</div>
 				</div>
 			</section>
 
-			{/* Demo Section */}
+			{/* Video */}
 			<section className="px-4 sm:px-6 py-16 sm:py-20">
 				<div className="mx-auto max-w-4xl">
-					<h2 className="mb-8 text-center font-display text-3xl sm:text-4xl font-semibold text-ink">
-						See it in action
-					</h2>
+					<SectionHeading>See it in action</SectionHeading>
 					<PromoVideo />
 				</div>
 			</section>
 
-			{/* How it works + Why */}
-			<section className="border-t border-line bg-white px-4 sm:px-6 py-16 sm:py-20">
-				<div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-2 lg:gap-20">
-					<div>
-						<h2 className="font-display text-3xl sm:text-4xl font-semibold text-ink">
-							How It Works (Simple & Fair)
+			{/* Tools */}
+			<section className="px-4 sm:px-6 pb-16 sm:pb-20">
+				<div className="surface mx-auto flex max-w-4xl flex-col items-center gap-6 p-6 text-center sm:flex-row sm:p-8 sm:text-left">
+					<span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50">
+						<Wrench className="h-6 w-6 text-brand-700" strokeWidth={1.75} />
+					</span>
+					<div className="min-w-0 flex-1">
+						<h2 className="font-display text-2xl font-semibold text-ink">
+							{ALL_TOOL_SLUGS.length} free calculators and {TEMPLATES.length} split-link templates
 						</h2>
-						<ol className="mt-8 space-y-5">
-							{STEPS.map((step, i) => (
-								<li key={step} className="flex gap-4">
-									<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-semibold tabular-nums text-brand-700">
-										{i + 1}
-									</span>
-									<span className="pt-1 font-medium text-ink">{step}</span>
-								</li>
-							))}
-						</ol>
-						<p className="mt-8 max-w-md text-ink-muted">
-							All expenses are split equally, and debts are automatically
-							simplified so fewer transactions are needed.
+						<p className="mt-1 text-ink-soft">
+							Restaurant bills, rent, trips, GST, UPI fees, Secret Santa and more. No signup.
 						</p>
 					</div>
-					<div>
-						<h2 className="font-display text-3xl sm:text-4xl font-semibold text-ink">
-							Why Use This Expense Splitter?
-						</h2>
-						<p className="mt-2 text-ink-soft">A Splitwise alternative without the login.</p>
-						<ul className="mt-8 grid gap-x-6 gap-y-5 sm:grid-cols-2">
-							{WHY.map(({ icon: Icon, label }) => (
-								<li key={label} className="flex items-start gap-3">
-									<Icon className="mt-0.5 h-5 w-5 shrink-0 text-brand-700" strokeWidth={1.75} />
-									<h3 className="font-medium text-ink">{label}</h3>
-								</li>
-							))}
-						</ul>
-					</div>
+					<TrackedLink href="/tools" location="tools_band" className="btn-primary shrink-0">
+						Browse all tools <ArrowRight className="h-4 w-4" />
+					</TrackedLink>
 				</div>
 			</section>
 
-			{/* Comparison + Privacy */}
+			{/* How it works */}
+			<section className="border-t border-line bg-surface px-4 sm:px-6 py-16 sm:py-20">
+				<div className="mx-auto max-w-5xl">
+					<SectionHeading sub="Debts are simplified automatically, so fewer payments are needed.">How it works</SectionHeading>
+					<ol className="grid gap-8 sm:grid-cols-3">
+						{STEPS.map(([title, body], i) => (
+							<li key={title} className="text-center">
+								<span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 font-semibold tabular-nums text-brand-700">
+									{i + 1}
+								</span>
+								<h3 className="mt-4 font-semibold text-ink">{title}</h3>
+								<p className="mt-1 text-ink-soft">{body}</p>
+							</li>
+						))}
+					</ol>
+				</div>
+			</section>
+
+			{/* Privacy */}
 			<section className="px-4 sm:px-6 py-16 sm:py-20">
-				<div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.4fr_1fr]">
+				<div className="mx-auto grid max-w-5xl gap-8 rounded-3xl bg-brand-900 p-8 text-white sm:p-12 lg:grid-cols-[1fr_1.2fr] lg:gap-12">
 					<div>
-						<h2 className="font-display text-3xl sm:text-4xl font-semibold text-ink">
-							Splitwise Alternative Without Login
-						</h2>
-						<p className="mt-2 text-ink-soft">Unlike traditional expense apps:</p>
-						<div className="surface mt-6 overflow-x-auto overscroll-x-contain">
-							<table className="w-full min-w-[300px] text-sm sm:text-base">
-								<thead>
-									<tr className="border-b border-line text-left">
-										<th className="p-3 sm:p-4 font-medium text-ink-muted">Feature</th>
-										<th className="bg-brand-50/60 p-3 sm:p-4 font-semibold text-brand-800">
-											SplitBiller
-										</th>
-										<th className="p-3 sm:p-4 font-medium text-ink-muted">Other apps</th>
-									</tr>
-								</thead>
-								<tbody className="divide-y divide-line">
-									{COMPARISON.map((row) => (
-										<tr key={row.feature}>
-											<td className="p-3 sm:p-4 font-medium text-ink">{row.feature}</td>
-											<td className="bg-brand-50/60 p-3 sm:p-4">
-												<Cell value={row.us} strong />
-											</td>
-											<td className="p-3 sm:p-4">
-												<Cell value={row.them} />
-											</td>
-										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
-						<p className="mt-4 text-sm text-ink-muted">
-							This tool is designed for one-time expense splitting, not long-term
-							tracking.
-						</p>
+						<Lock className="h-7 w-7 text-brand-300" strokeWidth={1.75} />
+						<h2 className="mt-4 font-display text-3xl font-semibold sm:text-4xl">Private by design</h2>
+						<p className="mt-3 text-lg text-brand-100">Your money matters stay between you and your group.</p>
 					</div>
-
-					<div className="rounded-2xl bg-brand-900 p-6 sm:p-8 text-white lg:mt-[4.5rem] lg:self-start">
-						<Lock className="h-6 w-6 text-brand-300" strokeWidth={1.75} />
-						<h2 className="mt-4 font-display text-2xl sm:text-3xl font-semibold">
-							Privacy-First Expense Splitting
-						</h2>
-						<p className="mt-3 text-lg font-medium text-brand-100">
-							Your groups never leave your device.
-						</p>
-						<ul className="mt-5 space-y-2.5 text-brand-100">
-							{[
-								"All calculations run locally in your browser",
-								"Your expenses are never sent to our servers",
-								"Share links are encrypted — only people with the link can read them",
-								`Split pages use our server to sync payments, end-to-end encrypted, and are deleted after ${SPLIT_TTL_DAYS} days`,
-							].map((item) => (
-								<li key={item} className="flex items-start gap-2.5">
-									<Check className="mt-1 h-4 w-4 shrink-0 text-brand-300" />
-									{item}
-								</li>
-							))}
-						</ul>
-						<p className="mt-6 text-sm text-brand-200">
-							Ideal if you want a private, anonymous expense splitter.
-						</p>
-					</div>
+					<ul className="space-y-3 text-brand-100 lg:self-center">
+						{[
+							"No account: nothing to sign up for, nothing to leak",
+							"Groups stay on your device until you choose to share them",
+							"Shared groups and links are end-to-end encrypted; the key never reaches our server",
+							`Split pages are deleted automatically after ${SPLIT_TTL_DAYS} days`,
+						].map((item) => (
+							<li key={item} className="flex items-start gap-2.5">
+								<Check className="mt-1 h-4 w-4 shrink-0 text-brand-300" />
+								{item}
+							</li>
+						))}
+					</ul>
 				</div>
 			</section>
 
-			{/* FAQ Section */}
-			<section id="faq" className="scroll-mt-16 border-t border-line bg-white px-4 sm:px-6 py-16 sm:py-20">
+			{/* FAQ */}
+			<section id="faq" className="scroll-mt-16 border-t border-line bg-surface px-4 sm:px-6 py-16 sm:py-20">
 				<div className="mx-auto max-w-3xl">
-					<h2 className="font-display text-3xl sm:text-4xl font-semibold text-ink">
-						Frequently Asked Questions
-					</h2>
-					<div className="mt-8 divide-y divide-line border-y border-line">
+					<SectionHeading>Frequently asked questions</SectionHeading>
+					<div className="divide-y divide-line border-y border-line">
 						{FAQS.map(({ q, a }, i) => (
 							<details key={q} className="group" open={i === 0}>
 								<summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 [&::-webkit-details-marker]:hidden">
@@ -498,95 +271,9 @@ export const LandingPage = () => {
 				</div>
 			</section>
 
-			{/* Final CTA Section */}
-			<section className="px-4 sm:px-6 py-16 sm:py-24">
-				<div className="mx-auto max-w-3xl text-center">
-					<h2 className="font-display text-3xl sm:text-5xl font-semibold text-ink">
-						Start Splitting Bills Now
-					</h2>
-					<p className="mx-auto mt-4 max-w-xl text-lg text-ink-soft">
-						No downloads, no accounts — split expenses instantly and move on.
-					</p>
-					<TrackedLink
-						href="/dashboard"
-						location="footer"
-						className="btn-primary mt-8 !px-7 !py-3.5 !text-base"
-					>
-						Use the free expense splitter
-						<ArrowRight className="h-4 w-4" />
-					</TrackedLink>
-				</div>
-			</section>
-
-			{/* Footer */}
-			<footer className="border-t border-line bg-white px-4 sm:px-6 py-10">
-				<div className="mx-auto max-w-6xl">
-					<div className="grid gap-8 md:grid-cols-[1fr_2fr]">
-						<div>
-							<Link href="/" className="flex items-center gap-2">
-								<LogoMark />
-								<span className="font-display text-lg font-semibold text-ink">
-									SplitBiller
-								</span>
-							</Link>
-							<p className="mt-3 max-w-xs text-sm text-ink-muted">
-								Split bills in ₹ and settle with UPI. No signup, no app download.
-							</p>
-							<a
-								href="https://www.producthunt.com/products/split-biller?utm_source=badge&utm_medium=embed"
-								target="_blank"
-								rel="noopener noreferrer"
-								className="btn-secondary mt-4 !py-2"
-							>
-								<img src={PH_ICON} alt="" width={16} height={16} loading="lazy" decoding="async" className="h-4 w-4 rounded" />
-								Find us on Product Hunt
-							</a>
-							<Link
-								href="/features"
-								className="mt-1 block py-2 text-sm font-medium text-brand-700 hover:underline"
-							>
-								See everything SplitBiller does
-							</Link>
-							<Link
-								href="/feature-requests"
-								className="block py-2 text-sm font-medium text-brand-700 hover:underline"
-							>
-								Missing something? Request a feature
-							</Link>
-						</div>
-						<div>
-							<p className="label-text mb-3">All tools</p>
-							<ul className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
-								{ALL_TOOL_SLUGS.map((slug) => (
-									<li key={slug}>
-										<Link
-											href={`/${slug}`}
-											className="block py-1.5 text-sm text-ink-soft hover:text-brand-700 hover:underline"
-										>
-											{TOOL_PAGES[slug].title}
-										</Link>
-									</li>
-								))}
-							</ul>
-						</div>
-					</div>
-					<div className="mt-10 flex flex-col gap-2 border-t border-line pt-6 text-sm text-ink-muted sm:flex-row sm:justify-between">
-						<p>© {new Date().getFullYear()} splitbiller.com. All rights reserved.</p>
-						<p>
-							Created by{" "}
-							<a
-								href="https://www.wohnmohr.com"
-								target="_blank"
-								rel="noopener noreferrer"
-								className="inline-block py-1.5 font-medium text-ink-soft underline hover:text-brand-700"
-							>
-								wohnmohr
-							</a>
-						</p>
-					</div>
-				</div>
-			</footer>
+			<SiteFooter />
 			<StickyCta targetId="hero-cta" />
 		</main>
 	);
 };
+

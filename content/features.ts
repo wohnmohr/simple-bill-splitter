@@ -113,6 +113,6 @@ export const FEATURES: Feature[] = [
 		body: "Restaurant bills with tip, rent, electricity by usage, GST, UPI fees, Secret Santa and more. Each one gives you a result you can share.",
 		points: ["No signup, works on any phone", "Share the result on WhatsApp", "Continue in SplitBiller when you need more"],
 		clip: { name: "calculators", ...PHONE, label: "Splitting a ₹3,600 restaurant bill with a 10% tip among four friends" },
-		cta: { href: "/#tools", label: "See all calculators" },
+		cta: { href: "/tools", label: "See all tools" },
 	},
 ];

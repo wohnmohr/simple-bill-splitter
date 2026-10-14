@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { SiteNav } from "@/components/Landing/SiteNav";
+import { SiteFooter } from "@/components/Landing/SiteFooter";
 import { FeatureClip } from "@/components/Features/FeatureClip";
 import { TrackedLink } from "@/components/UI/TrackedLink";
 import { FEATURES } from "@/content/features";
@@ -104,6 +105,8 @@ export default function FeaturesPage() {
 					</p>
 				</div>
 			</section>
+
+			<SiteFooter />
 		</main>
 	);
 }
