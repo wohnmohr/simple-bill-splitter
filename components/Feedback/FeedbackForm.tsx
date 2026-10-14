@@ -75,7 +75,7 @@ export const FeedbackForm = ({
 				<p className="mt-3 font-semibold text-ink">Thank you — we read every one.</p>
 				<p className="mt-1 text-sm text-ink-muted">
 					Missing something bigger?{" "}
-					<Link href="/feature-requests" className="font-medium text-brand-700 hover:underline">
+					<Link href="/roadmap#request" className="font-medium text-brand-700 hover:underline">
 						Request a feature
 					</Link>
 				</p>

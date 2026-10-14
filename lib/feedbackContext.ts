@@ -45,6 +45,7 @@ export function collectFeedbackContext(options: {
 		ctx.members_with_upi = g.members.filter((m) => m.upiId?.trim()).length;
 		ctx.expenses = bills.length;
 		ctx.percentage_splits = bills.filter((e) => e.splitMethod === "percentage").length;
+		ctx.exact_splits = bills.filter((e) => e.splitMethod === "exact").length;
 		ctx.payments_recorded = payments;
 		ctx.identity_chosen = g.meId !== undefined;
 		if (dated.length) {

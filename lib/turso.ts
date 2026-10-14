@@ -25,18 +25,6 @@ const SCHEMA = [
 	)`,
 	`CREATE INDEX IF NOT EXISTS feedback_created ON feedback (created_at)`,
 	`CREATE INDEX IF NOT EXISTS feedback_ip ON feedback (ip_hash, created_at)`,
-	`CREATE TABLE IF NOT EXISTS feature_requests (
-		id          TEXT PRIMARY KEY,
-		created_at  INTEGER NOT NULL,
-		title       TEXT NOT NULL,
-		details     TEXT,
-		email       TEXT NOT NULL,
-		context     TEXT NOT NULL,
-		status      TEXT NOT NULL DEFAULT 'new',
-		ip_hash     TEXT NOT NULL
-	)`,
-	`CREATE INDEX IF NOT EXISTS feature_requests_created ON feature_requests (created_at)`,
-	`CREATE INDEX IF NOT EXISTS feature_requests_ip ON feature_requests (ip_hash, created_at)`,
 	`CREATE TABLE IF NOT EXISTS splits (
 		id          TEXT PRIMARY KEY,
 		created_at  INTEGER NOT NULL,
@@ -157,14 +145,13 @@ export function hashIp(req: Request): string {
 	return createHash("sha256").update(`${salt}:${ip}`).digest("hex").slice(0, 32);
 }
 
-export type RateTable = "feedback" | "feature_requests" | "splits" | "split_payments";
+export type RateTable = "feedback" | "splits" | "split_payments";
 
 /** Per-IP write budgets: a short burst window and a daily cap, so one source can't flood us all day. */
 export const WRITE_LIMITS: Record<RateTable, { hour: number; day: number }> = {
 	splits: { hour: 30, day: 100 },
 	split_payments: { hour: 60, day: 300 },
 	feedback: { hour: 10, day: 30 },
-	feature_requests: { hour: 5, day: 15 },
 };
 
 /** Counts this IP's writes to `table` in the last day and hour; one indexed read. Batch it with other reads. */
@@ -206,9 +193,6 @@ export const cleanText = (value: unknown, max: number): string | null => {
 	const trimmed = value.replace(/\u0000/g, "").trim();
 	return trimmed ? trimmed.slice(0, max) : null;
 };
-
-export const isEmail = (value: string) =>
-	value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
 
 const CONTEXT_MAX_BYTES = 4000;
 

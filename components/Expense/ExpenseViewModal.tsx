@@ -2,6 +2,7 @@ import { Expense, Person, Currency } from "@/types";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
 import { formatCurrency } from "@/utils/formatting";
+import { expenseShares } from "@/utils/calculations";
 import { Pencil, Trash2 } from "lucide-react";
 
 interface ExpenseViewModalProps {
@@ -69,10 +70,8 @@ export const ExpenseViewModal = ({
 	}
 
 	const isPercentage = expense.splitMethod === "percentage" && !!expense.percentages;
-	const shareOf = (id: string) =>
-		isPercentage
-			? (expense.amount * (expense.percentages![id] || 0)) / 100
-			: expense.amount / expense.participants.length;
+	const shares = expenseShares(expense);
+	const splitLabel = isPercentage ? "by percentage" : expense.splitMethod === "exact" ? "by exact amounts" : "equally";
 
 	return (
 		<Modal isOpen={isOpen} onClose={onClose} title={expense.description || "Expense"}>
@@ -86,7 +85,7 @@ export const ExpenseViewModal = ({
 						<span className="font-medium text-ink-soft">
 							{getPersonName(expense.paidBy)}
 						</span>{" "}
-						· split {isPercentage ? "by percentage" : "equally"}
+						· split {splitLabel}
 					</p>
 				</div>
 
@@ -106,7 +105,7 @@ export const ExpenseViewModal = ({
 										</span>
 									)}
 									<span className="font-semibold text-ink">
-										{formatCurrency(shareOf(id), currency)}
+										{formatCurrency(shares.get(id) ?? 0, currency)}
 									</span>
 								</span>
 							</li>

@@ -11,8 +11,8 @@ export type CompactSharePayload = {
 		p: string; // paidBy
 		t: string[]; // participants
 		d?: string; // description
-		s?: "e" | "p"; // equally | percentage
-		r?: Record<string, number>; // percentages
+		s?: "e" | "p" | "x"; // equally | percentage | exact amounts
+		r?: Record<string, number>; // percentages or exact amounts, per s
 		k?: "s"; // settlement payment
 		at?: number; // created at (epoch seconds)
 	}[];

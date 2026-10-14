@@ -6,7 +6,7 @@ import { useMediaQuery } from "@mantine/hooks";
 import { ChevronLeft, Link2, Plus, UserPlus } from "lucide-react";
 import { Tab, Currency, Expense, Settlement } from "@/types";
 import { DEFAULT_CURRENCY } from "@/constants";
-import { calculateBalances, calculateSettlements } from "@/utils/calculations";
+import { calculateBalances, calculateSettlements, splitWeights } from "@/utils/calculations";
 import { useGroups } from "@/hooks/useGroups";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
 import { useExpenses } from "@/hooks/useExpenses";
@@ -18,6 +18,7 @@ import { GroupsHome } from "@/components/Group/GroupsHome";
 import { SyncModal } from "@/components/Group/SyncModal";
 import { ThemeModal } from "@/components/Group/ThemeModal";
 import { IdentitySheet } from "@/components/Group/IdentitySheet";
+import { InviteNudge } from "@/components/Group/InviteNudge";
 import { shownMembers } from "@/utils/identity";
 import { applyTheme } from "@/utils/themes";
 import { TabNavigation } from "@/components/Tabs/TabNavigation";
@@ -54,7 +55,7 @@ export default function Home() {
 		participants: Set<string>;
 		description?: string;
 		splitMethod?: string;
-		percentages?: Record<string, number>;
+		weights?: Record<string, number>;
 		date?: number;
 	} | null>(null);
 
@@ -128,7 +129,7 @@ export default function Home() {
 		participants: Set<string>,
 		description?: string,
 		splitMethod?: string,
-		percentages?: Record<string, number>,
+		weights?: Record<string, number>,
 		date?: number
 	) => {
 		addExpense(
@@ -137,7 +138,7 @@ export default function Home() {
 			participants,
 			description,
 			splitMethod as any,
-			percentages,
+			weights,
 			date
 		);
 		track("dashboard_expense_added", {
@@ -157,6 +158,8 @@ export default function Home() {
 	// Who you are in this group. Opening a shared group for the first time asks
 	// (joining anonymously is the default); "Invite with a link" asks, then shares.
 	const identityOpen = !!currentGroup && (identityAsk !== null || (!!currentGroup.sync && currentGroup.meId === undefined && !showSync));
+	// Inviting asks who you are first (if nobody has), so friends can't pick you.
+	const startInvite = () => (currentGroup?.meId === undefined ? setIdentityAsk("invite") : setShowSync(true));
 	const finishIdentity = (how: "joined" | "claimed" | "looking" | "closed") => {
 		if (currentGroup && how !== "closed") track("group_identity_chosen", { how, synced: !!currentGroup.sync });
 		if (identityAsk === "invite") setShowSync(true);
@@ -183,7 +186,7 @@ export default function Home() {
 			participants: new Set(expense.participants),
 			description: expense.description,
 			splitMethod: expense.splitMethod || "equally",
-			percentages: expense.percentages,
+			weights: splitWeights(expense),
 			date: expense.createdAt,
 		});
 	};
@@ -194,7 +197,7 @@ export default function Home() {
 		participants: Set<string>,
 		description?: string,
 		splitMethod?: string,
-		percentages?: Record<string, number>,
+		weights?: Record<string, number>,
 		date?: number
 	) => {
 		if (editingExpenseId) {
@@ -205,7 +208,7 @@ export default function Home() {
 				participants,
 				description,
 				splitMethod as any,
-				percentages,
+				weights,
 				date
 			);
 			setEditingExpenseId(null);
@@ -348,7 +351,7 @@ export default function Home() {
 											phone, anonymously if they like.
 										</p>
 										<div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
-											<button onClick={() => setIdentityAsk("invite")} className="btn-primary">
+											<button onClick={startInvite} className="btn-primary">
 												<Link2 className="h-4 w-4" />
 												Invite with a link
 											</button>
@@ -362,6 +365,12 @@ export default function Home() {
 
 								{currentGroup.members.length > 0 && (
 									<>
+										{!currentGroup.sync &&
+											currentGroup.members.length > 1 &&
+											expenses.some((e) => e.kind !== "payment") && (
+												<InviteNudge groupId={currentGroup.id} onInvite={startInvite} />
+											)}
+
 										<TabNavigation
 											activeTab={shownTab}
 											onTabChange={handleTabChange}
@@ -584,7 +593,7 @@ export default function Home() {
 						initialParticipants={editExpenseData.participants}
 						initialDescription={editExpenseData.description}
 						initialSplitMethod={editExpenseData.splitMethod as any}
-						initialPercentages={editExpenseData.percentages}
+						initialWeights={editExpenseData.weights}
 						initialDate={editExpenseData.date}
 						currency={currency}
 						title="Edit Expense"

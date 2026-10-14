@@ -7,7 +7,7 @@ export type Person = {
   joined?: true;
 };
 
-export type SplitMethod = "equally" | "percentage";
+export type SplitMethod = "equally" | "percentage" | "exact";
 
 export type Expense = {
   id: string;
@@ -17,6 +17,7 @@ export type Expense = {
   description?: string; // optional description for the expense
   splitMethod: SplitMethod; // how the expense is split
   percentages?: Record<string, number>; // person id -> percentage (only for percentage split)
+  amounts?: Record<string, number>; // person id -> amount owed (only for exact split)
   /** "payment" = a recorded settlement: paidBy paid participants[0] back. */
   kind?: "payment";
   /** Epoch ms when the entry was created. Missing on older data. */

@@ -97,18 +97,23 @@ function toExpense(id: string, v: unknown, members: Set<string>): Expense | null
 	const participants = Array.isArray(x?.participants) ? [...new Set(x.participants.map((p) => str(p, 64)))].filter((p) => members.has(p)) : [];
 	// A member deleted on another device takes their entries with them.
 	if (!amount || !members.has(paidBy) || participants.length === 0) return null;
-	const expense: Expense = { id, amount, paidBy, participants, splitMethod: x.splitMethod === "percentage" ? "percentage" : "equally" };
+	const splitMethod = x.splitMethod === "percentage" || x.splitMethod === "exact" ? x.splitMethod : "equally";
+	const expense: Expense = { id, amount, paidBy, participants, splitMethod };
 	const description = str(x.description, 200);
 	if (description) expense.description = description;
 	if (x.kind === "payment") expense.kind = "payment";
 	if (Number.isSafeInteger(x.createdAt) && (x.createdAt as number) > 0) expense.createdAt = x.createdAt;
-	if (expense.splitMethod === "percentage" && x.percentages && typeof x.percentages === "object") {
-		const pct: Record<string, number> = {};
+	// Percentages run 0–100; exact amounts can't exceed what was spent.
+	const field = splitMethod === "percentage" ? "percentages" : splitMethod === "exact" ? "amounts" : null;
+	const raw = field && x[field];
+	if (field && raw && typeof raw === "object") {
+		const max = field === "percentages" ? 100 : amount;
+		const weights: Record<string, number> = {};
 		for (const p of participants) {
-			const n = (x.percentages as Record<string, unknown>)[p];
-			if (typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= 100) pct[p] = n;
+			const n = (raw as Record<string, unknown>)[p];
+			if (typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= max) weights[p] = n;
 		}
-		expense.percentages = pct;
+		expense[field] = weights;
 	}
 	return expense;
 }

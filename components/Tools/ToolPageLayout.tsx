@@ -206,6 +206,14 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 					All tools
 				</Link>
 				{" · "}
+				<Link href="/about" className="inline-block py-2 text-indigo-600 hover:underline">
+					About
+				</Link>
+				{" · "}
+				<Link href="/contact" className="inline-block py-2 text-indigo-600 hover:underline">
+					Contact
+				</Link>
+				{" · "}
 				Free bill splitter · No login · Privacy-first
 			</footer>
 		</main>
