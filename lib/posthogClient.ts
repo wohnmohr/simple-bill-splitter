@@ -48,11 +48,15 @@ let client: PostHog | null = null;
 let starting = false;
 const queue: Job[] = [];
 
-export const analyticsEnabled = () => !!process.env.NEXT_PUBLIC_POSTHOG_KEY;
+/** Development machines and the local network: their clicks aren't users' and would skew the data. */
+const LOCAL_HOST = /^(localhost$|127\.|0\.0\.0\.0$|\[::1\]$|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)|\.local$/;
+
+export const analyticsEnabled = () =>
+	!!process.env.NEXT_PUBLIC_POSTHOG_KEY && typeof window !== "undefined" && !LOCAL_HOST.test(window.location.hostname);
 
 /** Run `job` with the client now if it's ready, otherwise as soon as it is. */
 export function withPostHog(job: Job): void {
-	if (typeof window === "undefined" || !analyticsEnabled()) return;
+	if (!analyticsEnabled()) return;
 	if (client) {
 		try {
 			job(client);
@@ -73,7 +77,7 @@ export function capture(event: string, properties?: Record<string, unknown>): vo
 /** Start loading PostHog (once). Safe to call repeatedly. */
 export function startPostHog(): void {
 	const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-	if (!key || client || starting || typeof window === "undefined") return;
+	if (!key || !analyticsEnabled() || client || starting) return;
 	starting = true;
 
 	import("posthog-js")

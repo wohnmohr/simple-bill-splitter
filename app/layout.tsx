@@ -3,6 +3,7 @@ import { Outfit, Fraunces } from "next/font/google";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { VercelAnalytics } from "@/components/providers/VercelAnalytics";
 import { FeedbackNudge } from "@/components/Feedback/FeedbackNudge";
+import { InstallPromptCapture } from "@/components/providers/InstallPromptCapture";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -87,6 +88,7 @@ export default function RootLayout({
 				<PostHogProvider>
 					{children}
 					<FeedbackNudge />
+					<InstallPromptCapture />
 					<VercelAnalytics />
 				</PostHogProvider>
 			</body>

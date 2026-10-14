@@ -1,5 +1,33 @@
 import { Expense, Person, Balance, Settlement } from "@/types";
 
+/** The custom split an expense carries: percentages or exact amounts, per person. */
+export const splitWeights = (expense: Expense): Record<string, number> | undefined =>
+  expense.splitMethod === "percentage"
+    ? expense.percentages
+    : expense.splitMethod === "exact"
+      ? expense.amounts
+      : undefined;
+
+/**
+ * What each participant owes for an expense. Percentages and exact amounts
+ * are both weights, scaled so the shares always add up to the amount; with
+ * no usable weights the expense is split equally.
+ */
+export const expenseShares = (expense: Expense): Map<string, number> => {
+  const weights = splitWeights(expense);
+  const total = weights
+    ? expense.participants.reduce((sum, id) => sum + (weights[id] || 0), 0)
+    : 0;
+  return new Map(
+    expense.participants.map((id) => [
+      id,
+      total > 0
+        ? (expense.amount * (weights![id] || 0)) / total
+        : expense.amount / expense.participants.length,
+    ])
+  );
+};
+
 export const calculateBalances = (
   people: Person[],
   expenses: Expense[]
@@ -11,42 +39,9 @@ export const calculateBalances = (
   });
 
   expenses.forEach((expense) => {
-    let perPersonShare: number;
-    const splitMethod = expense.splitMethod || "equally";
-
-    if (splitMethod === "percentage" && expense.percentages) {
-      // Calculate share based on percentages
-      const totalPercentage = expense.participants.reduce((sum, id) => {
-        return sum + (expense.percentages![id] || 0);
-      }, 0);
-
-      // Normalize percentages if they don't sum to 100
-      const normalizedPercentages = totalPercentage > 0
-        ? expense.participants.reduce((acc, id) => {
-          acc[id] = (expense.percentages![id] || 0) / totalPercentage * 100;
-          return acc;
-        }, {} as Record<string, number>)
-        : {};
-
-      // For percentage split, we'll calculate each person's share individually
-      expense.participants.forEach((participantId) => {
-        const percentage = normalizedPercentages[participantId] || 0;
-        const share = (expense.amount * percentage) / 100;
-        balances.set(
-          participantId,
-          (balances.get(participantId) || 0) - share
-        );
-      });
-    } else {
-      // Equal split (default)
-      perPersonShare = expense.amount / expense.participants.length;
-      expense.participants.forEach((participantId) => {
-        balances.set(
-          participantId,
-          (balances.get(participantId) || 0) - perPersonShare
-        );
-      });
-    }
+    expenseShares(expense).forEach((share, participantId) => {
+      balances.set(participantId, (balances.get(participantId) || 0) - share);
+    });
 
     balances.set(
       expense.paidBy,

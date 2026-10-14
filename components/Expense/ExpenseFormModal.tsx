@@ -16,7 +16,8 @@ interface ExpenseFormModalProps {
 		participants: Set<string>,
 		description?: string,
 		splitMethod?: SplitMethod,
-		percentages?: Record<string, number>,
+		/** Percentages or exact amounts per person, for those split methods. */
+		weights?: Record<string, number>,
 		date?: number
 	) => void;
 	people: Person[];
@@ -28,7 +29,7 @@ interface ExpenseFormModalProps {
 	initialParticipants?: Set<string>;
 	initialDescription?: string;
 	initialSplitMethod?: SplitMethod;
-	initialPercentages?: Record<string, number>;
+	initialWeights?: Record<string, number>;
 	initialDate?: number;
 	title?: string;
 }
@@ -58,7 +59,7 @@ export const ExpenseFormModal = ({
 	initialParticipants = new Set(),
 	initialDescription = "",
 	initialSplitMethod = "equally",
-	initialPercentages = {},
+	initialWeights = {},
 	initialDate,
 	title = "Add Expense",
 }: ExpenseFormModalProps) => {
@@ -69,8 +70,8 @@ export const ExpenseFormModal = ({
 	const [description, setDescription] = React.useState(initialDescription);
 	const [splitMethod, setSplitMethod] =
 		React.useState<SplitMethod>(initialSplitMethod);
-	const [percentages, setPercentages] =
-		React.useState<Record<string, number>>(initialPercentages);
+	const [weights, setWeights] =
+		React.useState<Record<string, number>>(initialWeights);
 	const [date, setDate] = React.useState(toDateInput(initialDate ?? Date.now()));
 	const prevIsOpenRef = React.useRef(isOpen);
 	const initialValuesRef = React.useRef({
@@ -79,7 +80,7 @@ export const ExpenseFormModal = ({
 		participants: initialParticipants,
 		description: initialDescription,
 		splitMethod: initialSplitMethod,
-		percentages: initialPercentages,
+		weights: initialWeights,
 		date: initialDate,
 		defaultPayerId,
 	});
@@ -98,7 +99,7 @@ export const ExpenseFormModal = ({
 			participants: initialParticipants,
 			description: initialDescription,
 			splitMethod: initialSplitMethod,
-			percentages: initialPercentages,
+			weights: initialWeights,
 			date: initialDate,
 			defaultPayerId,
 		};
@@ -108,24 +109,32 @@ export const ExpenseFormModal = ({
 		initialParticipantsArray,
 		initialDescription,
 		initialSplitMethod,
-		initialPercentages,
+		initialWeights,
 		initialDate,
 		defaultPayerId,
 	]);
 
-	const equalShares = (ids: Set<string>) => {
+	const equalShares = (ids: Set<string>, total: number) => {
 		const shares: Record<string, number> = {};
 		if (ids.size === 0) return shares;
-		const each = Math.round((100 / ids.size) * 100) / 100;
+		const each = Math.round((total / ids.size) * 100) / 100;
 		const list = Array.from(ids);
 		list.forEach((id) => {
 			shares[id] = each;
 		});
-		// Put the rounding remainder on the last person so the total is exactly 100.
+		// Put the rounding remainder on the last person so the total is exact.
 		shares[list[list.length - 1]] =
-			Math.round((100 - each * (list.length - 1)) * 100) / 100;
+			Math.round((total - each * (list.length - 1)) * 100) / 100;
 		return shares;
 	};
+
+	/** A custom split starts out even: 100% shared out, or the amount when there is one yet. */
+	const startingWeights = (method: SplitMethod, ids: Set<string>, total: number) =>
+		method === "percentage"
+			? equalShares(ids, 100)
+			: method === "exact" && total > 0
+			? equalShares(ids, total)
+			: {};
 
 	// Only reset form when modal opens (transitions from closed to open)
 	React.useEffect(() => {
@@ -149,26 +158,27 @@ export const ExpenseFormModal = ({
 			setDescription(init.description);
 			setSplitMethod(init.splitMethod);
 			setDate(toDateInput(init.date ?? Date.now()));
-			if (
-				init.splitMethod === "percentage" &&
-				Object.keys(init.percentages).length === 0
-			) {
-				setPercentages(equalShares(defaultParticipants));
-			} else {
-				setPercentages({ ...init.percentages });
-			}
+			setWeights(
+				Object.keys(init.weights).length > 0
+					? { ...init.weights }
+					: startingWeights(init.splitMethod, defaultParticipants, parseFloat(init.amount))
+			);
 		}
 		prevIsOpenRef.current = isOpen;
 	}, [isOpen, people]);
 
-	const getTotalPercentage = () =>
-		Array.from(participants).reduce((sum, id) => sum + (percentages[id] || 0), 0);
-
 	const amountNum = parseFloat(amount);
 	const hasAmount = amountNum > 0;
-	const totalPct = getTotalPercentage();
-	const pctOff = splitMethod === "percentage" && Math.abs(totalPct - 100) > 0.01;
-	const canSubmit = hasAmount && !!paidBy && participants.size > 0 && !pctOff;
+	const isPercentage = splitMethod === "percentage";
+	const isExact = splitMethod === "exact";
+	// A custom split has to add up: to 100%, or to the amount.
+	const assigned = Math.round(
+		Array.from(participants).reduce((sum, id) => sum + (weights[id] || 0), 0) * 100
+	) / 100;
+	const target = isPercentage ? 100 : amountNum;
+	const splitOff = (isPercentage || isExact) && Math.abs(assigned - target) > 0.01;
+	const canSubmit = hasAmount && !!paidBy && participants.size > 0 && !splitOff;
+	const unit = (n: number) => (isPercentage ? `${Math.round(n * 100) / 100}%` : formatCurrency(n, currency));
 	const isEdit = title.includes("Edit");
 
 	// The button says what's still missing instead of just going grey.
@@ -178,21 +188,27 @@ export const ExpenseFormModal = ({
 		? "Choose who paid"
 		: participants.size === 0
 		? "Choose who shared it"
-		: pctOff
-		? "Make it add up to 100%"
+		: splitOff
+		? isPercentage ? "Make it add up to 100%" : "Amounts don't add up"
 		: isEdit
 		? "Save changes"
 		: "Add expense";
 
 	const handleSubmit = () => {
 		if (!canSubmit) return;
+		// Someone given nothing of an exact split didn't share it.
+		const sharing = isExact
+			? new Set(Array.from(participants).filter((id) => (weights[id] || 0) > 0))
+			: participants;
 		onSubmit(
 			amountNum,
 			paidBy,
-			participants,
+			sharing,
 			description.trim() || undefined,
 			splitMethod,
-			splitMethod === "percentage" ? percentages : undefined,
+			splitMethod === "equally"
+				? undefined
+				: Object.fromEntries(Array.from(sharing).map((id) => [id, weights[id] || 0])),
 			date ? fromDateInput(date) : undefined
 		);
 		// State is re-initialised when the modal next opens, so the closing
@@ -208,30 +224,31 @@ export const ExpenseFormModal = ({
 			next.add(personId);
 		}
 		setParticipants(next);
-		if (splitMethod === "percentage") setPercentages(equalShares(next));
+		// Percentages re-balance; exact amounts keep what's been typed.
+		if (isPercentage) setWeights(equalShares(next, 100));
 	};
 
 	const setAllParticipants = (all: boolean) => {
 		const next = all ? new Set(people.map((p) => p.id)) : new Set<string>();
 		setParticipants(next);
-		if (splitMethod === "percentage") setPercentages(equalShares(next));
+		if (isPercentage) setWeights(equalShares(next, 100));
 	};
 
-	const handlePercentageChange = (personId: string, value: number | undefined) => {
-		const next = { ...percentages };
-		if (value !== undefined && value >= 0 && value <= 100) {
+	const handleWeightChange = (personId: string, value: number | undefined) => {
+		const next = { ...weights };
+		if (value !== undefined && value >= 0 && (!isPercentage || value <= 100)) {
 			next[personId] = value;
 		} else {
 			delete next[personId];
 		}
-		setPercentages(next);
+		setWeights(next);
 	};
 
 	const shareOf = (id: string) =>
 		!hasAmount
 			? 0
-			: splitMethod === "percentage"
-			? (amountNum * (percentages[id] || 0)) / 100
+			: isPercentage
+			? (amountNum * (weights[id] || 0)) / 100
 			: participants.size > 0
 			? amountNum / participants.size
 			: 0;
@@ -323,11 +340,12 @@ export const ExpenseFormModal = ({
 						onChange={(value) => {
 							const method = value as SplitMethod;
 							setSplitMethod(method);
-							if (method === "percentage") setPercentages(equalShares(participants));
+							setWeights(startingWeights(method, participants, amountNum));
 						}}
 						data={[
 							{ value: "equally", label: "Equally" },
-							{ value: "percentage", label: "By percentage" },
+							{ value: "percentage", label: "By %" },
+							{ value: "exact", label: "By amount" },
 						]}
 					/>
 
@@ -372,29 +390,31 @@ export const ExpenseFormModal = ({
 											{person.name}
 										</span>
 									</button>
-									{selected && hasAmount && (
+									{selected && hasAmount && !isExact && (
 										<span className="shrink-0 text-sm tabular-nums text-ink-muted">
 											{formatCurrency(Math.round(shareOf(person.id) * 100) / 100, currency)}
 										</span>
 									)}
-									{selected && splitMethod === "percentage" && (
+									{selected && (isPercentage || isExact) && (
 										<NumberInput
-											aria-label={`${person.name}'s percentage`}
-											value={percentages[person.id] ?? 0}
+											aria-label={`${person.name}'s ${isPercentage ? "percentage" : "amount"}`}
+											value={weights[person.id] ?? 0}
 											onChange={(value) =>
-												handlePercentageChange(
+												handleWeightChange(
 													person.id,
 													value === "" ? undefined : parseFloat(value.toString())
 												)
 											}
 											min={0}
-											max={100}
+											max={isPercentage ? 100 : undefined}
 											decimalScale={2}
-											suffix="%"
+											{...(isPercentage ? { suffix: "%" } : { prefix: currency.symbol })}
+											thousandSeparator={isExact ? "," : undefined}
+											thousandsGroupStyle={currency.code === "INR" ? "lakh" : "thousand"}
 											hideControls
 											inputMode="decimal"
 											size="sm"
-											w={84}
+											w={isPercentage ? 84 : 108}
 											styles={{ input: { minHeight: 36, fontSize: 15, textAlign: "right" } }}
 										/>
 									)}
@@ -403,17 +423,29 @@ export const ExpenseFormModal = ({
 						})}
 					</ul>
 
-					{splitMethod === "percentage" && participants.size > 0 && (
-						<p
-							className={`mt-2 text-sm tabular-nums ${pctOff ? "text-negative" : "text-ink-muted"}`}
-							role={pctOff ? "alert" : undefined}
+					{isExact && !hasAmount && assigned > 0 ? (
+						// Typed everyone's share first? Their total is the amount.
+						<button
+							type="button"
+							onClick={() => setAmount(assigned.toString())}
+							className="mt-2 text-sm font-medium text-brand-700 hover:underline"
 						>
-							Total {Math.round(totalPct * 100) / 100}%
-							{pctOff &&
-								` — ${Math.round(Math.abs(100 - totalPct) * 100) / 100}% ${
-									totalPct < 100 ? "still to assign" : "too much"
-								}`}
-						</p>
+							Use {unit(assigned)} as the amount
+						</button>
+					) : (
+						(isPercentage || (isExact && hasAmount)) &&
+						participants.size > 0 && (
+							<p
+								className={`mt-2 text-sm tabular-nums ${splitOff ? "text-negative" : "text-ink-muted"}`}
+								role={splitOff ? "alert" : undefined}
+							>
+								{isPercentage ? `Total ${unit(assigned)}` : `${unit(assigned)} of ${unit(target)}`}
+								{splitOff &&
+									` — ${unit(Math.abs(target - assigned))} ${
+										assigned < target ? "still to assign" : "too much"
+									}`}
+							</p>
+						)
 					)}
 				</fieldset>
 

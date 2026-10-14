@@ -66,9 +66,10 @@ export const ExpenseCard = ({
 	}
 
 	const count = expense.participants.length;
-	const isPercentage = expense.splitMethod === "percentage";
-	const splitLabel = isPercentage
+	const splitLabel = expense.splitMethod === "percentage"
 		? `Split by % among ${count}`
+		: expense.splitMethod === "exact"
+		? `Split by amount among ${count}`
 		: count === 1
 		? "1 person"
 		: `${formatCurrency(expense.amount / count, currency)} each · ${count} people`;

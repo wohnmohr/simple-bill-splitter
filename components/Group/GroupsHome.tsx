@@ -4,6 +4,7 @@ import { MAX_GROUPS } from "@/constants";
 import { formatCurrency } from "@/utils/formatting";
 import { totalSpent } from "@/utils/calculations";
 import { BalanceHeadline, myBalance } from "@/components/Group/GroupSelector";
+import { InstallCard } from "@/components/Group/InstallCard";
 
 interface GroupsHomeProps {
 	groups: Group[];
@@ -96,6 +97,9 @@ export const GroupsHome = ({
 					You&apos;ve reached the {MAX_GROUPS}-group limit. Delete one to start another.
 				</p>
 			)}
+
+			{/* Worth a home-screen spot once they've actually split something. */}
+			{groups.some((g) => g.expenses.length > 0) && <InstallCard />}
 		</div>
 	);
 };

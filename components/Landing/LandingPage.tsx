@@ -9,7 +9,7 @@ import { TEMPLATES } from "@/utils/payStory";
 import { SPLIT_TTL_DAYS } from "@/utils/splitCloud";
 
 const PROMISES = [
-	{ icon: Scale, title: "Who owes whom, in seconds", body: "Split equally or by percentage, and settle in the fewest payments." },
+	{ icon: Scale, title: "Who owes whom, in seconds", body: "Split equally, by percentage or exact amounts, and settle in the fewest payments." },
 	{ icon: IndianRupee, title: "Settle in one tap on UPI", body: "GPay, PhonePe, Paytm or any UPI app, with the amount filled in." },
 	{ icon: Lock, title: "Private by design", body: "No signup. Groups stay on your device, and sharing is end-to-end encrypted." },
 ];
