@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, Download, Globe, Languages, ListChecks, Repeat, ScanLine } from "lucide-react";
+import { ArrowRight, Check, Download, Globe, Languages, Repeat, ScanLine } from "lucide-react";
 import { SiteNav } from "@/components/Landing/SiteNav";
 import { SiteFooter } from "@/components/Landing/SiteFooter";
 import { TallyForm } from "@/components/UI/TallyForm";
@@ -9,13 +9,12 @@ import { LATER, NEXT, REQUEST_FORM_ID, SHIPPED, type PlannedItem, type RoadmapIc
 export const metadata: Metadata = {
 	title: "Roadmap | What SplitBiller is building next",
 	description:
-		"What's coming to SplitBiller: recurring expenses, splitting a bill by item, scanning bills and more. See what just shipped and request a feature.",
+		"What's coming to SplitBiller: recurring expenses, scanning paper restaurant bills, exporting a group and more. See what just shipped and request a feature.",
 	alternates: { canonical: "/roadmap" },
 };
 
 const ICONS: Record<RoadmapIcon, typeof Repeat> = {
 	repeat: Repeat,
-	list: ListChecks,
 	scan: ScanLine,
 	globe: Globe,
 	download: Download,

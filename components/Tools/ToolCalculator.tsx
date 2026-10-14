@@ -17,6 +17,7 @@ import { NamePickerWheel } from "@/components/Tools/calculators/NamePickerWheel"
 import { TeamGenerator } from "@/components/Tools/calculators/TeamGenerator";
 import { GstCalculator } from "@/components/Tools/calculators/GstCalculator";
 import { DiscountCalculator } from "@/components/Tools/calculators/DiscountCalculator";
+import { OrderSplitCalculator } from "@/components/Tools/calculators/OrderSplitCalculator";
 
 export const ToolCalculator = ({ kind }: { kind: CalculatorKind }) => {
 	switch (kind) {
@@ -60,6 +61,8 @@ export const ToolCalculator = ({ kind }: { kind: CalculatorKind }) => {
 			return <GstCalculator />;
 		case "discount":
 			return <DiscountCalculator />;
+		case "order":
+			return <OrderSplitCalculator />;
 		default:
 			return <RestaurantCalculator />;
 	}

@@ -13,6 +13,12 @@ const nextConfig = {
 	async headers() {
 		return [
 			{
+				// The on-device OCR engine and model (copied in at build): large, and only
+				// change with a tesseract.js upgrade.
+				source: "/ocr/:path*",
+				headers: [{ key: "Cache-Control", value: "public, max-age=2592000, stale-while-revalidate=2592000" }],
+			},
+			{
 				// The promo poster rarely changes; let browsers and CDNs keep it for a week.
 				source: "/promo/:path*",
 				headers: [{ key: "Cache-Control", value: "public, max-age=604800" }],

@@ -212,7 +212,6 @@ export const UpiCalculator = () => {
 				expenses={expenses}
 				currency={INR}
 				extra={upiExtra}
-				ctaLabel="Open SplitBiller (₹)"
 				tool="upi-bill-splitter"
 			/>
 		</div>
