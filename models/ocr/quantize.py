@@ -3,8 +3,11 @@ Rebuilds the order scanner's models in this folder from the published
 PaddleOCR PP-OCRv4 ONNX models. See README.md for why these settings.
 
     python3 -m venv /tmp/q && /tmp/q/bin/pip install onnxruntime==1.31.0 onnx==1.23.2
-    npm pack @gutenye/ocr-models@1.4.2 && tar xzf gutenye-ocr-models-1.4.2.tgz
-    /tmp/q/bin/python models/ocr/quantize.py package/assets
+    (cd /tmp && npm pack @gutenye/ocr-models@1.4.2 && tar xzf gutenye-ocr-models-1.4.2.tgz)
+    /tmp/q/bin/python models/ocr/quantize.py /tmp/package/assets
+    (cd models/ocr && sha256sum -c SHA256SUMS)
+
+Tested with Python 3.13; the output is byte-identical to the committed models.
 """
 import shutil
 import sys
