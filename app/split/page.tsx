@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageFrame } from "@/components/PayStory/PageFrame";
 import { TemplateGrid } from "@/components/PayStory/TemplateGrid";
+import { BillLinkPromo } from "@/components/PayStory/BillLinkPromo";
 
 const title = "Split Anything and Share One UPI Link";
 const description =
@@ -35,7 +36,8 @@ export default function SplitHubPage() {
 					encrypted: the key stays in your link, so not even SplitBiller can read it. Splits are deleted automatically after
 					30 days.
 				</p>
-				<div className="mt-8">
+				<BillLinkPromo location="split_hub" className="mt-8" />
+				<div className="mt-6">
 					<TemplateGrid />
 				</div>
 			</div>
