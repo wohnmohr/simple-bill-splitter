@@ -34,7 +34,8 @@ const Chip = ({ on, onClick, children }: { on: boolean; onClick: () => void; chi
 
 /**
  * Review a scanned (or typed) order and say who had what: each item starts
- * as shared by everyone; tap names to give it to just those people.
+ * as shared by everyone; tap names to give it to just those people. With no
+ * people, it's just the bill (friends pick their own items later).
  */
 export const OrderSplit = ({ draft, onChange, people, currency, hideShares }: Props) => {
 	const ids = people.map((p) => p.id);
@@ -57,9 +58,9 @@ export const OrderSplit = ({ draft, onChange, people, currency, hideShares }: Pr
 			<section aria-labelledby="order-items">
 				<div className="mb-2 flex items-baseline justify-between gap-3">
 					<h3 id="order-items" className="text-[13px] font-semibold text-ink-soft">
-						Who had what?
+						{people.length ? "Who had what?" : "What’s on the bill?"}
 					</h3>
-					<span className="text-xs text-ink-muted">Tap names to give an item to just them</span>
+					{people.length > 0 && <span className="text-xs text-ink-muted">Tap names to give an item to just them</span>}
 				</div>
 				<ul className="divide-y divide-line rounded-xl border border-line">
 					{draft.items.map((item, n) => (
@@ -81,17 +82,19 @@ export const OrderSplit = ({ draft, onChange, people, currency, hideShares }: Pr
 									<X className="h-4 w-4" />
 								</button>
 							</div>
-							<div className="flex items-start gap-2">
-								<div className="flex flex-1 flex-wrap gap-1.5" role="group" aria-label={`Who had ${item.name || `item ${n + 1}`}`}>
-									<Chip on={item.people.length === 0} onClick={() => setItem(item.key, { people: [] })}>
-										Everyone
-									</Chip>
-									{people.map((p) => (
-										<Chip key={p.id} on={item.people.includes(p.id)} onClick={() => toggle(item.key, p.id)}>
-											{p.name}
+							<div className="flex items-start justify-end gap-2">
+								{people.length > 0 && (
+									<div className="flex flex-1 flex-wrap gap-1.5" role="group" aria-label={`Who had ${item.name || `item ${n + 1}`}`}>
+										<Chip on={item.people.length === 0} onClick={() => setItem(item.key, { people: [] })}>
+											Everyone
 										</Chip>
-									))}
-								</div>
+										{people.map((p) => (
+											<Chip key={p.id} on={item.people.includes(p.id)} onClick={() => toggle(item.key, p.id)}>
+												{p.name}
+											</Chip>
+										))}
+									</div>
+								)}
 								<input
 									className={`${field} w-24 shrink-0 text-right tabular-nums`}
 									inputMode="decimal"

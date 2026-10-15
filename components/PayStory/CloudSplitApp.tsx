@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
 import type { PayRequest } from "@/utils/payStory";
-import { SPLIT_TTL_DAYS, addCloudPayment, loadCloudSplit } from "@/utils/splitCloud";
+import { SPLIT_TTL_DAYS, addCloudEntry, loadCloudSplit, type CloudEntry } from "@/utils/splitCloud";
+import { ClaimView } from "./ClaimView";
 import { SplitViewKeyed as SplitView } from "./views";
 
 // Live while someone is looking; quieter when idle; silent when away. Keeps reads cheap.
@@ -83,27 +84,32 @@ export const CloudSplitApp = ({ id }: { id: string }) => {
 		};
 	}, [refresh]);
 
-	const record = useCallback(
-		async (next: PayRequest) => {
-			if (state.status !== "ok") return;
-			const payment = next.paid[next.paid.length - 1];
+	/** Shows `next` straight away and saves the entry that produced it; rolls back if the save fails. */
+	const append = useCallback(
+		async (next: PayRequest, entry: CloudEntry) => {
+			if (state.status !== "ok") return false;
 			const before = state.req;
 			setSaveError("");
 			setState({ status: "ok", req: next, expiresAt: state.expiresAt });
 			pending.current++;
+			let saved = true;
 			try {
-				await addCloudPayment(id, key.current, payment);
+				await addCloudEntry(id, key.current, entry);
 			} catch {
+				saved = false;
 				setState({ status: "ok", req: before, expiresAt: state.expiresAt });
-				setSaveError("Couldn’t save that payment mark. Check your connection and try again.");
+				setSaveError(`Couldn’t save that ${entry.kind === "claim" ? "pick" : "payment mark"}. Check your connection and try again.`);
 			} finally {
 				pending.current--;
 			}
 			version.current = undefined;
 			refresh();
+			return saved;
 		},
 		[id, state, refresh]
 	);
+
+	const record = useCallback((next: PayRequest) => append(next, { kind: "payment", data: next.paid[next.paid.length - 1] }), [append]);
 
 	if (state.status === "loading") {
 		return <div className="flex min-h-[60vh] items-center justify-center text-ink-muted" aria-live="polite">🔒 Decrypting split…</div>;
@@ -121,7 +127,11 @@ export const CloudSplitApp = ({ id }: { id: string }) => {
 	return (
 		<>
 			{saveError && <p role="alert" className="bg-negative-soft px-4 py-3 text-center text-sm font-semibold text-negative">{saveError}</p>}
-			<SplitView req={state.req} onChange={record} expiresAt={state.expiresAt} shareUrl={typeof window === "undefined" ? undefined : window.location.href} />
+			{state.req.items ? (
+				<ClaimView id={id} req={state.req} append={append} expiresAt={state.expiresAt} />
+			) : (
+				<SplitView req={state.req} onChange={record} expiresAt={state.expiresAt} shareUrl={typeof window === "undefined" ? undefined : window.location.href} />
+			)}
 		</>
 	);
 };

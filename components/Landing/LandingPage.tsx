@@ -4,6 +4,7 @@ import { StickyCta } from "@/components/Landing/StickyCta";
 import { SiteNav } from "@/components/Landing/SiteNav";
 import { SiteFooter } from "@/components/Landing/SiteFooter";
 import { PromoVideo } from "@/components/Landing/PromoVideo";
+import { BillLinkPromo } from "@/components/PayStory/BillLinkPromo";
 import { ALL_TOOL_SLUGS } from "@/content/tools";
 import { TEMPLATES } from "@/utils/payStory";
 import { SPLIT_TTL_DAYS } from "@/utils/splitCloud";
@@ -155,6 +156,7 @@ export const LandingPage = () => {
 								</li>
 							))}
 						</ul>
+						<BillLinkPromo location="hero_bill_link" className="mx-auto mt-8 max-w-xl lg:mx-0" />
 					</div>
 					<SettlementPreview />
 				</div>

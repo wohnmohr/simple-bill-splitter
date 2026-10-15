@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ArrowRight } from "lucide-react";
 import type { Expense } from "@/types";
 import { parseOrderText } from "@/utils/orderBill";
 import { OrderSplit } from "@/components/Scan/OrderSplit";
 import { ScanOrderButton } from "@/components/Scan/ScanOrderButton";
 import { useOrderScan } from "@/components/Scan/useOrderScan";
-import { draftFromOrder, draftShares, draftTotals, emptyDraft, type DraftOrder } from "@/components/Scan/draft";
+import { BILL_DRAFT_KEY, draftFromOrder, draftShares, draftTotals, emptyDraft, type DraftOrder } from "@/components/Scan/draft";
 import { CalculatorResult, fieldClass, labelClass, makePeople, useDefaultCurrency, useEngaged } from "./shared";
 
 const TOOL = "split-swiggy-zomato-bill";
@@ -192,6 +193,22 @@ export const OrderSplitCalculator = () => {
 
 			<div className="min-w-0 lg:sticky lg:top-20">
 				<CalculatorResult title={draft.title || "Food order"} people={people} expenses={expenses} currency={currency} tool={TOOL} />
+				{/* Hand this bill to "tap what you ate", so friends pick their own items. */}
+				<button
+					type="button"
+					onClick={() => {
+						try {
+							sessionStorage.setItem(BILL_DRAFT_KEY, JSON.stringify(draft));
+						} catch {
+							/* storage blocked: they'll scan again there */
+						}
+						window.location.assign("/split/by-item");
+					}}
+					className="mt-3 flex w-full items-center justify-between gap-3 rounded-xl border border-brand-100 bg-brand-50 px-4 py-3 text-left text-sm font-semibold text-brand-900 hover:bg-brand-100"
+				>
+					Send friends a link to tick what they ate
+					<ArrowRight className="h-4 w-4 shrink-0" />
+				</button>
 			</div>
 		</div>
 	);
