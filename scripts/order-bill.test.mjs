@@ -109,6 +109,45 @@ test("Nothing order-like reads as an empty, unbalanced order", () => {
 	assert.equal(o.balanced, false);
 });
 
+// Paper bills, as OCR reads photos of them (found by scanning receipts
+// published in open-source receipt projects).
+test("Paper bill: date and bill number aren't items; a plain TOTAL is the total", () => {
+	const o = parseOrderText(
+		["CORNER CAFE", "Shop 3, Linking Road, Mumbai", "Bill No: CC-7781   Date: 02/10/2026", "Masala Chai x2   120.00", "Veg Sandwich x1   180.00", "Cold Coffee x1   200.00",
+			"Sub Total   500.00", "CGST 2.5%   12.50", "SGST 2.5%   12.50", "TOTAL   Rs. 525.00", "Thank you! Visit again"].join("\n")
+	);
+	assert.equal(o.title, "CORNER CAFE");
+	assert.deepEqual(o.items.map((i) => [i.qty, i.name, i.amount]), [[2, "Masala Chai", 120], [1, "Veg Sandwich", 180], [1, "Cold Coffee", 200]]);
+	assert.deepEqual(amounts(o.charges), [12.5, 12.5]);
+	assert.equal(o.total, 525);
+	assert.equal(o.balanced, true);
+});
+
+test("Paper bill: a misread Sub Total, a price on its own line, a PIN code, payment lines", () => {
+	const o = parseOrderText(
+		["Anna Mess", "12 Gandhi Road, Chennai 600042", "Ph 044 2345 6789  09:41", "Meals   150.00", "Filter Coffee Large", "₹40.00",
+			"b Total 3    190.00", "GST 5%   9.50", "Total   199.50", "Credit Card   199.50", "Change   0.00"].join("\n")
+	);
+	assert.deepEqual(o.items.map((i) => [i.name, i.amount]), [["Meals", 150], ["Filter Coffee Large", 40]]);
+	assert.equal(o.itemTotal, 190);
+	assert.deepEqual(amounts(o.charges), [9.5]);
+	assert.equal(o.total, 199.5);
+	assert.equal(o.balanced, true);
+});
+
+test("A stray number is left out when that is what makes the bill add up", () => {
+	const o = parseOrderText(["Madison, WI 53703", "Pasta   $16.45", "Salad   $9.45", "Subtotal   $25.90", "Total   $25.90"].join("\n"));
+	assert.deepEqual(amounts(o.items), [16.45, 9.45]);
+	assert.equal(o.balanced, true);
+});
+
+test("No total on the bill: amounts as read, but not called balanced; coffee is not a fee", () => {
+	const o = parseOrderText(["Dosa   ₹120", "Filter Coffee   ₹40", "Grain Bowl   ₹220", "Princess Cake   ₹90"].join("\n"));
+	assert.equal(o.charges.length, 0);
+	assert.deepEqual(amounts(o.items), [120, 40, 220, 90]);
+	assert.equal(o.balanced, false);
+});
+
 test("splitOrder: items to who had them, extras in proportion, exact to the paisa", () => {
 	const shares = splitOrder(
 		[
