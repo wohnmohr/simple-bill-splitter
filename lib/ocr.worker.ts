@@ -24,24 +24,39 @@ ort.env.wasm.numThreads = self.crossOriginIsolated ? Math.min(4, navigator.hardw
 let engine: Promise<PaddleEngine> | null = null;
 
 /**
- * Downloads files together, reporting real bytes against exact sizes from
- * the build's manifest. Includes the engine itself, so nothing loads unseen.
+ * Downloads files together, reporting real bytes against each file's size.
+ * Includes the engine itself, so nothing loads unseen.
  */
 async function downloadAll(names: string[], onProgress: (p: OcrProgress) => void): Promise<Uint8Array[]> {
-	const sizes: Record<string, number> = await fetch(BASE + "manifest.json").then((r) => r.json());
-	const total = names.reduce((n, name) => n + (sizes[name] ?? 0), 0);
-	let done = 0;
-	onProgress({ stage: "download", done, total });
+	// The manifest isn't versioned like the files, so it's revalidated; if it's
+	// missing or stale, a file's own Content-Length stands in for its size. Only
+	// the bar depends on it: a scan never fails over a manifest.
+	const manifest: Record<string, number> = await fetch(BASE + "manifest.json", { cache: "no-cache" })
+		.then((r) => (r.ok ? r.json() : {}))
+		.catch(() => ({}));
+	const sizes = names.map((name) => manifest[name] ?? 0);
+	const got = names.map(() => 0);
+	const report = () => {
+		let done = 0, total = 0;
+		for (let i = 0; i < names.length; i++) {
+			done += got[i];
+			total += Math.max(sizes[i], got[i]);
+		}
+		onProgress({ stage: "download", done, total });
+	};
+	report();
 	return Promise.all(
-		names.map(async (name) => {
+		names.map(async (name, i) => {
 			const res = await fetch(BASE + name);
 			if (!res.ok || !res.body) throw new Error(`Couldn't load ${name} (${res.status})`);
+			// A compressed response's Content-Length counts the wrong bytes.
+			if (!sizes[i] && !res.headers.get("content-encoding")) sizes[i] = Number(res.headers.get("content-length")) || 0;
 			const parts: Uint8Array[] = [];
 			const reader = res.body.getReader();
 			for (let r = await reader.read(); !r.done; r = await reader.read()) {
 				parts.push(r.value);
-				done += r.value.length;
-				onProgress({ stage: "download", done, total: Math.max(total, done) });
+				got[i] += r.value.length;
+				report();
 			}
 			const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
 			let at = 0;
