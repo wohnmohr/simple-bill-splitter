@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "@mantine/hooks";
 import { ChevronLeft, Link2, Plus, UserPlus } from "lucide-react";
-import { Tab, Currency, Expense, Settlement } from "@/types";
+import { Tab, Currency, Expense, Group, Settlement } from "@/types";
 import { DEFAULT_CURRENCY } from "@/constants";
 import { calculateBalances, calculateSettlements, splitWeights } from "@/utils/calculations";
 import { useGroups } from "@/hooks/useGroups";
@@ -37,6 +37,12 @@ import { collectFeedbackContext } from "@/lib/feedbackContext";
 import { formatCurrency } from "@/utils/formatting";
 import { track } from "@/lib/analytics";
 import { consumeOpenOnSettleUp } from "@/utils/shareImport";
+import { parseQuickAdd, resolveQuickAdd, type QuickResolved } from "@/utils/quickAdd";
+import { applyQuickAdd } from "@/utils/quickAddSave";
+import { QuickAddBox } from "@/components/QuickAdd/QuickAddBox";
+import { QuickAddPreview } from "@/components/QuickAdd/QuickAddPreview";
+
+const NEW_GROUP_EXAMPLE = "Goa trip: Asha 5000 hotel, Ben 1200 fuel, everyone equal";
 
 export default function Home() {
 	const router = useRouter();
@@ -53,6 +59,10 @@ export default function Home() {
 	const [showTheme, setShowTheme] = useState(false);
 	/** "pick": who are you? "invite": the same, then share the group. */
 	const [identityAsk, setIdentityAsk] = useState<"pick" | "invite" | null>(null);
+	/** A typed sentence being checked before it is saved, as a new group or into the open one. */
+	const [quickAdd, setQuickAdd] = useState<{ quick: QuickResolved; newGroup: boolean } | null>(null);
+	/** Bumped on every save, so the boxes start empty again. */
+	const [quickAddSaves, setQuickAddSaves] = useState(0);
 	const [viewingExpenseId, setViewingExpenseId] = useState<string | null>(null);
 	const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 	const [editExpenseData, setEditExpenseData] = useState<{
@@ -157,6 +167,30 @@ export default function Home() {
 			repeats: Boolean(repeatMonthly),
 		});
 		setShowExpenseForm(false);
+	};
+
+	// Quick add reads the sentence on this device; analytics get counts only, never what was typed.
+	const handleQuickAdd = (text: string, newGroup: boolean) => {
+		const group = newGroup ? undefined : currentGroup;
+		const members = group ? shownMembers(group) : [];
+		const quick = resolveQuickAdd(parseQuickAdd(text, members.map((m) => m.name)), members, group?.meId);
+		if (!quick.expenses.length) return;
+		track("quick_add_previewed", {
+			expense_count: quick.expenses.length,
+			unsure_count: quick.expenses.reduce((n, e) => n + e.unsure.length, 0),
+			new_group: newGroup,
+		});
+		setQuickAdd({ quick, newGroup });
+	};
+
+	const handleSaveQuickAdd = (quick: QuickResolved, groupName: string, edited: boolean) => {
+		if (!quickAdd) return;
+		const fill = (g: Group) => applyQuickAdd(g, quick);
+		if (quickAdd.newGroup) createGroup(groupName, DEFAULT_CURRENCY, fill);
+		else if (currentGroup) setGroups((prev) => prev.map((g) => (g.id === currentGroup.id ? fill(g) : g)));
+		track("quick_add_saved", { expense_count: quick.expenses.length, edited, new_group: quickAdd.newGroup });
+		setQuickAdd(null);
+		setQuickAddSaves((n) => n + 1);
 	};
 
 	const handleAddMember = (memberName: string, upiId?: string) => {
@@ -323,13 +357,17 @@ export default function Home() {
 				/>
 
 				{groups.length === 0 ? (
-					<EmptyGroupState onCreateGroup={() => setShowGroupForm(true)} />
+					<EmptyGroupState
+						onCreateGroup={() => setShowGroupForm(true)}
+						quickAdd={<QuickAddBox key={quickAddSaves} label="Describe a shared expense" placeholder={NEW_GROUP_EXAMPLE} onSubmit={(t) => handleQuickAdd(t, true)} />}
+					/>
 				) : selectedGroupId === null ? (
 					<GroupsHome
 						groups={groups}
 						onSelectGroup={setSelectedGroupId}
 						onDeleteGroup={handleDeleteGroup}
 						onCreateGroup={() => setShowGroupForm(true)}
+						quickAdd={<QuickAddBox key={quickAddSaves} label="Start a group by describing an expense" placeholder={NEW_GROUP_EXAMPLE} onSubmit={(t) => handleQuickAdd(t, true)} />}
 					/>
 				) : (
 					<>
@@ -400,6 +438,15 @@ export default function Home() {
 											aria-labelledby={`tab-${shownTab}`}
 										>
 										{shownTab === "transactions" && (
+											<>
+											<div className="mb-3">
+												<QuickAddBox
+													key={quickAddSaves}
+													label="Add an expense by typing it"
+													placeholder="Dinner 2400 split with everyone"
+													onSubmit={(t) => handleQuickAdd(t, false)}
+												/>
+											</div>
 											<ExpenseList
 												expenses={expenses}
 												people={people}
@@ -408,6 +455,7 @@ export default function Home() {
 												onExpenseEdit={handleStartEditExpense}
 												onExpenseDelete={handleDeleteExpense}
 											/>
+											</>
 										)}
 
 										{shownTab === "balances" && (
@@ -575,6 +623,16 @@ export default function Home() {
 					currency={currency}
 					defaultPayerId={defaultPayerId}
 				/>
+
+				{quickAdd && (
+					<QuickAddPreview
+						quick={quickAdd.quick}
+						newGroup={quickAdd.newGroup}
+						currency={quickAdd.newGroup ? DEFAULT_CURRENCY : currency}
+						onConfirm={handleSaveQuickAdd}
+						onClose={() => setQuickAdd(null)}
+					/>
+				)}
 
 				<ExpenseViewModal
 					isOpen={!!viewingExpenseId}
