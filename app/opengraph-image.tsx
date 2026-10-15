@@ -1,86 +1,57 @@
-import { ImageResponse } from "next/og";
-import { readFile } from "fs/promises";
-import { join } from "path";
+import { C, OG_SIZE, PayButton, Surface, ogCard } from "@/lib/ogCard";
 
 export const runtime = "nodejs";
 
-export const alt = "SplitBiller — Split Expenses Instantly, No Login, No App";
-export const size = { width: 1200, height: 630 };
+export const alt = "SplitBiller: split bills in rupees and settle with UPI. No signup, no app.";
+export const size = OG_SIZE;
 export const contentType = "image/png";
 
-export default async function OpengraphImage() {
-	const logoData = await readFile(join(process.cwd(), "public/logo.png"));
-	const logoSrc = `data:image/png;base64,${logoData.toString("base64")}`;
+const Arrow = () => (
+	<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.inkMuted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+		<path d="M5 12h14M13 6l6 6-6 6" />
+	</svg>
+);
 
-	return new ImageResponse(
-		(
-			<div
-				style={{
-					width: "100%",
-					height: "100%",
-					display: "flex",
-					flexDirection: "column",
-					alignItems: "center",
-					justifyContent: "center",
-					backgroundImage:
-						"linear-gradient(135deg, #eef2ff 0%, #faf5ff 50%, #fdf2f8 100%)",
-					fontFamily: "sans-serif",
-					padding: "64px",
-				}}
-			>
-				{/* eslint-disable-next-line @next/next/no-img-element */}
-				<img src={logoSrc} alt="SplitBiller" width={160} height={160} />
-				<div
-					style={{
-						display: "flex",
-						fontSize: 96,
-						fontWeight: 800,
-						color: "#4f46e5",
-						marginTop: 8,
-						letterSpacing: "-2px",
-					}}
-				>
-					SplitBiller
-				</div>
-				<div
-					style={{
-						display: "flex",
-						fontSize: 44,
-						fontWeight: 700,
-						color: "#1f2937",
-						marginTop: 8,
-						textAlign: "center",
-					}}
-				>
-					Split Expenses Instantly
-				</div>
-				<div
-					style={{
-						display: "flex",
-						gap: 16,
-						marginTop: 40,
-					}}
-				>
-					{["Free forever", "No sign-up", "Works on any device"].map((t) => (
-						<div
-							key={t}
-							style={{
-								display: "flex",
-								fontSize: 30,
-								fontWeight: 600,
-								color: "#4f46e5",
-								background: "#ffffff",
-								border: "2px solid #c7d2fe",
-								borderRadius: 9999,
-								padding: "12px 28px",
-							}}
-						>
-							{t}
-						</div>
-					))}
-				</div>
+const Row = ({ from, to, amount, pay }: { from: string; to: string; amount: string; pay?: boolean }) => (
+	<div style={{ display: "flex", flexDirection: "column", marginTop: 16, padding: "18px 20px", border: `2px solid ${C.line}`, borderRadius: 18 }}>
+		<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 26, fontWeight: 600 }}>
+			<div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+				{from}
+				<Arrow />
+				{to}
 			</div>
+			<span style={{ fontFamily: "Fraunces" }}>{amount}</span>
+		</div>
+		{pay && (
+			<PayButton>
+				<span>Pay</span>
+				<span style={{ fontFamily: "Fraunces" }}>{amount}</span>
+				<span>with UPI</span>
+			</PayButton>
+		)}
+	</div>
+);
+
+/** The site's preview: the hero line beside the settle-up screen it leads to (as on the landing page). */
+export default function OpengraphImage() {
+	return ogCard({
+		title: "Split bills in ₹, settle with UPI",
+		sub: "Who owes whom in seconds. No signup, no app download.",
+		visual: (
+			<Surface>
+				<div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+					<div style={{ display: "flex", flexDirection: "column" }}>
+						<span style={{ fontFamily: "Fraunces", fontSize: 34 }}>Goa trip</span>
+						<span style={{ fontSize: 22, color: C.inkMuted, marginTop: 4 }}>4 members · 11 expenses</span>
+					</div>
+					<div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+						<span style={{ fontSize: 18, fontWeight: 600, letterSpacing: "1.5px", color: C.inkMuted }}>TOTAL</span>
+						<span style={{ fontFamily: "Fraunces", fontSize: 28, marginTop: 2 }}>₹38,460</span>
+					</div>
+				</div>
+				<Row from="Rohan" to="Priya" amount="₹6,215" pay />
+				<Row from="Aisha" to="Priya" amount="₹2,940" />
+			</Surface>
 		),
-		{ ...size }
-	);
+	});
 }

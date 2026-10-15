@@ -12,11 +12,6 @@ export type ShippedItem = { title: string; href: string };
 /** Being designed or built now. */
 export const NEXT: PlannedItem[] = [
 	{
-		icon: "repeat",
-		title: "Recurring expenses",
-		body: "Rent, Wi-Fi and subscriptions that come round every month, added to the group for you.",
-	},
-	{
 		icon: "scan",
 		title: "Scan paper restaurant bills",
 		body: "Take a photo of a printed bill at the table and SplitBiller fills in the items, the way it reads app screenshots today.",
@@ -47,6 +42,8 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "Monthly expenses for rent, Wi-Fi and subscriptions", href: "/features#expenses" },
+			{ title: "Payment reminders that open the group on what you owe", href: "/features#sync" },
 			{ title: "Scan Swiggy, Zomato and Instamart screenshots (beta)", href: "/split-swiggy-zomato-bill" },
 			{ title: "Split a bill item by item", href: "/split-swiggy-zomato-bill" },
 			{ title: "Split by exact amounts", href: "/features#expenses" },

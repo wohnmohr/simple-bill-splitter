@@ -1,5 +1,6 @@
 import { Expense, Group, SplitMethod } from "@/types";
 import { newId } from "@/utils/ids";
+import { firstRepeat } from "@/utils/recurring";
 
 /** A custom split is stored in the field its method reads: percentages or exact amounts. */
 const splitFields = (splitMethod: SplitMethod, weights?: Record<string, number>) => ({
@@ -20,7 +21,8 @@ export const useExpenses = (
     description?: string,
     splitMethod: SplitMethod = "equally",
     weights?: Record<string, number>,
-    date?: number
+    date?: number,
+    repeatMonthly = false
   ): boolean => {
     if (amount <= 0 || !paidBy || participants.size === 0 || !currentGroup) {
       return false;
@@ -35,6 +37,8 @@ export const useExpenses = (
       description,
       ...splitFields(splitMethod, weights),
       createdAt: date ?? Date.now(),
+      // The first copy is next month's, even for a back-dated expense.
+      ...(repeatMonthly ? { repeat: { next: firstRepeat(Date.now()) } } : {}),
     };
 
     const updatedGroups = groups.map((g) =>
@@ -55,11 +59,15 @@ export const useExpenses = (
     description?: string,
     splitMethod: SplitMethod = "equally",
     weights?: Record<string, number>,
-    date?: number
+    date?: number,
+    repeatMonthly = false
   ): boolean => {
     if (amount <= 0 || !paidBy || participants.size === 0 || !currentGroup) {
       return false;
     }
+
+    // Keeps its place in the schedule if it already repeated; otherwise the first copy is next month's.
+    const repeatFor = (e: Expense) => (repeatMonthly ? { repeat: e.repeat ?? { next: firstRepeat(Date.now()) } } : {});
 
     const updatedGroups = groups.map((g) =>
       g.id === currentGroup.id
@@ -75,6 +83,7 @@ export const useExpenses = (
                 participants: Array.from(participants),
                 description,
                 ...splitFields(splitMethod, weights),
+                ...repeatFor(e),
               }
               : e
           ),

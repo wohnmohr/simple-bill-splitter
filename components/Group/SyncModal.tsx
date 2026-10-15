@@ -8,6 +8,7 @@ import type { SyncStatus } from "@/utils/groupSync";
 import { groupUrl, syncShareText } from "@/utils/groupSync";
 import { deriveGroupKeys } from "@/utils/groupVault";
 import { track } from "@/lib/analytics";
+import { sendViaWhatsApp } from "@/utils/whatsapp";
 
 const MIN_PASSPHRASE = 6;
 
@@ -138,7 +139,12 @@ export const SyncModal = ({ isOpen, onClose, group, status, expiresAt, onEnable,
 
 	const share = async (method: "native" | "copy" | "whatsapp") => {
 		const text = syncShareText(group, url) + (sync?.pass ? " (I'll tell you the passphrase.)" : "");
-		if (method === "whatsapp") window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+		if (method === "whatsapp") {
+			if ((await sendViaWhatsApp(text)) === "copied") {
+				setCopied(true);
+				setTimeout(() => setCopied(false), 2000);
+			}
+		}
 		else if (method === "native" && navigator.share) {
 			try {
 				await navigator.share({ title: group.name, text, url });

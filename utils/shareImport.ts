@@ -47,6 +47,27 @@ export function importShareSnapshot(snapshot: ShareSnapshot, meId?: string): Imp
 	return { ok: true, groupId: group.id };
 }
 
+const SETTLE_KEY = "splitbiller-open-settle";
+
+/** Has the dashboard open the next group on its settle-up tab (a payment reminder was tapped). */
+export function openOnSettleUp(): void {
+	try {
+		window.sessionStorage.setItem(SETTLE_KEY, "1");
+	} catch {
+		/* it opens on the expenses tab instead */
+	}
+}
+
+export function consumeOpenOnSettleUp(): boolean {
+	try {
+		const yes = window.sessionStorage.getItem(SETTLE_KEY) !== null;
+		window.sessionStorage.removeItem(SETTLE_KEY);
+		return yes;
+	} catch {
+		return false;
+	}
+}
+
 export function consumePendingGroupSelection(): string | null {
 	if (typeof window === "undefined") return null;
 	const id = window.sessionStorage.getItem("splitbiller-select-group");
