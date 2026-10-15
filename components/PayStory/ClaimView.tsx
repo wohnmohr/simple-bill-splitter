@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Share2, Users } from "lucide-react";
+import { Check, Share2 } from "lucide-react";
 import { UpiQr, useCanOpenUpiApps } from "@/components/Settlements/UpiQr";
 import { track } from "@/lib/analytics";
 import { personKey, tally } from "@/utils/billClaims";
 import { billToGroup } from "@/utils/billGroup";
+import { SaveAsGroupCard } from "./SaveAsGroupCard";
 import type { PayRequest } from "@/utils/payStory";
 import type { CloudEntry } from "@/utils/splitCloud";
 import { isOrganiser } from "@/utils/splitOrganiser";
-import { IMPORT_LIMIT_MESSAGE, importShareSnapshot } from "@/utils/shareImport";
 import { buildUpiLink } from "@/utils/upi";
 
 const inr = (n: number) => `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
@@ -121,16 +121,6 @@ export const ClaimView = ({ id, req, append, expiresAt }: Props) => {
 		} catch {
 			/* clipboard blocked */
 		}
-	};
-
-	const [groupError, setGroupError] = useState("");
-	/** Carries the table into the app as a group (on this device), and opens it there. */
-	const saveAsGroup = () => {
-		const { snapshot, meId } = billToGroup(req, board);
-		const result = importShareSnapshot(snapshot, meId);
-		if (!result.ok) return setGroupError(result.reason === "limit" ? IMPORT_LIMIT_MESSAGE : "Nobody has picked items yet.");
-		track("bill_saved_as_group", { members: snapshot.members.length, payments: snapshot.expenses.length - 1, done: board.done });
-		window.location.assign("/dashboard");
 	};
 
 	const progress = Math.min(board.collected / req.target, 1);
@@ -266,19 +256,17 @@ export const ClaimView = ({ id, req, append, expiresAt }: Props) => {
 			)}
 
 			{organiser && friends.length > 0 && (
-				<section aria-labelledby="bill-group" className="mt-6 rounded-xl border border-brand-100 bg-brand-50 p-4">
-					<h2 id="bill-group" className="flex items-center gap-2 font-semibold text-ink">
-						<Users className="h-4 w-4 text-brand-700" /> Keep splitting with this table
-					</h2>
-					<p className="mt-1 text-sm text-ink-soft">
-						Save it as a group: everyone here becomes a member, with this bill and who’s paid already in it. Turn on sync there to share
-						the group, and the next bill takes seconds.
-					</p>
-					<button type="button" onClick={saveAsGroup} className="btn-secondary mt-3 w-full !justify-center">
-						Save as a group
-					</button>
-					{groupError && <p role="alert" className="mt-2 text-sm text-negative">{groupError}</p>}
-				</section>
+				<div className="mt-6">
+					<SaveAsGroupCard
+						heading="Keep splitting with this table"
+						body="Save it as a group: everyone here becomes a member, with this bill and who’s paid already in it. Share the group from there, and the next bill takes seconds."
+						toGroup={() => billToGroup(req, board)}
+						emptyMessage="Nobody has picked items yet."
+						onSaved={(snapshot) =>
+							track("bill_saved_as_group", { members: snapshot.members.length, payments: snapshot.expenses.length - 1, done: board.done })
+						}
+					/>
+				</div>
 			)}
 
 			<p className="mt-6 text-xs text-ink-muted">

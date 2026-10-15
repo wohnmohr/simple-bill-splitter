@@ -147,29 +147,33 @@ export const CalculatorResult = ({
 
 			{extra}
 
-			<ShareSettlementActions
-				name={title}
-				people={people}
-				expenses={expenses}
-				currency={currency}
-				primary
-				source={`tool:${tool}`}
-			/>
-
-			<div className="border-t border-line pt-4">
-				<button type="button" onClick={saveAsGroup} disabled={saved} className="btn-secondary w-full !justify-center !py-3">
+			{/* The result is the start of a group, not the end of the tool. */}
+			<div className="rounded-xl border border-brand-100 bg-brand-50 p-4">
+				<p className="font-semibold text-ink">Keep it as a group</p>
+				<p className="mt-0.5 text-sm text-ink-soft">
+					Opens in SplitBiller with all of this filled in. Invite everyone with one link: they pay by UPI and add the next
+					expense themselves. No signup.
+				</p>
+				<button type="button" onClick={saveAsGroup} disabled={saved} className="btn-primary mt-3 w-full !justify-center !py-3">
 					<FolderPlus className="h-4 w-4" />
 					{ctaLabel}
 				</button>
-				{saveError ? (
+				{saveError && (
 					<p className="mt-2 text-center text-sm text-negative" role="alert">
 						{saveError}
 					</p>
-				) : (
-					<p className="mt-2 text-center text-xs text-ink-muted">
-						Opens in SplitBiller with all of this filled in, to add more later. No signup.
-					</p>
 				)}
+			</div>
+
+			<div className="flex items-center justify-between gap-3">
+				<p className="text-sm text-ink-muted">Or just send the result</p>
+				<ShareSettlementActions
+					name={title}
+					people={people}
+					expenses={expenses}
+					currency={currency}
+					source={`tool:${tool}`}
+				/>
 			</div>
 		</div>
 	);

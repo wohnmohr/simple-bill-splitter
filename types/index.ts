@@ -22,6 +22,11 @@ export type Expense = {
   kind?: "payment";
   /** Epoch ms when the entry was created. Missing on older data. */
   createdAt?: number;
+  /**
+   * Repeats every month on the day of `createdAt` (rent, Wi-Fi). `next` is the
+   * month the next copy is due, as "YYYY-MM". See utils/recurring.
+   */
+  repeat?: { next: string };
 };
 
 export type Group = {

@@ -36,10 +36,16 @@ import { SettledFeedbackCard } from "@/components/Feedback/SettledFeedbackCard";
 import { collectFeedbackContext } from "@/lib/feedbackContext";
 import { formatCurrency } from "@/utils/formatting";
 import { track } from "@/lib/analytics";
+import { consumeOpenOnSettleUp } from "@/utils/shareImport";
 
 export default function Home() {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState<Tab>("transactions");
+	// Arrived from a payment reminder: start on what you owe.
+	useEffect(() => {
+		if (consumeOpenOnSettleUp()) setActiveTab("settlements");
+	}, []);
+
 	const [showGroupForm, setShowGroupForm] = useState(false);
 	const [showExpenseForm, setShowExpenseForm] = useState(false);
 	const [showMembersModal, setShowMembersModal] = useState(false);
@@ -57,6 +63,7 @@ export default function Home() {
 		splitMethod?: string;
 		weights?: Record<string, number>;
 		date?: number;
+		repeat: boolean;
 	} | null>(null);
 
 	const {
@@ -130,7 +137,8 @@ export default function Home() {
 		description?: string,
 		splitMethod?: string,
 		weights?: Record<string, number>,
-		date?: number
+		date?: number,
+		repeatMonthly?: boolean
 	) => {
 		addExpense(
 			amount,
@@ -139,12 +147,14 @@ export default function Home() {
 			description,
 			splitMethod as any,
 			weights,
-			date
+			date,
+			repeatMonthly
 		);
 		track("dashboard_expense_added", {
 			participant_count: participants.size,
 			split_method: splitMethod || "equally",
 			currency: currency.code,
+			repeats: Boolean(repeatMonthly),
 		});
 		setShowExpenseForm(false);
 	};
@@ -188,6 +198,7 @@ export default function Home() {
 			splitMethod: expense.splitMethod || "equally",
 			weights: splitWeights(expense),
 			date: expense.createdAt,
+			repeat: !!expense.repeat,
 		});
 	};
 
@@ -198,7 +209,8 @@ export default function Home() {
 		description?: string,
 		splitMethod?: string,
 		weights?: Record<string, number>,
-		date?: number
+		date?: number,
+		repeatMonthly?: boolean
 	) => {
 		if (editingExpenseId) {
 			updateExpense(
@@ -209,7 +221,8 @@ export default function Home() {
 				description,
 				splitMethod as any,
 				weights,
-				date
+				date,
+				repeatMonthly
 			);
 			setEditingExpenseId(null);
 			setEditExpenseData(null);
@@ -415,6 +428,7 @@ export default function Home() {
 												onUpdateMemberUpi={updateMemberUpi}
 												meId={currentGroup.meId}
 												sharePeople={currentGroup.members}
+												syncLink={currentGroup.sync}
 												onSetMe={(id) => setGroupMe(currentGroup.id, id)}
 												onRecordPayment={handleRecordPayment}
 												settledSlot={
@@ -595,6 +609,7 @@ export default function Home() {
 						initialSplitMethod={editExpenseData.splitMethod as any}
 						initialWeights={editExpenseData.weights}
 						initialDate={editExpenseData.date}
+						initialRepeat={editExpenseData.repeat}
 						currency={currency}
 						title="Edit Expense"
 					/>

@@ -1,6 +1,6 @@
 import React from "react";
 import { TextInput, NumberInput, SegmentedControl } from "@mantine/core";
-import { Check } from "lucide-react";
+import { Check, Repeat } from "lucide-react";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
 import { Currency, Person, SplitMethod } from "@/types";
@@ -23,7 +23,9 @@ interface ExpenseFormModalProps {
 		splitMethod?: SplitMethod,
 		/** Percentages or exact amounts per person, for those split methods. */
 		weights?: Record<string, number>,
-		date?: number
+		date?: number,
+		/** Add it again every month, on the same day. */
+		repeatMonthly?: boolean
 	) => void;
 	people: Person[];
 	currency?: Currency;
@@ -36,8 +38,16 @@ interface ExpenseFormModalProps {
 	initialSplitMethod?: SplitMethod;
 	initialWeights?: Record<string, number>;
 	initialDate?: number;
+	initialRepeat?: boolean;
 	title?: string;
 }
+
+/** 1st, 2nd, 3rd, 4th … 31st. */
+const ordinal = (n: number) => {
+	const tens = n % 100;
+	const suffix = tens >= 11 && tens <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th";
+	return `${n}${suffix}`;
+};
 
 /** yyyy-mm-dd in local time, for <input type="date">. */
 const toDateInput = (ms: number) => {
@@ -66,6 +76,7 @@ export const ExpenseFormModal = ({
 	initialSplitMethod = "equally",
 	initialWeights = {},
 	initialDate,
+	initialRepeat = false,
 	title = "Add Expense",
 }: ExpenseFormModalProps) => {
 	const [amount, setAmount] = React.useState(initialAmount);
@@ -78,6 +89,7 @@ export const ExpenseFormModal = ({
 	const [weights, setWeights] =
 		React.useState<Record<string, number>>(initialWeights);
 	const [date, setDate] = React.useState(toDateInput(initialDate ?? Date.now()));
+	const [repeat, setRepeat] = React.useState(initialRepeat);
 	// Splitting a food order item by item, from a screenshot or typed in.
 	const [order, setOrder] = React.useState<DraftOrder | null>(null);
 	const { state: scanState, scan, reset: resetScan } = useOrderScan("expense");
@@ -90,6 +102,7 @@ export const ExpenseFormModal = ({
 		splitMethod: initialSplitMethod,
 		weights: initialWeights,
 		date: initialDate,
+		repeat: initialRepeat,
 		defaultPayerId,
 	});
 
@@ -109,6 +122,7 @@ export const ExpenseFormModal = ({
 			splitMethod: initialSplitMethod,
 			weights: initialWeights,
 			date: initialDate,
+			repeat: initialRepeat,
 			defaultPayerId,
 		};
 	}, [
@@ -119,6 +133,7 @@ export const ExpenseFormModal = ({
 		initialSplitMethod,
 		initialWeights,
 		initialDate,
+		initialRepeat,
 		defaultPayerId,
 	]);
 
@@ -166,6 +181,7 @@ export const ExpenseFormModal = ({
 			setDescription(init.description);
 			setSplitMethod(init.splitMethod);
 			setDate(toDateInput(init.date ?? Date.now()));
+			setRepeat(init.repeat);
 			setOrder(null);
 			resetScan();
 			setWeights(
@@ -219,7 +235,8 @@ export const ExpenseFormModal = ({
 			splitMethod === "equally"
 				? undefined
 				: Object.fromEntries(Array.from(sharing).map((id) => [id, weights[id] || 0])),
-			date ? fromDateInput(date) : undefined
+			date ? fromDateInput(date) : undefined,
+			repeat
 		);
 		// State is re-initialised when the modal next opens, so the closing
 		// animation keeps showing what was just submitted.
@@ -506,6 +523,32 @@ export const ExpenseFormModal = ({
 						)
 					)}
 				</fieldset>
+
+				<button
+					type="button"
+					role="switch"
+					aria-checked={repeat}
+					onClick={() => setRepeat(!repeat)}
+					className="flex w-full items-center gap-3 rounded-xl border border-line px-3 py-2.5 text-left"
+				>
+					<Repeat className={`h-4 w-4 shrink-0 ${repeat ? "text-brand-700" : "text-ink-muted"}`} aria-hidden />
+					<span className="min-w-0 flex-1">
+						<span className="block text-sm font-medium text-ink">Repeat every month</span>
+						<span className="block text-xs text-ink-muted">
+							{repeat && date
+								? `Added again on the ${ordinal(Number(date.slice(8)))} of each month`
+								: "For rent, Wi-Fi and subscriptions"}
+						</span>
+					</span>
+					<span
+						className={`relative h-6 w-10 shrink-0 rounded-full transition-colors ${repeat ? "bg-brand-700" : "bg-line-strong"}`}
+						aria-hidden
+					>
+						<span
+							className={`absolute top-0.5 h-5 w-5 rounded-full bg-surface shadow transition-[left] ${repeat ? "left-[18px]" : "left-0.5"}`}
+						/>
+					</span>
+				</button>
 
 				<div className="sticky bottom-0 -mx-4 flex gap-2 border-t border-line bg-surface px-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
 					<Button variant="secondary" type="button" onClick={onClose} className="flex-1" size="md">

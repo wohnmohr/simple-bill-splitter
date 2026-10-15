@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Settlement, Person, Currency, Expense } from "@/types";
+import { Settlement, Person, Currency, Expense, GroupSyncLink } from "@/types";
 import { MemberAvatar } from "@/components/Group/MemberAvatar";
 import { formatCurrency } from "@/utils/formatting";
 import { ArrowRight, Check, CircleCheck, MessageCircle } from "lucide-react";
 import { ShareSettlementActions } from "@/components/Share/ShareSettlementActions";
 import { UpiSettlementActions } from "@/components/Settlements/UpiSettlementActions";
-import { buildUpiLink } from "@/utils/upi";
-import { track } from "@/lib/analytics";
+import { groupUrl } from "@/utils/groupSync";
+import { buildShareSnapshot, encodeShareUrl } from "@/utils/shareCodec";
+import { track, trackError } from "@/lib/analytics";
+import { sendViaWhatsApp } from "@/utils/whatsapp";
 
 interface SettlementListProps {
 	settlements: Settlement[];
@@ -28,6 +30,8 @@ interface SettlementListProps {
 	settledSlot?: React.ReactNode;
 	/** Names for share links when `people` carries this device's private nicknames. */
 	sharePeople?: Person[];
+	/** The group's sync link, when it's shared: reminders then bring people into the group itself. */
+	syncLink?: GroupSyncLink;
 }
 
 type Pending = { from: string; to: string; amount: number };
@@ -48,6 +52,7 @@ export const SettlementList = ({
 	onRecordPayment,
 	settledSlot,
 	sharePeople = people,
+	syncLink,
 }: SettlementListProps) => {
 	const getPerson = (personId: string) => people.find((p) => p.id === personId);
 	// If "you" was removed from the group, ask again rather than guessing.
@@ -66,6 +71,8 @@ export const SettlementList = ({
 	// their UPI app we ask whether it went through, instead of assuming.
 	const [pending, setPending] = useState<Pending | null>(null);
 	const [askConfirm, setAskConfirm] = useState(false);
+	// On a computer the reminder lands on the clipboard; this is whose it was.
+	const [remindCopied, setRemindCopied] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (!pending) return;
@@ -189,6 +196,7 @@ export const SettlementList = ({
 							currency={currency}
 							primary
 							source="dashboard"
+							syncLink={syncLink}
 						/>
 					</section>
 				)}
@@ -257,21 +265,37 @@ export const SettlementList = ({
 			</div>
 		) : null;
 
-	const remindLink = (s: Settlement) => {
-		const debtor = getPerson(s.from);
-		const creditor = getPerson(s.to);
-		const amount = formatCurrency(s.amount, currency);
-		const upi =
-			showUpi && creditor?.upiId
-				? `\nPay here: ${buildUpiLink({
-						pa: creditor.upiId,
-						pn: creditor.name,
-						am: s.amount,
-						tn: `${groupName} — ${debtor?.name || "split"}`,
-				  })}\nUPI ID: ${creditor.upiId}`
-				: "";
-		const text = `Hi ${debtor?.name || ""}, for ${groupName} you owe me ${amount}.${upi}`;
-		return `https://wa.me/?text=${encodeURIComponent(text)}`;
+	/**
+	 * A WhatsApp reminder with a link that lands the debtor on what they owe:
+	 * in a shared group, their personal link (it opens the group as them, on
+	 * settle-up); otherwise the encrypted summary, which they can save as a group.
+	 * (UPI links aren't tappable in WhatsApp, so the pay button lives behind the link.)
+	 */
+	const remind = async (s: Settlement) => {
+		// Shared names, not this device's nicknames: the message goes to them.
+		const debtor = sharePeople.find((p) => p.id === s.from);
+		const creditor = sharePeople.find((p) => p.id === s.to);
+		track("settlement_remind_clicked", { synced: !!syncLink });
+		try {
+			const url = syncLink
+				? groupUrl(syncLink, s.from, true)
+				: await encodeShareUrl(buildShareSnapshot({ name: groupName, currency, members: sharePeople, expenses }));
+			const sent = await sendViaWhatsApp(
+				[
+					`Hi ${debtor?.name || ""}, a reminder for ${groupName}: you owe me ${formatCurrency(s.amount, currency)}.`,
+					showUpi && creditor?.upiId ? `UPI: ${creditor.upiId}` : "",
+					`See it and pay here: ${url}`,
+				]
+					.filter(Boolean)
+					.join("\n")
+			);
+			if (sent === "copied") {
+				setRemindCopied(s.from);
+				setTimeout(() => setRemindCopied(null), 2500);
+			}
+		} catch (err) {
+			trackError(err, { source: "settlement_remind" });
+		}
 	};
 
 	return (
@@ -329,16 +353,10 @@ export const SettlementList = ({
 							</div>
 						) : (
 							<div className="mt-4 grid grid-cols-2 gap-2">
-								<a
-									href={remindLink(s)}
-									target="_blank"
-									rel="noopener noreferrer"
-									onClick={() => track("settlement_remind_clicked")}
-									className="btn-secondary !py-2.5"
-								>
-									<MessageCircle className="h-4 w-4" />
-									Remind
-								</a>
+								<button type="button" onClick={() => remind(s)} className="btn-secondary !py-2.5">
+									{remindCopied === s.from ? <Check className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
+									{remindCopied === s.from ? "Copied" : "Remind"}
+								</button>
 								<button
 									type="button"
 									onClick={() => markPaid(s, "hero_received")}
@@ -409,6 +427,7 @@ export const SettlementList = ({
 						currency={currency}
 						primary
 						source="dashboard"
+						syncLink={syncLink}
 					/>
 				</section>
 			)}
