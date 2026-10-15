@@ -5,7 +5,7 @@ import { Check, Copy, Info, MessageCircle, Plus, Shuffle, X } from "lucide-react
 import { Exclusion, SantaPayload, drawSecretSanta, encodeRevealLink } from "@/utils/secretSanta";
 import { fieldClass, labelClass, useCopy, useTrackResult } from "./shared";
 import { track } from "@/lib/analytics";
-import { whatsAppUrl } from "@/utils/whatsapp";
+import { sendViaWhatsApp } from "@/utils/whatsapp";
 
 type Draw = { links: { name: string; url: string }[]; event: string };
 
@@ -80,10 +80,18 @@ export const SecretSantaGenerator = () => {
 		});
 	};
 
-	const whatsapp = (name: string, url: string) =>
-		whatsAppUrl(
+	// On a computer the message lands on the clipboard; this is whose it was.
+	const [copiedFor, setCopiedFor] = useState<string | null>(null);
+	const whatsapp = async (name: string, url: string) => {
+		track("share_settlement_clicked", { method: "whatsapp", source: "tool:secret-santa" });
+		const sent = await sendViaWhatsApp(
 			`🎁 ${event.trim() || "Secret Santa"}: hi ${name}! Open your private link to see who you're buying for (don't forward it):\n${url}`
 		);
+		if (sent === "copied") {
+			setCopiedFor(name);
+			setTimeout(() => setCopiedFor(null), 2000);
+		}
+	};
 
 	const updatePair = (i: number, side: 0 | 1, value: string) =>
 		setPairs((prev) =>
@@ -223,14 +231,10 @@ export const SecretSantaGenerator = () => {
 								<li key={name} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
 									<span className="min-w-0 truncate font-medium text-ink">{name}</span>
 									<span className="flex gap-2">
-										<a
-											href={whatsapp(name, url)}
-											className="btn-secondary !px-3 !py-2"
-											onClick={() => track("share_settlement_clicked", { method: "whatsapp", source: "tool:secret-santa" })}
-										>
-											<MessageCircle className="h-4 w-4" />
-											WhatsApp
-										</a>
+										<button type="button" onClick={() => whatsapp(name, url)} className="btn-secondary !px-3 !py-2">
+											{copiedFor === name ? <Check className="h-4 w-4 text-positive" /> : <MessageCircle className="h-4 w-4" />}
+											{copiedFor === name ? "Copied" : "WhatsApp"}
+										</button>
 										<CopyLink url={url} />
 									</span>
 								</li>

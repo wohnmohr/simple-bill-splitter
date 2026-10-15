@@ -8,7 +8,7 @@ import { buildShareSnapshot, encodeShareUrl } from "@/utils/shareCodec";
 import { formatCurrency } from "@/utils/formatting";
 import { calculateSettlements } from "@/utils/calculations";
 import { track, trackError } from "@/lib/analytics";
-import { openWhatsApp } from "@/utils/whatsapp";
+import { sendViaWhatsApp } from "@/utils/whatsapp";
 
 interface ShareSettlementActionsProps {
 	name: string;
@@ -155,7 +155,10 @@ export const ShareSettlementActions = ({
 			await reportShare("whatsapp", async () => {
 				const url = await createShareUrl();
 				const text = buildShareText(url);
-				openWhatsApp(text);
+				if ((await sendViaWhatsApp(text)) === "copied") {
+					setCopiedLink(true);
+					setTimeout(() => setCopiedLink(false), 2500);
+				}
 			});
 		} catch {
 			setError("Could not create share link.");

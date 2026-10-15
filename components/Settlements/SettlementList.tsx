@@ -10,7 +10,7 @@ import { UpiSettlementActions } from "@/components/Settlements/UpiSettlementActi
 import { groupUrl } from "@/utils/groupSync";
 import { buildShareSnapshot, encodeShareUrl } from "@/utils/shareCodec";
 import { track, trackError } from "@/lib/analytics";
-import { openWhatsApp } from "@/utils/whatsapp";
+import { sendViaWhatsApp } from "@/utils/whatsapp";
 
 interface SettlementListProps {
 	settlements: Settlement[];
@@ -71,6 +71,8 @@ export const SettlementList = ({
 	// their UPI app we ask whether it went through, instead of assuming.
 	const [pending, setPending] = useState<Pending | null>(null);
 	const [askConfirm, setAskConfirm] = useState(false);
+	// On a computer the reminder lands on the clipboard; this is whose it was.
+	const [remindCopied, setRemindCopied] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (!pending) return;
@@ -278,7 +280,7 @@ export const SettlementList = ({
 			const url = syncLink
 				? groupUrl(syncLink, s.from, true)
 				: await encodeShareUrl(buildShareSnapshot({ name: groupName, currency, members: sharePeople, expenses }));
-			openWhatsApp(
+			const sent = await sendViaWhatsApp(
 				[
 					`Hi ${debtor?.name || ""}, a reminder for ${groupName}: you owe me ${formatCurrency(s.amount, currency)}.`,
 					showUpi && creditor?.upiId ? `UPI: ${creditor.upiId}` : "",
@@ -287,6 +289,10 @@ export const SettlementList = ({
 					.filter(Boolean)
 					.join("\n")
 			);
+			if (sent === "copied") {
+				setRemindCopied(s.from);
+				setTimeout(() => setRemindCopied(null), 2500);
+			}
 		} catch (err) {
 			trackError(err, { source: "settlement_remind" });
 		}
@@ -348,8 +354,8 @@ export const SettlementList = ({
 						) : (
 							<div className="mt-4 grid grid-cols-2 gap-2">
 								<button type="button" onClick={() => remind(s)} className="btn-secondary !py-2.5">
-									<MessageCircle className="h-4 w-4" />
-									Remind
+									{remindCopied === s.from ? <Check className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
+									{remindCopied === s.from ? "Copied" : "Remind"}
 								</button>
 								<button
 									type="button"
