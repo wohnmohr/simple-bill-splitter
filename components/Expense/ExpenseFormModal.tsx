@@ -6,6 +6,11 @@ import { Button } from "@/components/UI/Button";
 import { Currency, Person, SplitMethod } from "@/types";
 import { DEFAULT_CURRENCY } from "@/constants";
 import { formatCurrency } from "@/utils/formatting";
+import { track } from "@/lib/analytics";
+import { OrderSplit } from "@/components/Scan/OrderSplit";
+import { ScanOrderButton } from "@/components/Scan/ScanOrderButton";
+import { useOrderScan } from "@/components/Scan/useOrderScan";
+import { draftFromOrder, draftShares, draftTotals, emptyDraft, type DraftOrder } from "@/components/Scan/draft";
 
 interface ExpenseFormModalProps {
 	isOpen: boolean;
@@ -73,6 +78,9 @@ export const ExpenseFormModal = ({
 	const [weights, setWeights] =
 		React.useState<Record<string, number>>(initialWeights);
 	const [date, setDate] = React.useState(toDateInput(initialDate ?? Date.now()));
+	// Splitting a food order item by item, from a screenshot or typed in.
+	const [order, setOrder] = React.useState<DraftOrder | null>(null);
+	const { state: scanState, scan, reset: resetScan } = useOrderScan("expense");
 	const prevIsOpenRef = React.useRef(isOpen);
 	const initialValuesRef = React.useRef({
 		amount: initialAmount,
@@ -158,6 +166,8 @@ export const ExpenseFormModal = ({
 			setDescription(init.description);
 			setSplitMethod(init.splitMethod);
 			setDate(toDateInput(init.date ?? Date.now()));
+			setOrder(null);
+			resetScan();
 			setWeights(
 				Object.keys(init.weights).length > 0
 					? { ...init.weights }
@@ -254,6 +264,39 @@ export const ExpenseFormModal = ({
 			: 0;
 	const allSelected = participants.size === people.length;
 
+	/** The order's shares become an exact split; who paid is still chosen here. */
+	const applyOrder = (draft: DraftOrder) => {
+		const shares = draftShares(draft, people.map((p) => p.id));
+		const { total } = draftTotals(draft);
+		setAmount(total > 0 ? total.toString() : "");
+		if (draft.title.trim()) setDescription(draft.title.trim().slice(0, 80));
+		setSplitMethod("exact");
+		setParticipants(new Set(shares.map((s) => s.personId)));
+		setWeights(Object.fromEntries(shares.map((s) => [s.personId, s.amount])));
+		setOrder(null);
+		track("order_split_used", { where: "expense", items: draft.items.length, people: shares.length });
+	};
+
+	if (order) {
+		const shares = draftShares(order, people.map((p) => p.id));
+		const ready = draftTotals(order).total > 0 && shares.length > 0;
+		return (
+			<Modal isOpen={isOpen} onClose={onClose} title="Split the order">
+				<div className="flex flex-col gap-5 pb-2">
+					<OrderSplit draft={order} onChange={setOrder} people={people} currency={currency} />
+					<div className="sticky bottom-0 -mx-4 flex gap-2 border-t border-line bg-surface px-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+						<Button variant="secondary" type="button" onClick={() => setOrder(null)} className="flex-1" size="md">
+							Back
+						</Button>
+						<Button variant="primary" type="button" disabled={!ready} onClick={() => applyOrder(order)} className="flex-[2]" size="md">
+							Use these amounts
+						</Button>
+					</div>
+				</div>
+			</Modal>
+		);
+	}
+
 	return (
 		<Modal isOpen={isOpen} onClose={onClose} title={isEdit ? "Edit expense" : "Add an expense"}>
 			<form
@@ -263,6 +306,21 @@ export const ExpenseFormModal = ({
 					handleSubmit();
 				}}
 			>
+				{!isEdit && people.length > 1 && (
+					<div>
+						<ScanOrderButton
+							state={scanState}
+							onFile={async (file) => {
+								const parsed = await scan(file);
+								if (parsed) setOrder(draftFromOrder(parsed));
+							}}
+						/>
+						<button type="button" onClick={() => setOrder(emptyDraft())} className="mt-1 text-sm font-medium text-brand-700 hover:underline">
+							or split a bill item by item
+						</button>
+					</div>
+				)}
+
 				<NumberInput
 					label="Amount"
 					value={amount ? parseFloat(amount) : ""}

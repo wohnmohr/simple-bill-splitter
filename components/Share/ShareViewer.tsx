@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { ShareSnapshot } from "@/types/share";
 import { decodeShareUrl } from "@/utils/shareCodec";
-import { importShareSnapshot } from "@/utils/shareImport";
+import { IMPORT_LIMIT_MESSAGE, importShareSnapshot } from "@/utils/shareImport";
 import { calculateBalances, calculateSettlements, totalSpent } from "@/utils/calculations";
 import { formatCurrency } from "@/utils/formatting";
 import { BalanceList } from "@/components/Balances/BalanceList";
@@ -85,9 +85,7 @@ export const ShareViewer = () => {
 			setImporting(false);
 			track("share_import_failed", { reason: result.reason });
 			setImportError(
-				result.reason === "limit"
-					? "You already have 3 groups saved. Delete one in the app, then try again."
-					: "Nothing to import."
+				result.reason === "limit" ? IMPORT_LIMIT_MESSAGE : "Nothing to import."
 			);
 			return;
 		}
