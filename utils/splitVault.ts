@@ -37,7 +37,7 @@ export const newVault = () => ({ id: toB64u(random(16)), key: toB64u(random(32))
 
 const importKey = (key: string) => crypto.subtle.importKey("raw", buf(fromB64u(key)), "AES-GCM", false, ["encrypt", "decrypt"]);
 
-export type RecordKind = "split" | "payment";
+export type RecordKind = "split" | "payment" | "claim";
 const aad = (id: string, kind: RecordKind) => buf(enc.encode(`splitbiller/v1/${id}/${kind}`));
 
 /** Encrypts `data` for split `id`; returns base64url(iv ‖ ciphertext). */

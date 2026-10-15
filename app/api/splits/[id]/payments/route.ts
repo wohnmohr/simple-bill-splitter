@@ -4,16 +4,22 @@ import { MAX_PAYMENTS, SPLIT_ID_RE, cleanBlob, cleanToken, overLimit, readSmallJ
 
 export const runtime = "nodejs";
 
-/** Appends one encrypted payment. Only someone holding the link can produce a valid token. */
+/**
+ * Appends one encrypted entry to a split's log: a payment mark or a claim on an
+ * itemised bill (the server can't tell which). Only someone holding the link can
+ * produce a valid token.
+ */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 	if (!sameOrigin(req)) return reply({ error: "Forbidden" }, 403);
 	const ipHash = hashIp(req);
-	if (overLimit(`pay:${ipHash}`, 20)) return reply({ error: "Slow down" }, 429, { "Retry-After": "60" });
+	// Bursts are capped per split as well as per IP: a whole table often shares one
+	// restaurant Wi-Fi, so the IP cap is loose and the split cap does the real work.
+	if (overLimit(`entry:${id}`, 30) || overLimit(`pay:${ipHash}`, 60)) return reply({ error: "Slow down" }, 429, { "Retry-After": "60" });
 
 	const body = await readSmallJson(req);
 	const token = cleanToken(body?.token);
-	const blob = cleanBlob(body?.blob, 400);
+	const blob = cleanBlob(body?.blob, 600);
 	if (!SPLIT_ID_RE.test(id) || !token || !blob) return reply({ error: "Invalid payment" }, 400);
 
 	try {

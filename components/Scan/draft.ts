@@ -5,6 +5,9 @@ export type DraftItem = { key: string; name: string; amount: string; people: str
 export type DraftCharge = { key: string; label: string; kind: ChargeKind; amount: string };
 export type DraftOrder = { title: string; items: DraftItem[]; charges: DraftCharge[]; total: string };
 
+/** sessionStorage key for a bill handed from the order splitter to "tap what you ate", read once. */
+export const BILL_DRAFT_KEY = "splitbiller-bill-draft";
+
 let seq = 0;
 export const draftKey = () => `d${++seq}`;
 

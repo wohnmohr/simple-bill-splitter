@@ -8,8 +8,11 @@
 import * as ort from "onnxruntime-web/wasm";
 import { readText, type PaddleEngine, type ReadProgress, type Rgba } from "./paddleOcr";
 
-/** What the engine is doing: downloading (bytes), starting up, or reading (see ReadProgress). */
-export type OcrProgress = { stage: "download" | "start"; done: number; total: number } | ReadProgress;
+/**
+ * What the engine is doing: downloading (bytes), loading from the browser's
+ * cache (bytes, on a repeat visit), starting up, or reading (see ReadProgress).
+ */
+export type OcrProgress = { stage: "download" | "load" | "start"; done: number; total: number } | ReadProgress;
 export type OcrRequest = { id: number; image: Rgba };
 export type OcrReply = { id: number; progress: OcrProgress } | { id: number; text: string } | { id: number; error: string };
 
@@ -25,7 +28,9 @@ let engine: Promise<PaddleEngine> | null = null;
 
 /**
  * Downloads files together, reporting real bytes against each file's size.
- * Includes the engine itself, so nothing loads unseen.
+ * Includes the engine itself, so nothing loads unseen. When the browser's
+ * cache already holds every file (a repeat visit), it says "load", not
+ * "download": nothing comes over the network.
  */
 async function downloadAll(names: string[], onProgress: (p: OcrProgress) => void): Promise<Uint8Array[]> {
 	// The manifest isn't versioned like the files, so it's revalidated; if it's
@@ -34,6 +39,11 @@ async function downloadAll(names: string[], onProgress: (p: OcrProgress) => void
 	const manifest: Record<string, number> = await fetch(BASE + "manifest.json", { cache: "no-cache" })
 		.then((r) => (r.ok ? r.json() : {}))
 		.catch(() => ({}));
+	// Ask the cache first; a miss rejects at once, and only those go to the network.
+	const cached = await Promise.all(
+		names.map((name) => fetch(BASE + name, { cache: "only-if-cached", mode: "same-origin" }).then((r) => (r.ok ? r : null), () => null))
+	);
+	const stage = cached.every(Boolean) ? "load" : "download";
 	const sizes = names.map((name) => manifest[name] ?? 0);
 	const got = names.map(() => 0);
 	const report = () => {
@@ -42,12 +52,12 @@ async function downloadAll(names: string[], onProgress: (p: OcrProgress) => void
 			done += got[i];
 			total += Math.max(sizes[i], got[i]);
 		}
-		onProgress({ stage: "download", done, total });
+		onProgress({ stage, done, total });
 	};
 	report();
 	return Promise.all(
 		names.map(async (name, i) => {
-			const res = await fetch(BASE + name);
+			const res = cached[i] ?? (await fetch(BASE + name));
 			if (!res.ok || !res.body) throw new Error(`Couldn't load ${name} (${res.status})`);
 			// A compressed response's Content-Length counts the wrong bytes.
 			if (!sizes[i] && !res.headers.get("content-encoding")) sizes[i] = Number(res.headers.get("content-length")) || 0;

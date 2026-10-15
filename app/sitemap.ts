@@ -13,8 +13,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
 		priority: 0.9,
 	}));
 
-	const splitEntries: MetadataRoute.Sitemap = TEMPLATES.map((t) => ({
-		url: `${baseUrl}/split/${t.id}`,
+	const splitEntries: MetadataRoute.Sitemap = [...TEMPLATES.map((t) => t.id), "by-item"].map((id) => ({
+		url: `${baseUrl}/split/${id}`,
 		lastModified: new Date(),
 		changeFrequency: "monthly",
 		priority: 0.8,

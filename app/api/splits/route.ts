@@ -15,7 +15,8 @@ export async function POST(req: Request) {
 	const body = await readSmallJson(req);
 	const id = typeof body?.id === "string" && SPLIT_ID_RE.test(body.id) ? body.id : null;
 	const token = cleanToken(body?.token);
-	const blob = cleanBlob(body?.blob, 4000);
+	// Room for an itemised bill of up to 40 lines.
+	const blob = cleanBlob(body?.blob, 6000);
 	if (!id || !token || !blob) return reply({ error: "Invalid split" }, 400);
 
 	try {

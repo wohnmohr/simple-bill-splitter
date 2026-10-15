@@ -1,3 +1,5 @@
+import { personKey, sanitizeClaim, sanitizeItems, type BillItem, type Claim } from "@/utils/billClaims";
+
 export interface SplitFaq {
 	q: string;
 	a: string;
@@ -412,6 +414,10 @@ export interface PayRequest {
 	people: number;
 	/** Payments marked by the payer or the organiser, as [first name, rupees]. One per person; see firstMarks. */
 	paid: [string, number][];
+	/** An itemised bill ("tap what you ate"): its lines, and target is the bill total rounded up. Cloud splits only. */
+	items?: BillItem[];
+	/** Who had what on an itemised bill. */
+	claims?: Claim[];
 }
 
 const toBase64Url = (text: string) => {
@@ -437,9 +443,6 @@ export function sanitizePayment(p: unknown): [string, number] | null {
 	if (!Array.isArray(p) || int(p[1]) < 1) return null;
 	return [str(p[0], 30), int(p[1])];
 }
-
-/** Who a mark is for: "Priya", " priya " and "PRIYA" are the same person. */
-const personKey = (name: string) => name.trim().replace(/\s+/g, " ").toLowerCase();
 
 /**
  * One mark per person, whoever marked it first: the payer ("I’ve paid") or the
@@ -471,7 +474,7 @@ export function sanitizeRequest(raw: unknown): PayRequest | null {
 	const paid = Array.isArray(r.paid)
 		? firstMarks(r.paid.slice(0, 200).map(sanitizePayment).filter((x): x is [string, number] => x !== null))
 		: [];
-	return {
+	const req: PayRequest = {
 		kind: getTemplate(r.kind).id,
 		title: str(r.title, 60),
 		name: str(r.name, 40),
@@ -480,6 +483,10 @@ export function sanitizeRequest(raw: unknown): PayRequest | null {
 		people: Math.min(int(r.people), 100),
 		paid,
 	};
+	const items = sanitizeItems(r.items);
+	if (!items) return req;
+	const claims = Array.isArray(r.claims) ? r.claims.slice(0, 200).map((c) => sanitizeClaim(c, items.length)).filter((c): c is Claim => c !== null) : [];
+	return { ...req, people: 0, items, claims };
 }
 
 /** Parses and sanitises a link-only fragment; returns null for anything malformed. */
