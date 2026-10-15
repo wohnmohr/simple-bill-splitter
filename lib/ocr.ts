@@ -1,50 +1,26 @@
 /**
- * Reads the text of an image on the device, with Tesseract compiled to
- * WebAssembly. The image never leaves the browser: the engine and the
- * English model are fetched from our own origin (public/ocr) the first time
- * someone scans, then cached by the browser.
+ * Reads the text of an image on the device, with PaddleOCR running in a Web
+ * Worker (lib/ocr.worker.ts). The image never leaves the browser: the engine
+ * and models come from our own origin the first time someone scans, then the
+ * browser caches them.
  */
-import type { Worker } from "tesseract.js";
+import type { OcrReply, OcrRequest } from "./ocr.worker";
+import type { Rgba } from "./paddleOcr";
 
-const BASE = "/ocr";
+/** Big photos are scaled down to this (longest side, px): plenty for text, kind to memory. */
+const MAX_SIDE = 2048;
 
-let worker: Promise<Worker> | null = null;
-let onProgress: ((share: number) => void) | null = null;
-
-function getWorker(): Promise<Worker> {
-	worker ??= (async () => {
-		const { createWorker, OEM, PSM } = await import("tesseract.js");
-		const w = await createWorker("eng", OEM.LSTM_ONLY, {
-			workerPath: `${BASE}/worker.min.js`,
-			corePath: BASE,
-			langPath: BASE,
-			workerBlobURL: false,
-			logger: (m) => {
-				// Loading the model counts for the first half, reading for the second.
-				const loading = m.status.startsWith("loading") || m.status.startsWith("initializ");
-				onProgress?.(loading ? m.progress * 0.5 : 0.5 + m.progress * 0.5);
-			},
-		});
-		// One block of text: keeps each label on the same line as its amount.
-		await w.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_BLOCK, preserve_interword_spaces: "1" });
-		return w;
-	})().catch((err) => {
-		worker = null; // let the next attempt start over
-		throw err;
-	});
-	return worker;
-}
+let worker: Worker | null = null;
+let nextId = 0;
 
 /**
- * Prepares a screenshot for OCR: small images are enlarged, and dark-mode
- * screenshots are inverted to dark text on light.
+ * Prepares an image for reading: scales big photos down, and inverts
+ * dark-mode screenshots to dark text on light, which the models read best.
  */
-async function prepare(file: Blob): Promise<HTMLCanvasElement> {
+async function prepare(file: Blob): Promise<Rgba> {
 	const bitmap = await createImageBitmap(file);
-	const scale = bitmap.width < 1000 ? Math.min(2, 1200 / bitmap.width) : 1;
-	const canvas = document.createElement("canvas");
-	canvas.width = Math.round(bitmap.width * scale);
-	canvas.height = Math.round(bitmap.height * scale);
+	const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+	const canvas = new OffscreenCanvas(Math.round(bitmap.width * scale), Math.round(bitmap.height * scale));
 	const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
 	ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
 	bitmap.close();
@@ -59,19 +35,25 @@ async function prepare(file: Blob): Promise<HTMLCanvasElement> {
 			px[i + 1] = 255 - px[i + 1];
 			px[i + 2] = 255 - px[i + 2];
 		}
-		ctx.putImageData(img, 0, 0);
 	}
-	return canvas;
+	return { data: px, width: img.width, height: img.height };
 }
 
 /** The text of an image, read on this device. `progress` gets 0–1. */
 export async function readImageText(file: Blob, progress?: (share: number) => void): Promise<string> {
-	onProgress = progress ?? null;
-	try {
-		const [w, canvas] = await Promise.all([getWorker(), prepare(file)]);
-		const { data } = await w.recognize(canvas);
-		return data.text;
-	} finally {
-		onProgress = null;
-	}
+	const image = await prepare(file);
+	worker ??= new Worker(new URL("./ocr.worker.ts", import.meta.url), { type: "module" });
+	const id = ++nextId;
+	const w = worker;
+	return new Promise((resolve, reject) => {
+		const onMessage = ({ data }: MessageEvent<OcrReply>) => {
+			if (data.id !== id) return;
+			if ("progress" in data) return progress?.(data.progress);
+			w.removeEventListener("message", onMessage);
+			if ("text" in data) resolve(data.text);
+			else reject(new Error(data.error));
+		};
+		w.addEventListener("message", onMessage);
+		w.postMessage({ id, image } satisfies OcrRequest, [image.data.buffer]);
+	});
 }

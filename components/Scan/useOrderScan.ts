@@ -37,7 +37,8 @@ export function useOrderScan(where: string) {
 				track("order_scan_read", { where, items: order.items.length, balanced: order.balanced, app: order.app ?? "unknown" });
 				setState({ status: "done", order });
 				return order;
-			} catch {
+			} catch (err) {
+				console.error("Order scan failed", err);
 				track("order_scan_failed", { where, reason: "engine" });
 				setState({ status: "error", message: "The scanner couldn’t start. Check your connection and try again." });
 				return null;

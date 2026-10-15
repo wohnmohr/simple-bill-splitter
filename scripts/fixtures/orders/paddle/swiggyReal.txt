@@ -1,0 +1,23 @@
+3:19   ① 54 :ll   57
+ORDER#100000000000001   HELP
+Delivered，2Items，269
+Sree Akshayam
+12,ExampleRoad,Velachery,Chennai...
+Home
+4, First Floor, Sample Apartments, Example Nagar,
+Velachery, Chennai, Ta...
+OrderdeliveredonOctober15,10:35AM
+by RAVI
+BILL DETAILS
+Onion Dosa x 1   190
+ldli [2 Pieces] x 2   154
+Item Total   344
+Restaurant Packaging   17.20
+Platform fee with GST   17.98
+Discount Applied (FLATDEAL)   -124.99
+Delivery Fee (FREE with One Black) |1.8 kms   34 FREE
+Express Fee   29 FREE
+Taxes   14.94
+Paid Via Bank   Bill Total   269
+REORDER
+101

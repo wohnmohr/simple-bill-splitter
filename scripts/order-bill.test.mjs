@@ -1,16 +1,23 @@
 // Tests for utils/orderBill.ts: parsing real OCR output of order screenshots
-// (scripts/fixtures/orders/*.txt, from mock-ups of Swiggy, Zomato and
-// Instamart order pages) and splitting an order fairly.
+// (scripts/fixtures/orders/<engine>/*.txt: mock-ups of Swiggy, Zomato and
+// Instamart order pages, and a real Swiggy order) and splitting an order
+// fairly. Each screenshot is read by both engines the scanner has used,
+// Tesseract and PaddleOCR (now live): their mistakes differ, and the parser
+// must get the same bill out of either.
 //   node --test --experimental-strip-types scripts/order-bill.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { parseOrderText, splitOrder } from "../utils/orderBill.ts";
 
-const fixture = (name) => parseOrderText(readFileSync(new URL(`./fixtures/orders/${name}.txt`, import.meta.url), "utf8"));
+const fixturePath = (engine, name) => new URL(`./fixtures/orders/${engine}/${name}.txt`, import.meta.url);
 const amounts = (rows) => rows.map((r) => r.amount);
 
-test("Swiggy: ₹ read as 3, ¥, $ or dropped still gives the right amounts", () => {
+for (const engine of ["tesseract", "paddle"]) {
+const fixture = (name) => parseOrderText(readFileSync(fixturePath(engine, name), "utf8"));
+
+
+test(`${engine}: Swiggy: ₹ read as 3, ¥, $ or dropped still gives the right amounts`, () => {
 	const o = fixture("swiggy");
 	assert.equal(o.app, "Swiggy");
 	assert.equal(o.title, "Behrouz Biryani");
@@ -25,7 +32,7 @@ test("Swiggy: ₹ read as 3, ¥, $ or dropped still gives the right amounts", ()
 	assert.equal(o.balanced, true);
 });
 
-test("Zomato: quantity first, struck-out prices ignored, discount negative", () => {
+test(`${engine}: Zomato: quantity first, struck-out prices ignored, discount negative`, () => {
 	const o = fixture("zomato");
 	assert.equal(o.app, "Zomato");
 	assert.equal(o.title, "Pizza Hut");
@@ -39,7 +46,7 @@ test("Zomato: quantity first, struck-out prices ignored, discount negative", () 
 	assert.equal(o.balanced, true);
 });
 
-test("Dark mode, a wrapped item name and a dish called Paneer 65", () => {
+test(`${engine}: Dark mode, a wrapped item name and a dish called Paneer 65`, () => {
 	const o = fixture("swiggyDark");
 	assert.deepEqual(o.items.map((i) => [i.qty, i.name, i.amount]), [
 		[1, "Special Chicken Boneless Biryani with Extra Raita and Gravy", 425],
@@ -56,8 +63,8 @@ test("Dark mode, a wrapped item name and a dish called Paneer 65", () => {
 // ("1798" for ₹17.98), and a total rounded to the rupee. Reading every
 // amount as printed also "adds up" (3190 + 154 = 3344), so the ₹ signs
 // elsewhere on the bill have to tip it to 190 + 154 = 344.
-for (const name of ["swiggyReal", "swiggyReal2x"]) {
-	test(`Real Swiggy screenshot (${name}): every amount right, rounding shown`, () => {
+for (const name of ["swiggyReal", "swiggyReal2x"].filter((n) => existsSync(fixturePath(engine, n)))) {
+	test(`${engine}: real Swiggy screenshot (${name}): every amount right, rounding shown`, () => {
 		const o = fixture(name);
 		assert.equal(o.app, "Swiggy");
 		assert.equal(o.title, "Sree Akshayam");
@@ -78,7 +85,7 @@ for (const name of ["swiggyReal", "swiggyReal2x"]) {
 	});
 }
 
-test("Instamart: a FREE delivery line and a coupon", () => {
+test(`${engine}: Instamart: a FREE delivery line and a coupon`, () => {
 	const o = fixture("instamart");
 	assert.equal(o.app, "Instamart");
 	assert.deepEqual(amounts(o.items), [136, 265, 45, 449]);
@@ -86,6 +93,7 @@ test("Instamart: a FREE delivery line and a coupon", () => {
 	assert.equal(o.total, 849);
 	assert.equal(o.balanced, true);
 });
+}
 
 test("Rs. prefixes, thousands with dots, and no item total", () => {
 	const o = parseOrderText(["Masala Dosa x 2 Rs. 240", "Filter Coffee x 2 Rs.80", "Taxes Rs 16", "Total paid Rs. 1.336.00"].join("\n"));

@@ -122,6 +122,8 @@ function clean(line: string): string {
 	return line
 		.replace(/^\s*[\[(][^\])]{0,3}[\])]\s*/, "") // "[e]", "(o)": the veg mark
 		.replace(/^[^\p{L}\p{N}\[-]+/u, "") // "(®", "@®", "©)": the veg mark or an icon
+		.replace(/^\p{L}\s+(?=\S)/u, "") // "O Onion Dosa", "a 1 x Cake": the veg mark read as a letter
+		.replace(/[\u3400-\u9fff\uf900-\ufaff]/g, "₹") // never Chinese on these bills: a misread ₹ ("天798.30")
 		.replace(/^\[tem\b/i, "Item")
 		.replace(/[|]\s*$/, "")
 		.replace(/\s{2,}/g, " ")
@@ -225,10 +227,15 @@ export function parseOrderText(text: string): ParsedOrder {
 			qty = parseInt(after[1], 10);
 			name = name.replace(QTY_AFTER, "");
 		}
-		// A struck-out old price before the real one: "Choco Volcano Cake F119".
+		// A struck-out old price before the real one: "Choco Volcano Cake F119", or with no
+		// sign, a trailing number bigger than the price ("Cake 119 ₹99", but "Paneer 65 ₹290").
 		name = name.replace(/\s+(?:₹|[xXfFrR¥$%])\d[\d,]*(?:\.\d{1,2})?$/, "").trim();
+		const struck = name.match(/\s(\d[\d,]*(?:\.\d{1,2})?)$/);
+		if (struck && parseFloat(struck[1].replace(/,/g, "")) > token.value) name = name.slice(0, struck.index).trim();
 		// A capital I read as 1 at the start of a word: "1dli" (but not "1kg", "1pcs").
 		name = name.replace(/(^|\s)1(?=[a-z]{3,}\b)(?!(?:pcs|pack|ltr|litre|liter|piece|pieces|nos)\b)/g, "$1I");
+		// …or as l, before a consonant no English word starts "l" with: "ldli".
+		name = name.replace(/(^|\s)l(?=[cdfghjkmnpqrstvwxz][a-z]{2,}\b)/g, "$1I");
 		if (name) {
 			items.push({ name, qty, token });
 			lastWasItem = true;
@@ -270,6 +277,9 @@ export function parseOrderText(text: string): ParsedOrder {
 	};
 }
 
+/** How many of 6 nearby wrong totals may be reachable before a match counts as chance. */
+const DECOY_LIMIT = 2;
+
 /** What leaving a line out of the bill costs, against 1 for each misreading fixed. */
 const DROP = 3;
 
@@ -281,7 +291,7 @@ type Term = { options: { paise: number; cost: number }[]; sign: number };
  * `target`, at the lowest total cost (then the smallest gap). Dynamic
  * programming over reachable sums, so it stays fast with many amounts.
  */
-function solve(terms: Term[], target: number, tol: number): { picks: number[]; cost: number; gap: number } | null {
+function solve(terms: Term[], target: number, tol: number, keepOne = false): { picks: number[]; cost: number; gap: number } | null {
 	type Node = { cost: number; pick: number; prev: Node | null };
 	let reach = new Map<number, Node>([[0, { cost: 0, pick: -1, prev: null }]]);
 	for (const term of terms) {
@@ -305,6 +315,20 @@ function solve(terms: Term[], target: number, tol: number): { picks: number[]; c
 	if (!best) return null;
 	const picks: number[] = [];
 	for (let n: Node | null = best.node; n && n.pick >= 0; n = n.prev) picks.unshift(n.pick);
+	// With enough lines left out, some subset matches almost any total: that proves
+	// nothing. Allow one line in five to be dropped (the last option of each term).
+	const dropped = picks.filter((p, i) => p === terms[i].options.length - 1).length;
+	if (dropped > Math.max(1, Math.floor(terms.length / 5))) return null;
+	if (keepOne && terms.length && dropped === terms.length) return null; // items that add up only once they're all gone
+	// Would these readings add up just as easily to a wrong total? If decoy targets
+	// nearby are reachable as cheaply, the match is a coincidence, not evidence.
+	const cheap = (t: number) => {
+		for (const [sum, node] of reach) if (Math.abs(sum - t) <= tol && node.cost <= best!.node.cost) return true;
+		return false;
+	};
+	// Whole-rupee offsets, wider than the tolerance, so decoys look like real totals.
+	const decoys = [300, -300, 700, -700, 1100, -1100].map((d) => target + d);
+	if (decoys.filter(cheap).length >= DECOY_LIMIT) return null;
 	return { picks, cost: best.node.cost, gap: best.gap };
 }
 
@@ -364,7 +388,7 @@ function reconcile(
 			const tol = (t: number) => (t % 100 === 0 ? 50 : 1);
 			if (iVal !== undefined && items.length) {
 				checks++;
-				const r = solve(itemTerms, iVal, 1);
+				const r = solve(itemTerms, iVal, 1, true);
 				if (r) {
 					score++;
 					planCost += r.cost;
