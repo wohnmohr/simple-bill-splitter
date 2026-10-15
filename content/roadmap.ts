@@ -1,13 +1,18 @@
 /**
- * The public roadmap at /roadmap. Edit freely: move an item from NEXT to
- * SHIPPED when it lands. Keep the request form's "Which of these…"
+ * The public roadmap at /roadmap. The live copy is the "roadmap" item in the
+ * Vercel Edge Config connected to the project (see lib/roadmap.ts), so it can
+ * be edited without a deploy; the lists below are the fallback when that is
+ * missing, down or malformed. Keep the request form's "Which of these…"
  * checkboxes in Tally (form REQUEST_FORM_ID) in step with NEXT and LATER.
  */
 
-export type RoadmapIcon = "repeat" | "scan" | "globe" | "download" | "languages";
+const ICONS = ["repeat", "scan", "globe", "download", "languages"] as const;
+export type RoadmapIcon = (typeof ICONS)[number];
 
 export type PlannedItem = { title: string; body: string; icon: RoadmapIcon };
 export type ShippedItem = { title: string; href: string };
+export type ShippedMonth = { month: string; items: ShippedItem[] };
+export type Roadmap = { next: PlannedItem[]; later: PlannedItem[]; shipped: ShippedMonth[] };
 
 /** Being designed or built now. */
 export const NEXT: PlannedItem[] = [
@@ -38,7 +43,7 @@ export const LATER: PlannedItem[] = [
 ];
 
 /** Most recent first. */
-export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
+export const SHIPPED: ShippedMonth[] = [
 	{
 		month: "October 2026",
 		items: [
@@ -59,3 +64,32 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 
 /** The Tally form for requests and votes on the items above. */
 export const REQUEST_FORM_ID = "2EqQQD";
+
+export const STATIC_ROADMAP: Roadmap = { next: NEXT, later: LATER, shipped: SHIPPED };
+
+type Json = Record<string, unknown>;
+const isObject = (v: unknown): v is Json => typeof v === "object" && v !== null;
+const isText = (v: unknown): v is string => typeof v === "string" && v.trim() !== "";
+const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+
+const isPlanned = (v: unknown): v is PlannedItem =>
+	isObject(v) && isText(v.title) && isText(v.body) && ICONS.includes(v.icon as RoadmapIcon);
+// Only links within the site, so an edit can never point a visitor somewhere else.
+const isShipped = (v: unknown): v is ShippedItem =>
+	isObject(v) && isText(v.title) && typeof v.href === "string" && /^\/(?!\/)/.test(v.href);
+
+/**
+ * Reads a roadmap edited by hand, dropping any item that isn't well formed
+ * rather than failing the page. Null when it isn't a roadmap at all.
+ */
+export function parseRoadmap(raw: unknown): Roadmap | null {
+	if (!isObject(raw) || !["next", "later", "shipped"].every((k) => Array.isArray(raw[k]))) return null;
+	return {
+		next: list(raw.next).filter(isPlanned),
+		later: list(raw.later).filter(isPlanned),
+		shipped: list(raw.shipped)
+			.filter((m): m is Json => isObject(m) && isText(m.month))
+			.map((m) => ({ month: m.month as string, items: list(m.items).filter(isShipped) }))
+			.filter((m) => m.items.length > 0),
+	};
+}

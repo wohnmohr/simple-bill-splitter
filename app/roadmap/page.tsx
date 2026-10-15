@@ -4,7 +4,11 @@ import { ArrowRight, Check, Download, Globe, Languages, Repeat, ScanLine } from 
 import { SiteNav } from "@/components/Landing/SiteNav";
 import { SiteFooter } from "@/components/Landing/SiteFooter";
 import { TallyForm } from "@/components/UI/TallyForm";
-import { LATER, NEXT, REQUEST_FORM_ID, SHIPPED, type PlannedItem, type RoadmapIcon } from "@/content/roadmap";
+import { REQUEST_FORM_ID, type PlannedItem, type RoadmapIcon } from "@/content/roadmap";
+import { getRoadmap } from "@/lib/roadmap";
+
+// Static, rebuilt in the background at most once a minute to pick up roadmap edits.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
 	title: "Roadmap | What SplitBiller is building next",
@@ -48,7 +52,8 @@ const Stage = ({ id, label, title, items, muted }: { id: string; label: string; 
 	</section>
 );
 
-export default function RoadmapPage() {
+export default async function RoadmapPage() {
+	const { next, later, shipped } = await getRoadmap();
 	return (
 		<main className="page-shell min-h-screen bg-paper text-ink">
 			<SiteNav current="roadmap" />
@@ -69,8 +74,8 @@ export default function RoadmapPage() {
 				</div>
 			</header>
 
-			<Stage id="next" label="Next up" title="Being built now" items={NEXT} />
-			<Stage id="later" label="Later" title="On the list" items={LATER} muted />
+			{next.length > 0 && <Stage id="next" label="Next up" title="Being built now" items={next} />}
+			{later.length > 0 && <Stage id="later" label="Later" title="On the list" items={later} muted />}
 
 			<section aria-labelledby="shipped" className="border-y border-line bg-surface px-4 py-12 sm:px-6 sm:py-14">
 				<div className="mx-auto max-w-5xl">
@@ -78,7 +83,7 @@ export default function RoadmapPage() {
 					<h2 id="shipped" className="mt-2 font-display text-2xl font-semibold sm:text-3xl">
 						Recently shipped
 					</h2>
-					{SHIPPED.map(({ month, items }) => (
+					{shipped.map(({ month, items }) => (
 						<div key={month} className="mt-6">
 							<h3 className="text-sm font-semibold text-ink-muted">{month}</h3>
 							<ul className="mt-3 grid gap-x-8 sm:grid-cols-2">
