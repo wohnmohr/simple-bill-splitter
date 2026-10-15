@@ -8,7 +8,7 @@ import {
 	withDb,
 } from "@/lib/turso";
 
-import { sameOrigin } from "@/lib/splitStore";
+import { overLimit, readSmallJson, sameOrigin } from "@/lib/splitStore";
 
 export const runtime = "nodejs";
 
@@ -16,12 +16,13 @@ const TRIGGERS = new Set(["group_settled", "manual", "share_viewed", "moment"]);
 
 export async function POST(req: Request) {
 	if (!sameOrigin(req)) return Response.json({ error: "Forbidden" }, { status: 403 });
-	let body: Record<string, unknown>;
-	try {
-		body = await req.json();
-	} catch {
-		return Response.json({ error: "Invalid request" }, { status: 400 });
+	// Bursts stop here, before a database round trip; the per-IP quotas below are the hard limit.
+	if (overLimit(`feedback:${hashIp(req)}`, 5)) {
+		return Response.json({ error: "Slow down" }, { status: 429, headers: { "Retry-After": "60" } });
 	}
+	// A comment (2,000 characters) and its context (4 KB) fit well inside 16 KB.
+	const body = await readSmallJson(req, 16 * 1024);
+	if (!body) return Response.json({ error: "Invalid request" }, { status: 400 });
 
 	// Honeypot: real people never see or fill this field.
 	if (typeof body.website === "string" && body.website.length > 0) {

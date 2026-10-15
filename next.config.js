@@ -12,6 +12,19 @@ const nextConfig = {
 	},
 	async headers() {
 		return [
+			{
+				// Every response: no MIME sniffing, no framing (the pay and "Received" buttons
+				// can't be clickjacked), only our origin in outgoing Referers, and no access
+				// to device features the app never uses.
+				source: "/:path*",
+				headers: [
+					{ key: "X-Content-Type-Options", value: "nosniff" },
+					{ key: "X-Frame-Options", value: "DENY" },
+					{ key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+					{ key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+					{ key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+				],
+			},
 			// Pages that scan order screenshots: cross-origin isolation lets the on-device
 			// reader use several threads (about 2.5x faster). "credentialless" can't block
 			// other sites' content, only drops cookies from it; Safari ignores it and the
