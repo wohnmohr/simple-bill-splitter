@@ -13,6 +13,7 @@
  */
 import { CURRENCIES, DEFAULT_CURRENCY } from "@/constants";
 import type { Currency, Expense, Group, Person } from "@/types";
+import { isMonthKey } from "@/utils/recurring";
 import { isThemeId } from "@/utils/themes";
 
 export type EntityKind = "m" | "e" | "g";
@@ -103,6 +104,7 @@ function toExpense(id: string, v: unknown, members: Set<string>): Expense | null
 	if (description) expense.description = description;
 	if (x.kind === "payment") expense.kind = "payment";
 	if (Number.isSafeInteger(x.createdAt) && (x.createdAt as number) > 0) expense.createdAt = x.createdAt;
+	if (!expense.kind && isMonthKey(x.repeat?.next)) expense.repeat = { next: x.repeat.next };
 	// Percentages run 0–100; exact amounts can't exceed what was spent.
 	const field = splitMethod === "percentage" ? "percentages" : splitMethod === "exact" ? "amounts" : null;
 	const raw = field && x[field];

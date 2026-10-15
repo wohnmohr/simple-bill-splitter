@@ -1,6 +1,6 @@
 import { Expense, Currency } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
-import { Check, Pencil, Trash2 } from "lucide-react";
+import { Check, Pencil, Repeat, Trash2 } from "lucide-react";
 
 /**
  * Edit and delete slide in at the end of a row on hover or keyboard focus,
@@ -90,6 +90,12 @@ export const ExpenseCard = ({
 						{expense.description || "Untitled expense"}
 					</span>
 					<span className="mt-0.5 block truncate text-sm text-ink-muted">
+						{expense.repeat && (
+							<>
+								<Repeat className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-brand-700" aria-hidden />
+								<span className="text-brand-700">Monthly</span> ·{" "}
+							</>
+						)}
 						<span className="text-ink-soft">{paidByName}</span> paid · {splitLabel}
 					</span>
 				</span>

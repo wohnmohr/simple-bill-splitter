@@ -1,6 +1,10 @@
 "use client";
 
 import { getTemplate, type PayRequest, type SplitLayout, type SplitTemplate } from "@/utils/payStory";
+import { track } from "@/lib/analytics";
+import { splitToGroup } from "@/utils/billGroup";
+import { personKey } from "@/utils/billClaims";
+import { SaveAsGroupCard } from "../SaveAsGroupCard";
 import { usePay, type PayOptions, type PayState } from "./shared";
 import { ReceiptView } from "./Receipt";
 import { LedgerView } from "./Ledger";
@@ -29,7 +33,24 @@ export const SplitView = ({ req, onChange, ...opts }: ViewProps) => {
 	const t = getTemplate(req.kind);
 	const p = usePay(t, req, onChange, opts);
 	const View = VIEWS[t.layout];
-	return <View t={t} p={p} />;
+	const friendsPaid = req.paid.some(([name]) => personKey(name) && personKey(name) !== personKey(req.name));
+	return (
+		<>
+			<View t={t} p={p} />
+			{/* The organiser's device has the whole picture, so the offer is theirs. */}
+			{p.organiser && friendsPaid && (
+				<div className="mx-auto max-w-xl px-4 py-8">
+					<SaveAsGroupCard
+						heading="Keep splitting with these friends"
+						body="Save them as a group, with what everyone has paid. Next time, add the expense there and they each pay their share from one link."
+						toGroup={() => splitToGroup(req)}
+						emptyMessage="Nobody has paid yet."
+						onSaved={(snapshot) => track("split_saved_as_group", { template: t.id, members: snapshot.members.length, done: p.done })}
+					/>
+				</div>
+			)}
+		</>
+	);
 };
 
 /** Remount per split (not per payment) so a payer’s typed amount resets when a different link opens. */

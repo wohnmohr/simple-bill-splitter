@@ -73,8 +73,14 @@ export const forgetSync = (groupId: string) => {
 	}
 };
 
-/** The group's link; with `me`, a member's personal link that opens the group as them on their other devices. */
-export const groupUrl = (link: GroupSyncLink, me?: string) => `${window.location.origin}/g#${linkFragment(link.secret, Boolean(link.pass), me)}`;
+/**
+ * The group's link; with `me`, a member's personal link that opens the group as them on their other devices.
+ * `settle` opens it on the settle-up tab (for payment reminders); it's the only part the server sees.
+ */
+export const groupUrl = (link: GroupSyncLink, me?: string, settle = false) =>
+	`${window.location.origin}/g${settle ? `?${SETTLE_PARAM}` : ""}#${linkFragment(link.secret, Boolean(link.pass), me)}`;
+
+export const SETTLE_PARAM = "settle";
 
 class HttpError extends Error {
 	constructor(readonly status: number, readonly body: Record<string, unknown>) {

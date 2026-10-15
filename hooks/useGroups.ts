@@ -5,6 +5,7 @@ import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
 import { consumePendingGroupSelection } from "@/utils/shareImport";
 import { useGroupSync } from "@/hooks/useGroupSync";
 import { newId } from "@/utils/ids";
+import { addDueRepeats } from "@/utils/recurring";
 
 export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -31,6 +32,26 @@ export const useGroups = () => {
       saveGroupsToStorage(groups);
     }
   }, [groups]);
+
+  // Monthly expenses that have come due: on load, on every change, and when the app comes back to the front.
+  const [awake, setAwake] = useState(0);
+  useEffect(() => {
+    const onShow = () => document.visibilityState === "visible" && setAwake((n) => n + 1);
+    document.addEventListener("visibilitychange", onShow);
+    return () => document.removeEventListener("visibilitychange", onShow);
+  }, []);
+  useEffect(() => {
+    if (!hasLoadedRef.current) return;
+    const now = Date.now();
+    let due = false;
+    const next = groups.map((g) => {
+      const expenses = addDueRepeats(g.expenses, now);
+      if (expenses === g.expenses) return g;
+      due = true;
+      return { ...g, expenses };
+    });
+    if (due) setGroups(next);
+  }, [groups, awake]);
 
   const createGroup = (
     name: string,

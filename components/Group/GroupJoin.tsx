@@ -7,7 +7,8 @@ import { KeyRound, Loader2, Lock } from "lucide-react";
 import type { Group, GroupSyncLink } from "@/types";
 import { MAX_GROUPS } from "@/constants";
 import { track } from "@/lib/analytics";
-import { joinGroup } from "@/utils/groupSync";
+import { SETTLE_PARAM, joinGroup } from "@/utils/groupSync";
+import { openOnSettleUp } from "@/utils/shareImport";
 import { type GroupLink, parseGroupFragment, stretchPassphrase } from "@/utils/groupVault";
 import { newId } from "@/utils/ids";
 import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
@@ -79,6 +80,7 @@ export const GroupJoin = () => {
 
 	useEffect(() => {
 		const parsed = parseGroupFragment(window.location.hash);
+		if (new URLSearchParams(window.location.search).has(SETTLE_PARAM)) openOnSettleUp();
 		// Keep the key out of the address bar and session history once read.
 		if (window.location.hash) window.history.replaceState(null, "", window.location.pathname);
 		link.current = parsed;

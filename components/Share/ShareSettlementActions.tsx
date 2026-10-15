@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Check, Copy, Link2, MessageCircle, Share2 } from "lucide-react";
-import { Currency, Expense, Person } from "@/types";
+import { Currency, Expense, GroupSyncLink, Person } from "@/types";
+import { groupUrl } from "@/utils/groupSync";
 import { buildShareSnapshot, encodeShareUrl } from "@/utils/shareCodec";
 import { formatCurrency } from "@/utils/formatting";
 import { calculateSettlements } from "@/utils/calculations";
@@ -17,6 +18,8 @@ interface ShareSettlementActionsProps {
 	primary?: boolean;
 	className?: string;
 	source?: string;
+	/** A shared group's link: sent instead of a frozen summary, so people land in the live group. */
+	syncLink?: GroupSyncLink;
 }
 
 export const ShareSettlementActions = ({
@@ -27,6 +30,7 @@ export const ShareSettlementActions = ({
 	primary = false,
 	className = "",
 	source = "unknown",
+	syncLink,
 }: ShareSettlementActionsProps) => {
 	const [busy, setBusy] = useState(false);
 	const [copiedLink, setCopiedLink] = useState(false);
@@ -57,7 +61,9 @@ export const ShareSettlementActions = ({
 			"",
 			...lines,
 			"",
-			"View the full split (encrypted in your browser, nothing stored on our servers):",
+			syncLink
+				? "Pay your share and add expenses in the group (end-to-end encrypted):"
+				: "View the full split (encrypted in your browser, nothing stored on our servers):",
 			url,
 			"",
 			`Split your own bills free, no signup: ${window.location.origin}`,
@@ -65,6 +71,7 @@ export const ShareSettlementActions = ({
 	};
 
 	const createShareUrl = async () => {
+		if (syncLink) return groupUrl(syncLink, undefined, true);
 		const snapshot = buildShareSnapshot({
 			name,
 			currency,
@@ -85,6 +92,7 @@ export const ShareSettlementActions = ({
 			member_count: people.length,
 			expense_count: expenses.length,
 			currency: currency.code,
+			synced: !!syncLink,
 		});
 		setBusy(true);
 		setError(null);
