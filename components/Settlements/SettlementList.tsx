@@ -194,7 +194,7 @@ export const SettlementList = ({
 							currency={currency}
 							primary
 							source="dashboard"
-						syncLink={syncLink}
+							syncLink={syncLink}
 						/>
 					</section>
 				)}

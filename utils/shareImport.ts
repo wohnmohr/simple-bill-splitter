@@ -59,7 +59,6 @@ export function openOnSettleUp(): void {
 }
 
 export function consumeOpenOnSettleUp(): boolean {
-	if (typeof window === "undefined") return false;
 	try {
 		const yes = window.sessionStorage.getItem(SETTLE_KEY) !== null;
 		window.sessionStorage.removeItem(SETTLE_KEY);

@@ -45,6 +45,7 @@ export default function Home() {
 	useEffect(() => {
 		if (consumeOpenOnSettleUp()) setActiveTab("settlements");
 	}, []);
+
 	const [showGroupForm, setShowGroupForm] = useState(false);
 	const [showExpenseForm, setShowExpenseForm] = useState(false);
 	const [showMembersModal, setShowMembersModal] = useState(false);
