@@ -4,7 +4,7 @@
  * and models come from our own origin the first time someone scans, then the
  * browser caches them.
  */
-import type { OcrReply, OcrRequest } from "./ocr.worker";
+import type { OcrProgress, OcrReply, OcrRequest } from "./ocr.worker";
 import type { Rgba } from "./paddleOcr";
 
 /** Big photos are scaled down to this (longest side, px): plenty for text, kind to memory. */
@@ -12,6 +12,33 @@ const MAX_SIDE = 2048;
 
 let worker: Worker | null = null;
 let nextId = 0;
+let loaded = false; // the engine is up in this page: no download or start-up next time
+
+/** How far along a scan is (0–1), and what it's doing, in words. */
+export type ScanProgress = { share: number; step: string };
+
+// Each stage's slice of the bar, roughly in proportion to the time it takes:
+// on the first scan mostly the download, after that mostly reading the lines.
+const FIRST: Record<OcrProgress["stage"] | "prepare", [number, number]> = {
+	prepare: [0, 0.02],
+	download: [0.02, 0.6],
+	start: [0.6, 0.66],
+	detect: [0.66, 0.74],
+	read: [0.74, 1],
+};
+const AGAIN: typeof FIRST = { prepare: [0, 0.03], download: [0.03, 0.03], start: [0.03, 0.03], detect: [0.03, 0.2], read: [0.2, 1] };
+
+function describe(p: OcrProgress | { stage: "prepare"; done: 0; total: 1 }): ScanProgress {
+	const [from, to] = (loaded ? AGAIN : FIRST)[p.stage];
+	const share = from + (to - from) * (p.total ? Math.min(1, p.done / p.total) : 0);
+	const step =
+		p.stage === "prepare" ? "Preparing the screenshot…"
+		: p.stage === "download" ? `Downloading the reader, first time only: ${Math.round((100 * p.done) / (p.total || 1))}%`
+		: p.stage === "start" ? "Starting the reader…"
+		: p.stage === "detect" ? "Finding the text…"
+		: `Reading line ${Math.min(p.total, p.done + 1)} of ${p.total}…`;
+	return { share, step };
+}
 
 /**
  * Prepares an image for reading: scales big photos down, and inverts
@@ -39,8 +66,9 @@ async function prepare(file: Blob): Promise<Rgba> {
 	return { data: px, width: img.width, height: img.height };
 }
 
-/** The text of an image, read on this device. `progress` gets 0–1. */
-export async function readImageText(file: Blob, progress?: (share: number) => void): Promise<string> {
+/** The text of an image, read on this device. `progress` hears each step as it happens. */
+export async function readImageText(file: Blob, progress?: (p: ScanProgress) => void): Promise<string> {
+	progress?.(describe({ stage: "prepare", done: 0, total: 1 }));
 	const image = await prepare(file);
 	worker ??= new Worker(new URL("./ocr.worker.ts", import.meta.url), { type: "module" });
 	const id = ++nextId;
@@ -48,10 +76,12 @@ export async function readImageText(file: Blob, progress?: (share: number) => vo
 	return new Promise((resolve, reject) => {
 		const onMessage = ({ data }: MessageEvent<OcrReply>) => {
 			if (data.id !== id) return;
-			if ("progress" in data) return progress?.(data.progress);
+			if ("progress" in data) return progress?.(describe(data.progress));
 			w.removeEventListener("message", onMessage);
-			if ("text" in data) resolve(data.text);
-			else reject(new Error(data.error));
+			if ("text" in data) {
+				loaded = true;
+				resolve(data.text);
+			} else reject(new Error(data.error));
 		};
 		w.addEventListener("message", onMessage);
 		w.postMessage({ id, image } satisfies OcrRequest, [image.data.buffer]);

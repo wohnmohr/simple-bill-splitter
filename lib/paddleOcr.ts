@@ -22,6 +22,9 @@ export type PaddleEngine = {
 };
 
 type Box = { x0: number; y0: number; x1: number; y1: number };
+
+/** Where reading has got to: finding the text, then reading line `done` of `total`. */
+export type ReadProgress = { stage: "detect" | "read"; done: number; total: number };
 type Piece = Box & { text: string };
 
 /** Detection works on the image scaled to fit this (in pixels, a multiple of 32). */
@@ -29,13 +32,15 @@ const DET_MAX_SIDE = 1280; // as accurate as 1600 on our test bills, and quicker
 const REC_HEIGHT = 48;
 
 /** The text of an image, as rows of text top to bottom. */
-export async function readText(engine: PaddleEngine, img: Rgba, onProgress?: (share: number) => void): Promise<string> {
+export async function readText(engine: PaddleEngine, img: Rgba, onProgress?: (p: ReadProgress) => void): Promise<string> {
+	onProgress?.({ stage: "detect", done: 0, total: 1 });
 	const boxes = await detect(engine, img);
+	onProgress?.({ stage: "read", done: 0, total: boxes.length });
 	const pieces: Piece[] = [];
 	for (let i = 0; i < boxes.length; i++) {
 		const text = await recognise(engine, img, boxes[i]);
 		if (text.trim()) pieces.push({ ...boxes[i], text: text.trim() });
-		onProgress?.((i + 1) / boxes.length);
+		onProgress?.({ stage: "read", done: i + 1, total: boxes.length });
 	}
 	return toRows(pieces);
 }

@@ -6,7 +6,7 @@ import { track } from "@/lib/analytics";
 
 export type ScanState =
 	| { status: "idle" }
-	| { status: "reading"; progress: number }
+	| { status: "reading"; progress: number; step: string }
 	| { status: "done"; order: ParsedOrder }
 	| { status: "error"; message: string };
 
@@ -21,10 +21,10 @@ export function useOrderScan(where: string) {
 				return null;
 			}
 			track("order_scan_started", { where });
-			setState({ status: "reading", progress: 0 });
+			setState({ status: "reading", progress: 0, step: "Starting…" });
 			try {
 				const { readImageText } = await import("@/lib/ocr");
-				const text = await readImageText(file, (progress) => setState({ status: "reading", progress }));
+				const text = await readImageText(file, ({ share, step }) => setState({ status: "reading", progress: share, step }));
 				const order = parseOrderText(text);
 				if (!order.items.length && order.total === undefined) {
 					track("order_scan_failed", { where, reason: "no_order" });
