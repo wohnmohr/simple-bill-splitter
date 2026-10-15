@@ -5,6 +5,7 @@ import { Check, Copy, Info, MessageCircle, Plus, Shuffle, X } from "lucide-react
 import { Exclusion, SantaPayload, drawSecretSanta, encodeRevealLink } from "@/utils/secretSanta";
 import { fieldClass, labelClass, useCopy, useTrackResult } from "./shared";
 import { track } from "@/lib/analytics";
+import { whatsAppUrl } from "@/utils/whatsapp";
 
 type Draw = { links: { name: string; url: string }[]; event: string };
 
@@ -80,9 +81,9 @@ export const SecretSantaGenerator = () => {
 	};
 
 	const whatsapp = (name: string, url: string) =>
-		`https://wa.me/?text=${encodeURIComponent(
+		whatsAppUrl(
 			`🎁 ${event.trim() || "Secret Santa"}: hi ${name}! Open your private link to see who you're buying for (don't forward it):\n${url}`
-		)}`;
+		);
 
 	const updatePair = (i: number, side: 0 | 1, value: string) =>
 		setPairs((prev) =>
@@ -224,8 +225,6 @@ export const SecretSantaGenerator = () => {
 									<span className="flex gap-2">
 										<a
 											href={whatsapp(name, url)}
-											target="_blank"
-											rel="noopener noreferrer"
 											className="btn-secondary !px-3 !py-2"
 											onClick={() => track("share_settlement_clicked", { method: "whatsapp", source: "tool:secret-santa" })}
 										>

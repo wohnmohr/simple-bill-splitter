@@ -10,6 +10,7 @@ import { UpiSettlementActions } from "@/components/Settlements/UpiSettlementActi
 import { groupUrl } from "@/utils/groupSync";
 import { buildShareSnapshot, encodeShareUrl } from "@/utils/shareCodec";
 import { track, trackError } from "@/lib/analytics";
+import { openWhatsApp } from "@/utils/whatsapp";
 
 interface SettlementListProps {
 	settlements: Settlement[];
@@ -273,25 +274,20 @@ export const SettlementList = ({
 		const debtor = sharePeople.find((p) => p.id === s.from);
 		const creditor = sharePeople.find((p) => p.id === s.to);
 		track("settlement_remind_clicked", { synced: !!syncLink });
-		// Open the tab now, while the tap still counts, and fill it in once the link is ready.
-		const tab = window.open("", "_blank");
-		if (tab) tab.opener = null;
 		try {
 			const url = syncLink
 				? groupUrl(syncLink, s.from, true)
 				: await encodeShareUrl(buildShareSnapshot({ name: groupName, currency, members: sharePeople, expenses }));
-			const text = [
-				`Hi ${debtor?.name || ""}, a reminder for ${groupName}: you owe me ${formatCurrency(s.amount, currency)}.`,
-				showUpi && creditor?.upiId ? `UPI: ${creditor.upiId}` : "",
-				`See it and pay here: ${url}`,
-			]
-				.filter(Boolean)
-				.join("\n");
-			const wa = `https://wa.me/?text=${encodeURIComponent(text)}`;
-			if (tab) tab.location.href = wa;
-			else window.location.href = wa;
+			openWhatsApp(
+				[
+					`Hi ${debtor?.name || ""}, a reminder for ${groupName}: you owe me ${formatCurrency(s.amount, currency)}.`,
+					showUpi && creditor?.upiId ? `UPI: ${creditor.upiId}` : "",
+					`See it and pay here: ${url}`,
+				]
+					.filter(Boolean)
+					.join("\n")
+			);
 		} catch (err) {
-			tab?.close();
 			trackError(err, { source: "settlement_remind" });
 		}
 	};
