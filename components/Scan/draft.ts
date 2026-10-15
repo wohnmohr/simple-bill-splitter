@@ -8,7 +8,8 @@ export type DraftOrder = { title: string; items: DraftItem[]; charges: DraftChar
 let seq = 0;
 export const draftKey = () => `d${++seq}`;
 
-const str = (n: number | undefined) => (n === undefined ? "" : String(Math.round(n * 100) / 100));
+/** An amount as it's written on a bill: "190", "17.20". */
+const str = (n: number | undefined) => (n === undefined ? "" : Number.isInteger(n) ? String(n) : n.toFixed(2));
 export const num = (s: string) => {
 	const n = parseFloat(s.replace(/,/g, ""));
 	return Number.isFinite(n) ? n : 0;

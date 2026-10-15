@@ -51,6 +51,33 @@ test("Dark mode, a wrapped item name and a dish called Paneer 65", () => {
 	assert.equal(o.balanced, true);
 });
 
+// A real Swiggy screenshot (personal details replaced), read at two sizes:
+// "Bill details" above the items, ₹ read as 3, R or 2, decimal points lost
+// ("1798" for ₹17.98), and a total rounded to the rupee. Reading every
+// amount as printed also "adds up" (3190 + 154 = 3344), so the ₹ signs
+// elsewhere on the bill have to tip it to 190 + 154 = 344.
+for (const name of ["swiggyReal", "swiggyReal2x"]) {
+	test(`Real Swiggy screenshot (${name}): every amount right, rounding shown`, () => {
+		const o = fixture(name);
+		assert.equal(o.app, "Swiggy");
+		assert.equal(o.title, "Sree Akshayam");
+		assert.deepEqual(o.items.map((i) => [i.qty, i.name.replace("Idi ", "Idli ") /* OCR, size-dependent */, i.amount]), [
+			[1, "Onion Dosa", 190],
+			[2, "Idli [2 Pieces]", 154],
+		]);
+		assert.deepEqual(o.charges.map((c) => [c.kind, c.amount]), [
+			["fee", 17.2],
+			["fee", 17.98],
+			["discount", -124.99],
+			["tax", 14.94],
+			["discount", -0.13],
+		]);
+		assert.equal(o.itemTotal, 344);
+		assert.equal(o.total, 269);
+		assert.equal(o.balanced, true);
+	});
+}
+
 test("Instamart: a FREE delivery line and a coupon", () => {
 	const o = fixture("instamart");
 	assert.equal(o.app, "Instamart");
