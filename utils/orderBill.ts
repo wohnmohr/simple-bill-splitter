@@ -4,9 +4,11 @@
  *
  * The text comes from on-device OCR, which reads the ₹ sign unreliably: as a
  * symbol (X, F, ¥, $, %…), as nothing, or as a digit, so "₹320" can arrive as
- * "3320". Symbols are stripped; for a leading digit both readings are kept and
- * the bill's own arithmetic picks the right one (items add up to the item
- * total, and the item total plus charges to the amount paid).
+ * "3320"; it also loses decimal points ("₹17.98" as "1798"). Symbols are
+ * stripped, every other plausible reading of an amount is kept, and the bill's
+ * own arithmetic picks the likeliest set: items add up to the item total, and
+ * the item total plus charges to the amount paid, give or take the rounding
+ * to a whole rupee that apps apply to the total.
  *
  * Plain TypeScript with no imports, so it runs anywhere, including `node --test`.
  */
@@ -44,10 +46,16 @@ const MAX_AMOUNT = 1_000_000;
 
 const TOTAL_RE = /(grand\s*total|to\s*pay|bill\s*total|total\s*(paid|payable|amount)|amount\s*paid|order\s*total|net\s*(payable|amount)|you\s*paid|paid\s*amount)/i;
 const ITEM_TOTAL_RE = /(.?tem\s*total|items?\s*total|sub\s*-?\s*total|item\s*subtotal)/i;
-const DISCOUNT_RE = /(discount|coupon|offer|promo|cashback|saving|off\b|\bdeal)/i;
-const TAX_RE = /(gst|\btax|cgst|sgst|igst|restaurant\s*charges|cess)/i;
-const FEE_RE = /(delivery|platform|packaging|packing|convenience|handling|surge|rain|small\s*(cart|order)|late\s*night|\btip\b|donation|service\s*charge|feeding\s*india|fee\b|charge)/i;
-const IGNORE_RE = /(order\s*(#|id|no)|#\s*\d|invoice|gstin|fssai|you\s*saved|total\s*savings|savings|rating|rate\s*(your|the)|delivered\s*(on|in|by)?|placed\s*on|paid\s*via|payment\s*mode|\bupi\b.*(ref|id))/i;
+const DISCOUNT_RE = /\b(discounts?|coupons?|offers?|promo\w*|cashback|savings?|off|deals?)\b/i;
+const TAX_RE = /\b(gst|tax|taxes|cgst|sgst|igst|vat|restaurant\s*charges|cess)\b/i;
+// Whole words: "Coffee" is not a fee, "Grain bowl" not a rain surcharge.
+const FEE_RE = /\b(delivery|platform|packaging|packing|convenience|handling|surge|rain|small\s*(cart|order)|late\s*night|tip|donation|service\s*charge|feeding\s*india|fees?|charges?)\b/i;
+/** "Total" alone, as paper bills print it, but not "Total tax" or "Total savings". */
+const PLAIN_TOTAL_RE = /\btotal\b(?!\s*(tax|gst|savings?|saved|discount|qty|quantity|items?|includes|excl|before))/i;
+/** Bill paperwork, not money: dates, times, phone, bill/table/check numbers, staff. */
+const META_RE =
+	/(\b\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}\b|\b\d{1,2}:\d{2}\b|\b\d{1,2}[- ](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[- ,']+\d{2,4}|\b(tel|ph|phone|mob|mobile|fax|cashier|server|steward|waiter|register|txn|kot|token|pax|covers?|guests?|seats?)\b|\b(bill|inv|chk|check|tbl|table|store|member|ref|trans(action)?|term\s*id)\s*(no\.?|#|:))/i;
+const IGNORE_RE = /(order\s*(#|id|no)|#\s*\d|invoice|gstin|fssai|you\s*saved|total\s*savings|savings|rating|rate\s*(your|the)|delivered\s*(on|in|by)?|placed\s*on|paid\s*via|payment\s*mode|\bupi\b.*(ref|id)|(credit|debit)\s*card|tender|\bchange\b|\bvisa\b|mastercard|\bamex\b|\bbalance\b)/i;
 const HEADER_RE = /^(items?|your\s*order|order\s*summary|bill\s*(details|summary)|order\s*details|summary|payment)$/i;
 const QTY_BEFORE = /^(\d{1,2})\s*[xX×*]{1,2}\s+/;
 const QTY_AFTER = /\s[xX×*]\s*(\d{1,2})\s*$/;
@@ -57,14 +65,31 @@ const APPS: [RegExp, string][] = [
 	[/instamart/i, "Instamart"],
 	[/blinkit/i, "Blinkit"],
 	[/zepto/i, "Zepto"],
-	[/swiggy|gst and restaurant charges|\bto pay\b/i, "Swiggy"],
 	[/zomato|delivery partner fee|grand total/i, "Zomato"],
+	[/swiggy|gst and restaurant charges|\bto pay\b|bill total|one bl/i, "Swiggy"],
 ];
 
-type Token = { raw: string; value: number; candidates: number[]; negative: boolean };
+/**
+ * One way to read an amount: as printed, without a leading digit that was
+ * really ₹ (`strip`), and/or with the decimal point OCR lost put back (`point`).
+ */
+type Reading = { value: number; strip: boolean; point: boolean };
+type Token = { raw: string; value: number; readings: Reading[]; negative: boolean; symbol: boolean };
 
-/** Parses the amount at the end of a line, keeping both readings when ₹ may have become a digit. */
+/**
+ * The amount at the end of a line. In photos, scraps of noise can follow the
+ * price ("$16.00 EE =", "$4.28 2"): then the price is taken, unless the line
+ * ends in a real amount or a word ("₹34 FREE").
+ */
 function amountAtEnd(line: string): { label: string; token: Token } | null {
+	const strict = parseAmount(line);
+	if (strict && (strict.token.symbol || !/^\d{1,2}$/.test(strict.token.raw))) return strict;
+	const noisy = line.match(/^(.*\d\.\d{2})(?:\s+\S{1,3}){1,3}\s*$/);
+	return (noisy && parseAmount(noisy[1])) || strict;
+}
+
+/** Parses the amount at the very end of a line, with every plausible reading of it. */
+function parseAmount(line: string): { label: string; token: Token } | null {
 	const m = line.match(AMOUNT_AT_END);
 	if (!m || m.index === undefined) return null;
 	// "Raita and Gravy x 1": a quantity, not a price ("X99" with no space is ₹99).
@@ -76,15 +101,19 @@ function amountAtEnd(line: string): { label: string; token: Token } | null {
 	const value = parseFloat(parts.join("") + (paise ? `.${paise}` : ""));
 	if (!Number.isFinite(value) || value >= MAX_AMOUNT) return null;
 	// Long plain integers are order ids or phone numbers, not money.
-	if (!/[,.]/.test(digits) && digits.length >= 7) return null;
-	const candidates = [value];
+	if (!/[,.]/.test(digits) && digits.length >= 6) return null; // PIN codes too
+	const readings: Reading[] = [{ value, strip: false, point: false }];
 	if (!junk && RUPEE_DIGITS.has(digits[0]) && digits.length >= 2 && digits[1] !== "," && digits[1] !== "0") {
 		const rest = parseFloat(digits.slice(1).replace(/,/g, ""));
-		if (rest > 0) candidates.push(rest);
+		if (rest > 0) readings.push({ value: rest, strip: true, point: false });
+	}
+	// "1798" may be 17.98 with the point lost; a comma says it's a thousands figure.
+	if (/^\d{3,}$/.test(digits)) {
+		for (const r of [...readings]) if (String(r.value).length >= 3) readings.push({ ...r, value: r.value / 100, point: true });
 	}
 	return {
 		label: line.slice(0, m.index).trim(),
-		token: { raw: m[0].trim(), value, candidates, negative: !!minus },
+		token: { raw: m[0].trim(), value, readings, negative: !!minus, symbol: !!junk },
 	};
 }
 
@@ -92,6 +121,9 @@ function amountAtEnd(line: string): { label: string; token: Token } | null {
 function clean(line: string): string {
 	return line
 		.replace(/^\s*[\[(][^\])]{0,3}[\])]\s*/, "") // "[e]", "(o)": the veg mark
+		.replace(/^[^\p{L}\p{N}\[-]+/u, "") // "(®", "@®", "©)": the veg mark or an icon
+		.replace(/^\p{L}\s+(?=\S)/u, "") // "O Onion Dosa", "a 1 x Cake": the veg mark read as a letter
+		.replace(/[\u3400-\u9fff\uf900-\ufaff]/g, "₹") // never Chinese on these bills: a misread ₹ ("天798.30")
 		.replace(/^\[tem\b/i, "Item")
 		.replace(/[|]\s*$/, "")
 		.replace(/\s{2,}/g, " ")
@@ -116,43 +148,69 @@ export function parseOrderText(text: string): ParsedOrder {
 	let total: Token | undefined;
 	let title: string | undefined;
 	let inBill = false; // past "Item total": charges, not items
+	// A plain "Total" may be a subtotal: if another total follows, it was.
+	let maybeTotal: { token: Token; items: number; charges: number } | undefined;
+	// A name line with no price, in case the price sits alone on the next line.
+	let named: { line: string; joined?: { row: ItemRow; name: string; qty: number } } | undefined;
 
 	let lastWasItem = false;
 	for (const line of lines) {
 		if (HEADER_RE.test(line)) {
-			if (/bill|payment/i.test(line)) inBill = true;
+			// "Bill details" above the items (Swiggy) still lists items; below them, only charges.
+			if (/bill|payment/i.test(line) && items.length) inBill = true;
 			lastWasItem = false;
 			continue;
 		}
 		const found = amountAtEnd(line);
+		const lastNamed = named;
+		named = undefined;
 		if (!found) {
 			const prev = items[items.length - 1];
+			if (!inBill && !IGNORE_RE.test(line) && !META_RE.test(line)) named = { line };
 			if (lastWasItem && prev && !inBill && !IGNORE_RE.test(line) && !FEE_RE.test(line) && !/\bfree\b/i.test(line)) {
 				// A wrapped item name, possibly carrying the quantity: "Raita and Gravy x 1".
+				named = { line, joined: { row: prev, name: prev.name, qty: prev.qty } };
 				const q = line.match(QTY_AFTER);
 				prev.name = `${prev.name} ${line.replace(QTY_AFTER, "")}`.trim();
 				if (q) prev.qty = parseInt(q[1], 10);
-			} else if (!title && !inBill && !items.length && /^\p{L}[\p{L}\p{N} &'.,()-]{1,40}$/u.test(line) && !IGNORE_RE.test(line)) {
+			} else if (!title && !inBill && !items.length && /^\p{L}[\p{L}\p{N} &'.,()-]{1,40}$/u.test(line) && !IGNORE_RE.test(line) && !META_RE.test(line)) {
 				title = line;
 			}
 			lastWasItem = false;
 			continue;
 		}
 		lastWasItem = false;
-		const { label, token } = found;
+		const { token } = found;
+		let { label } = found;
+		// A price alone on its line belongs to the name above it, not to the item before.
+		if (!label && lastNamed) {
+			if (lastNamed.joined) Object.assign(lastNamed.joined.row, { name: lastNamed.joined.name, qty: lastNamed.joined.qty });
+			label = lastNamed.line;
+		}
 		if (TOTAL_RE.test(label)) {
+			if (maybeTotal) itemTotal ??= maybeTotal.token;
 			total = token;
 			break; // below the amount paid come savings and payment details
 		}
-		if (IGNORE_RE.test(label)) continue;
+		if (IGNORE_RE.test(label) || META_RE.test(line)) continue;
 		if (ITEM_TOTAL_RE.test(label)) {
 			itemTotal = token;
 			inBill = true;
 			continue;
 		}
+		if (PLAIN_TOTAL_RE.test(label)) {
+			if (itemTotal || maybeTotal || !items.length) {
+				if (maybeTotal) itemTotal ??= maybeTotal.token;
+				total = token;
+				break;
+			}
+			maybeTotal = { token, items: items.length, charges: charges.length };
+			inBill = true;
+			continue;
+		}
 		const hasQty = QTY_BEFORE.test(label) || QTY_AFTER.test(label);
 		const discount = token.negative || DISCOUNT_RE.test(label);
-		const tax = TAX_RE.test(label);
+		const tax = TAX_RE.test(label) && !/\bfee\b/i.test(label); // "Platform fee with GST" is a fee
 		if (inBill || ((discount || tax || FEE_RE.test(label)) && !hasQty)) {
 			const kind: ChargeKind = discount ? "discount" : tax ? "tax" : "fee";
 			charges.push({ label: label.replace(/\s*\|\s*[\d.]+\s*kms?$/i, "") || kind, kind, token });
@@ -169,12 +227,26 @@ export function parseOrderText(text: string): ParsedOrder {
 			qty = parseInt(after[1], 10);
 			name = name.replace(QTY_AFTER, "");
 		}
-		// A struck-out old price before the real one: "Choco Volcano Cake F119".
+		// A struck-out old price before the real one: "Choco Volcano Cake F119", or with no
+		// sign, a trailing number bigger than the price ("Cake 119 ₹99", but "Paneer 65 ₹290").
 		name = name.replace(/\s+(?:₹|[xXfFrR¥$%])\d[\d,]*(?:\.\d{1,2})?$/, "").trim();
+		const struck = name.match(/\s(\d[\d,]*(?:\.\d{1,2})?)$/);
+		if (struck && parseFloat(struck[1].replace(/,/g, "")) > token.value) name = name.slice(0, struck.index).trim();
+		// A capital I read as 1 at the start of a word: "1dli" (but not "1kg", "1pcs").
+		name = name.replace(/(^|\s)1(?=[a-z]{3,}\b)(?!(?:pcs|pack|ltr|litre|liter|piece|pieces|nos)\b)/g, "$1I");
+		// …or as l, before a consonant no English word starts "l" with: "ldli".
+		name = name.replace(/(^|\s)l(?=[cdfghjkmnpqrstvwxz][a-z]{2,}\b)/g, "$1I");
 		if (name) {
 			items.push({ name, qty, token });
 			lastWasItem = true;
 		}
+	}
+
+	// Only one plain total: it was the total, and what followed was payment details.
+	if (maybeTotal && !total) {
+		total = maybeTotal.token;
+		items.length = maybeTotal.items;
+		charges.length = maybeTotal.charges;
 	}
 
 	const resolved = reconcile(
@@ -183,24 +255,89 @@ export function parseOrderText(text: string): ParsedOrder {
 		charges.map((c) => ({ token: c.token, sign: c.kind === "discount" ? -1 : 1 })),
 		total
 	);
+	const parsedCharges: OrderCharge[] = charges.flatMap((c, i) => {
+		const v = resolved.charges[i];
+		return v === null ? [] : [{ label: c.label, kind: c.kind, amount: c.kind === "discount" ? -v : v }];
+	});
+	// The app rounded what was paid to a whole rupee: show it, so everything adds up.
+	if (resolved.rounding) {
+		parsedCharges.push({ label: "Rounded off", kind: resolved.rounding < 0 ? "discount" : "fee", amount: resolved.rounding });
+	}
 	return {
 		app,
 		title,
-		items: items.map((r, i) => ({ name: r.name, qty: r.qty, amount: resolved.items[i] })),
-		charges: charges.map((c, i) => ({
-			label: c.label,
-			kind: c.kind,
-			amount: c.kind === "discount" ? -Math.abs(resolved.charges[i]) : resolved.charges[i],
-		})),
+		items: items.flatMap((r, i) => {
+			const v = resolved.items[i];
+			return v === null ? [] : [{ name: r.name, qty: r.qty, amount: v }];
+		}),
+		charges: parsedCharges,
 		itemTotal: resolved.itemTotal,
 		total: resolved.total,
 		balanced: resolved.balanced,
 	};
 }
 
+/** How many of 6 nearby wrong totals may be reachable before a match counts as chance. */
+const DECOY_LIMIT = 2;
+
+/** What leaving a line out of the bill costs, against 1 for each misreading fixed. */
+const DROP = 3;
+
+/** An amount in a sum: its readings in paise, each with how unlikely it is. */
+type Term = { options: { paise: number; cost: number }[]; sign: number };
+
 /**
- * Picks one reading for every ambiguous amount so that the bill adds up,
- * preferring the amounts exactly as read when several readings work.
+ * Picks one reading per term so the signed sum lands within `tol` paise of
+ * `target`, at the lowest total cost (then the smallest gap). Dynamic
+ * programming over reachable sums, so it stays fast with many amounts.
+ */
+function solve(terms: Term[], target: number, tol: number, keepOne = false): { picks: number[]; cost: number; gap: number } | null {
+	type Node = { cost: number; pick: number; prev: Node | null };
+	let reach = new Map<number, Node>([[0, { cost: 0, pick: -1, prev: null }]]);
+	for (const term of terms) {
+		const next = new Map<number, Node>();
+		for (const [sum, node] of reach) {
+			term.options.forEach((o, pick) => {
+				const key = sum + term.sign * o.paise;
+				const cost = node.cost + o.cost;
+				const seen = next.get(key);
+				if (!seen || cost < seen.cost) next.set(key, { cost, pick, prev: node });
+			});
+		}
+		if (next.size > 200_000) return null; // not a real bill
+		reach = next;
+	}
+	let best: { node: Node; gap: number } | null = null;
+	for (const [sum, node] of reach) {
+		const gap = Math.abs(sum - target);
+		if (gap <= tol && (!best || node.cost < best.node.cost || (node.cost === best.node.cost && gap < best.gap))) best = { node, gap };
+	}
+	if (!best) return null;
+	const picks: number[] = [];
+	for (let n: Node | null = best.node; n && n.pick >= 0; n = n.prev) picks.unshift(n.pick);
+	// With enough lines left out, some subset matches almost any total: that proves
+	// nothing. Allow one line in five to be dropped (the last option of each term).
+	const dropped = picks.filter((p, i) => p === terms[i].options.length - 1).length;
+	if (dropped > Math.max(1, Math.floor(terms.length / 5))) return null;
+	if (keepOne && terms.length && dropped === terms.length) return null; // items that add up only once they're all gone
+	// Would these readings add up just as easily to a wrong total? If decoy targets
+	// nearby are reachable as cheaply, the match is a coincidence, not evidence.
+	const cheap = (t: number) => {
+		for (const [sum, node] of reach) if (Math.abs(sum - t) <= tol && node.cost <= best!.node.cost) return true;
+		return false;
+	};
+	// Whole-rupee offsets, wider than the tolerance, so decoys look like real totals.
+	const decoys = [300, -300, 700, -700, 1100, -1100].map((d) => target + d);
+	if (decoys.filter(cheap).length >= DECOY_LIMIT) return null;
+	return { picks, cost: best.node.cost, gap: best.gap };
+}
+
+/**
+ * Picks one reading for every amount so that the bill adds up: items to the
+ * item total, and the item total plus charges to what was paid (within the
+ * rounding to a whole rupee apps apply). Among the readings that work, the
+ * likeliest wins: as printed, unless the bill shows ₹ signs elsewhere, in
+ * which case a bare leading 2, 3 or 7 was more likely the ₹ itself.
  */
 function reconcile(
 	items: Token[],
@@ -209,55 +346,89 @@ function reconcile(
 	total: Token | undefined
 ) {
 	const all = [...items, ...(itemTotal ? [itemTotal] : []), ...charges.map((c) => c.token), ...(total ? [total] : [])];
-	const ambiguous = all.map((t, i) => (t.candidates.length > 1 ? i : -1)).filter((i) => i >= 0);
-	const pick = (choice: number[]) => {
-		const v = all.map((t) => t.value);
-		ambiguous.forEach((idx, k) => (v[idx] = all[idx].candidates[choice[k]]));
-		let p = 0;
-		const it = v.slice(p, (p += items.length));
-		const iTot = itemTotal ? v[p++] : undefined;
-		const ch = v.slice(p, (p += charges.length));
-		const tot = total ? v[p++] : undefined;
-		return { it, iTot, ch, tot };
-	};
-	const score = (r: ReturnType<typeof pick>) => {
-		const itemSum = round2(r.it.reduce((a, b) => a + b, 0));
-		const base = r.iTot ?? itemSum;
-		const charged = round2(base + r.ch.reduce((a, b, i) => a + charges[i].sign * Math.abs(b), 0));
-		let s = 0;
-		if (r.iTot !== undefined && items.length) s += near(itemSum, r.iTot) ? 2 : 0;
-		if (r.tot !== undefined) s += near(charged, r.tot) ? 2 : 0;
-		return { s, itemSum, charged };
-	};
-	const max = (r: ReturnType<typeof pick>) => (r.iTot !== undefined && items.length ? 2 : 0) + (r.tot !== undefined ? 2 : 0);
+	const symbols = all.some((t) => t.symbol);
+	const cost = (r: Reading, t: Token) =>
+		(t.readings.some((x) => x.strip) ? (r.strip === symbols ? 0 : 1) : 0) + (r.point ? 1 : 0);
+	// Last option: the line isn't part of the bill at all (an address, a stray
+	// number). Dearer than any misreading, so it's only taken when nothing else adds up.
+	const term = (t: Token, sign = 1): Term => ({
+		options: [...t.readings.map((r) => ({ paise: Math.round(r.value * 100), cost: cost(r, t) })), { paise: 0, cost: DROP }],
+		sign,
+	});
+	const value = (t: Token, pick: number) => (pick < t.readings.length ? t.readings[pick].value : null);
+	/** The likeliest reading on its own, for amounts no sum pins down. */
+	const likeliest = (t: Token) => t.readings.reduce((b, r, i) => (cost(r, t) < cost(t.readings[b], t) ? i : b), 0);
 
-	let best = pick(ambiguous.map(() => 0));
-	let bestScore = score(best).s;
-	let bestStrips = 0;
-	if (ambiguous.length <= 14 && bestScore < max(best)) {
-		for (let mask = 1; mask < 1 << ambiguous.length; mask++) {
-			const choice = ambiguous.map((_, k) => (mask >> k) & 1);
-			const r = pick(choice);
-			const s = score(r).s;
-			const strips = choice.reduce((a, b) => a + b, 0);
-			if (s > bestScore || (s === bestScore && s > 0 && strips < bestStrips)) {
-				best = r;
-				bestScore = s;
-				bestStrips = strips;
+	const itemTerms = items.map((t) => term(t));
+	const chargeTerms = charges.map((c) => term(c.token, c.sign));
+	type Plan = {
+		score: number;
+		cost: number;
+		gap: number;
+		iPick?: number;
+		tPick?: number;
+		itemPicks: number[];
+		chargePicks: number[];
+		checks: number;
+	};
+	let best: Plan | null = null;
+	const iOptions = itemTotal ? itemTotal.readings.map((_, i) => i) : [undefined];
+	const tOptions = total ? total.readings.map((_, i) => i) : [undefined];
+	for (const iPick of iOptions) {
+		for (const tPick of tOptions) {
+			const iVal = iPick === undefined ? undefined : Math.round(itemTotal!.readings[iPick].value * 100);
+			const tVal = tPick === undefined ? undefined : Math.round(total!.readings[tPick].value * 100);
+			let planCost = (iPick === undefined ? 0 : cost(itemTotal!.readings[iPick], itemTotal!)) + (tPick === undefined ? 0 : cost(total!.readings[tPick], total!));
+			let score = 0;
+			let checks = 0;
+			let gap = 0;
+			let itemPicks = items.map(likeliest);
+			let chargePicks = charges.map((c) => likeliest(c.token));
+			// Whole-rupee totals may be rounded; others must match to the paisa.
+			const tol = (t: number) => (t % 100 === 0 ? 50 : 1);
+			if (iVal !== undefined && items.length) {
+				checks++;
+				const r = solve(itemTerms, iVal, 1, true);
+				if (r) {
+					score++;
+					planCost += r.cost;
+					itemPicks = r.picks;
+				}
 			}
+			if (tVal !== undefined && (iVal !== undefined || items.length)) {
+				checks++;
+				const r = iVal !== undefined ? solve(chargeTerms, tVal - iVal, tol(tVal)) : solve([...itemTerms, ...chargeTerms], tVal, tol(tVal));
+				if (r) {
+					score++;
+					planCost += r.cost;
+					gap = r.gap;
+					if (iVal !== undefined) chargePicks = r.picks;
+					else {
+						itemPicks = r.picks.slice(0, items.length);
+						chargePicks = r.picks.slice(items.length);
+					}
+				}
+			}
+			const plan = { score, cost: planCost, gap, iPick, tPick, itemPicks, chargePicks, checks };
+			if (!best || score > best.score || (score === best.score && (planCost < best.cost || (planCost === best.cost && gap < best.gap)))) best = plan;
 		}
 	}
-	const { itemSum, charged } = score(best);
-	const total_ = best.tot ?? (items.length || best.iTot !== undefined ? charged : undefined);
+	const plan = best!;
+	const itemValues = items.map((t, i) => value(t, plan.itemPicks[i]));
+	const chargeValues = charges.map((c, i) => value(c.token, plan.chargePicks[i]));
+	const iTot = plan.iPick === undefined ? undefined : itemTotal!.readings[plan.iPick].value;
+	const tot = plan.tPick === undefined ? undefined : total!.readings[plan.tPick].value;
+	const itemSum = round2(itemValues.reduce<number>((a, b) => a + (b ?? 0), 0));
+	const charged = round2((iTot ?? itemSum) + chargeValues.reduce<number>((a, b, i) => a + charges[i].sign * (b ?? 0), 0));
+	// Verified only if the bill printed a total to check against, and it adds up.
+	const balanced = plan.checks > 0 && plan.score === plan.checks;
 	return {
-		items: best.it,
-		itemTotal: best.iTot,
-		charges: best.ch.map(Math.abs),
-		total: total_,
-		balanced:
-			(best.iTot === undefined || !items.length || near(itemSum, best.iTot)) &&
-			(best.tot === undefined || near(charged, best.tot)) &&
-			(items.length > 0 || best.iTot !== undefined),
+		items: itemValues,
+		itemTotal: iTot,
+		charges: chargeValues,
+		total: tot, // only what the bill printed: a sum of our own readings would vouch for itself
+		balanced,
+		rounding: balanced && tot !== undefined && !near(charged, tot) ? round2(tot - charged) : 0,
 	};
 }
 

@@ -310,7 +310,6 @@ export const ExpenseFormModal = ({
 					<div>
 						<ScanOrderButton
 							state={scanState}
-							label="Scan a food order screenshot"
 							onFile={async (file) => {
 								const parsed = await scan(file);
 								if (parsed) setOrder(draftFromOrder(parsed));

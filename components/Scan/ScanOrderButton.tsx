@@ -12,7 +12,7 @@ type Props = {
 };
 
 /** Picks a screenshot (or a photo) and shows how reading it is going. */
-export const ScanOrderButton = ({ state, onFile, label = "Scan a Swiggy or Zomato screenshot", className = "" }: Props) => {
+export const ScanOrderButton = ({ state, onFile, label = "Scan a food order screenshot", className = "" }: Props) => {
 	const input = useRef<HTMLInputElement>(null);
 	const reading = state.status === "reading";
 	return (
@@ -32,21 +32,38 @@ export const ScanOrderButton = ({ state, onFile, label = "Scan a Swiggy or Zomat
 			/>
 			<button type="button" onClick={() => input.current?.click()} disabled={reading} className="btn-secondary w-full !justify-center">
 				{reading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanLine className="h-4 w-4" />}
-				{reading ? `Reading the order… ${Math.round(state.progress * 100)}%` : label}
+				{reading ? `Scanning… ${Math.round(state.progress * 100)}%` : label}
+				{!reading && (
+					<span className="rounded-full bg-brand-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none tracking-wide text-brand-700">
+						Beta
+					</span>
+				)}
 			</button>
-			{reading && (
-				<div className="mt-2 h-1.5 overflow-hidden rounded-full bg-brand-50" aria-hidden>
-					<div className="h-full rounded-full bg-brand-700 transition-[width] duration-300" style={{ width: `${Math.max(4, state.progress * 100)}%` }} />
-				</div>
-			)}
-			{state.status === "error" ? (
+			{reading ? (
+				<>
+					<div
+						className="mt-2 h-1.5 overflow-hidden rounded-full bg-brand-50"
+						role="progressbar"
+						aria-label="Scanning"
+						aria-valuemin={0}
+						aria-valuemax={100}
+						aria-valuenow={Math.round(state.progress * 100)}
+					>
+						<div className="h-full rounded-full bg-brand-700 transition-[width] duration-200" style={{ width: `${Math.max(2, state.progress * 100)}%` }} />
+					</div>
+					{/* What it's doing right now, in words (read out by screen readers too). */}
+					<p className="mt-2 text-xs tabular-nums text-ink-soft" aria-live="polite">
+						{state.step}
+					</p>
+				</>
+			) : state.status === "error" ? (
 				<p role="alert" className="mt-2 text-sm text-negative">
 					{state.message}
 				</p>
 			) : (
 				<p className="mt-2 flex items-center gap-1.5 text-xs text-ink-muted">
 					<ShieldCheck className="h-3.5 w-3.5 shrink-0 text-positive" />
-					Read on your device. The screenshot never leaves it.
+					Read on your device and never uploaded. In beta: check the amounts before saving.
 				</p>
 			)}
 		</div>

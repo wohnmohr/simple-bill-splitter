@@ -191,6 +191,8 @@ export const OrderSplit = ({ draft, onChange, people, currency, hideShares }: Pr
 				<p className={`mt-2 text-sm tabular-nums ${totals.balanced ? "text-ink-muted" : "text-negative"}`} role={totals.balanced ? undefined : "alert"}>
 					Items {fmt(totals.items)} {totals.charges < 0 ? "−" : "+"} extras {fmt(Math.abs(totals.charges))} = {fmt(totals.computed)}
 					{!totals.balanced && ` — the bill says ${fmt(totals.total)}. Check the amounts above.`}
+					{/* Nothing to check against: say so rather than look confirmed. */}
+					{!draft.total.trim() && totals.computed > 0 && ". Type in the total from the bill to check these amounts."}
 				</p>
 			</section>
 

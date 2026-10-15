@@ -690,7 +690,11 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			},
 			{
 				q: "Does it work for Instamart, Blinkit or Zepto?",
-				a: "Yes. Any order summary that lists items with prices and a total works, including grocery orders split with flatmates.",
+				a: "Instamart, yes. Blinkit and Zepto order summaries list items, prices and a total the same way, so they should work, but they've been tested less. Grocery orders split with flatmates work the same as food.",
+			},
+			{
+				q: "What can't it read yet?",
+				a: "Scanning is in beta. It reads app screenshots best. Photos of paper bills, especially creased or angled ones, often come out wrong, and the review screen warns you when the amounts don't add up. It reads English and one screenshot at a time, so an order that runs over two screenshots needs its items typed in. If the screenshot doesn't show the total, it can't check the amounts, so type the total in.",
 			},
 			{
 				q: "How do friends pay me back?",

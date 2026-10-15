@@ -47,7 +47,7 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
-			{ title: "Scan Swiggy, Zomato and Instamart screenshots", href: "/split-swiggy-zomato-bill" },
+			{ title: "Scan Swiggy, Zomato and Instamart screenshots (beta)", href: "/split-swiggy-zomato-bill" },
 			{ title: "Split a bill item by item", href: "/split-swiggy-zomato-bill" },
 			{ title: "Split by exact amounts", href: "/features#expenses" },
 			{ title: "Install SplitBiller as an app", href: "/features" },
