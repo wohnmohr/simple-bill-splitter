@@ -24,8 +24,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
+# env files hold secrets (Turso token, IP salt); only the empty template is committed
+.env*
+!.env.example
 
 # vercel
 .vercel

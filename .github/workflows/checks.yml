@@ -1,0 +1,48 @@
+name: Checks
+
+# Runs on every pull request and on pushes to the deploy branches, so a leaked
+# secret or a broken build is caught before Vercel ships it.
+on:
+  pull_request:
+  push:
+    branches: [staging, production]
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: No secrets in the code or its history
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks 8.28.0 (checksum-pinned)
+        run: |
+          curl -sSfL -o gitleaks.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz
+          echo "a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb  gitleaks.tgz" | sha256sum -c -
+          tar xzf gitleaks.tgz gitleaks && rm gitleaks.tgz
+      - name: Scan every commit
+        run: ./gitleaks git --redact --no-banner -v
+
+  build:
+    name: Test, typecheck, audit and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm exec tsc --noEmit
+      - name: No known high or critical vulnerabilities in what ships
+        run: pnpm audit --prod --audit-level high
+      - run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"

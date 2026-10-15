@@ -46,12 +46,12 @@ export const tokenMatches = (token: string, storedHash: string) => {
 };
 
 /** Parses a small JSON object body; null if it's too big, not JSON, or not an object. */
-export async function readSmallJson(req: Request): Promise<Record<string, unknown> | null> {
+export async function readSmallJson(req: Request, max = MAX_BODY_BYTES): Promise<Record<string, unknown> | null> {
 	const declared = Number(req.headers.get("content-length") || 0);
-	if (declared > MAX_BODY_BYTES) return null;
+	if (declared > max) return null;
 	try {
 		const text = await req.text();
-		if (text.length > MAX_BODY_BYTES) return null;
+		if (text.length > max) return null;
 		const body = JSON.parse(text);
 		return body && typeof body === "object" && !Array.isArray(body) ? body : null;
 	} catch {
