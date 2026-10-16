@@ -95,6 +95,13 @@ test("a word before an amount is the payer only if it is a name", () => {
 	assert.deepEqual(parseQuickAdd("Paragliding 3000 split with Zuvoka").expenses[0].participants, [ME, "Zuvoka"]);
 });
 
+test("in a list of shares, an unlisted capitalised word is a name", () => {
+	const [bill, ...rest] = parseQuickAdd("Electricity 2600 - Asha 1000, Zuvoka 800, me 800").expenses;
+	assert.equal(rest.length, 0);
+	assert.deepEqual(bill.split.weights, { Asha: 1000, Zuvoka: 800, [ME]: 800 });
+	assert.equal(parseQuickAdd("Dinner 1200, Cab 300").expenses.length, 2, "a second expense is not a share");
+});
+
 test("amounts in words", () => {
 	const amount = (text) => parseQuickAdd(text).expenses[0].amount;
 	assert.equal(amount("pizza five hundred"), 500);

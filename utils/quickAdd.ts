@@ -535,6 +535,12 @@ function readPiece(text: string, names: Names, listOpen: boolean, now: number): 
 	return bit;
 }
 
+/** A description that is really one capitalised name, remembered as one. */
+function loneName(description: string, names: Names) {
+	const [t] = tokenize(description);
+	return description === t?.text && isCapitalised(t) ? nameOf(t, names, "strict") : undefined;
+}
+
 /** The words nobody else claimed, without the small words at either end. */
 function describe(toks: Tok[]) {
 	const keep = toks.filter((t) => !t.used && (isWord(t) || t.text === "&"));
@@ -654,11 +660,12 @@ export function parseQuickAdd(input: string, memberNames: string[] = [], now = D
 			continue;
 		}
 
-		const isShare =
-			b.amount !== undefined && b.lead && !b.description && !b.payer && cur?.amount !== undefined &&
-			sharedTotal(cur) + b.amount <= cur.amount + 0.005;
-		if (isShare && cur) {
-			cur.shares.push({ name: b.lead!, value: b.amount!, pct: false }, ...b.shares);
+		const fits =
+			b.amount !== undefined && !b.payer && cur?.amount !== undefined && sharedTotal(cur) + b.amount <= cur.amount + 0.005;
+		// Inside a list of shares, any capitalised word can be the name: "- Asha 1000, Zuvoka 800".
+		const shareName = fits && (b.lead ? !b.description && b.lead : cur!.shares.length > 0 && loneName(b.description, names));
+		if (shareName && cur) {
+			cur.shares.push({ name: shareName, value: b.amount!, pct: false }, ...b.shares);
 			open = undefined;
 		} else if (b.amount !== undefined) {
 			cur = pending.bits.length ? pending : emptyBuilding();
