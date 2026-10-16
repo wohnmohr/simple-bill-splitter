@@ -12,19 +12,20 @@
  * Values from other devices are untrusted input and are validated before use.
  */
 import { CURRENCIES, DEFAULT_CURRENCY } from "@/constants";
-import type { Currency, Expense, Group, Person } from "@/types";
+import type { Currency, Expense, ExpenseComment, Group, Person } from "@/types";
 import { isMonthKey } from "@/utils/recurring";
 import { isThemeId } from "@/utils/themes";
 
-export type EntityKind = "m" | "e" | "g";
+/** Members, expenses, comments, group settings. */
+export type EntityKind = "m" | "e" | "c" | "g";
 /** One change. `v: null` deletes the entity. */
 export type Op = { i: string; t: number; k: EntityKind; e: string; v: unknown };
 type Cell = { t: number; i: string; v: unknown; c: number };
 export type SyncState = Record<EntityKind, Record<string, Cell>>;
 
-export const emptyState = (): SyncState => ({ m: {}, e: {}, g: {} });
+export const emptyState = (): SyncState => ({ m: {}, e: {}, c: {}, g: {} });
 
-const KINDS: EntityKind[] = ["m", "e", "g"];
+const KINDS: EntityKind[] = ["m", "e", "c", "g"];
 const wins = (a: { t: number; i: string }, b: { t: number; i: string }) => a.t > b.t || (a.t === b.t && a.i > b.i);
 
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
@@ -120,6 +121,17 @@ function toExpense(id: string, v: unknown, members: Set<string>): Expense | null
 	return expense;
 }
 
+export const MAX_COMMENT = 500;
+
+function toComment(id: string, v: unknown, expenses: Set<string>, members: Set<string>): ExpenseComment | null {
+	const x = v as Partial<ExpenseComment>;
+	const expenseId = str(x?.expenseId, 64);
+	const text = str(x?.text, MAX_COMMENT).trim();
+	if (!expenses.has(expenseId) || !text || !Number.isSafeInteger(x.at) || (x.at as number) <= 0) return null;
+	const by = str(x.by, 64);
+	return { id, expenseId, text, at: x.at as number, ...(members.has(by) ? { by } : {}) };
+}
+
 const toCurrency = (v: unknown): Currency => CURRENCIES.find((c) => c.code === (v as Currency | null)?.code) ?? DEFAULT_CURRENCY;
 
 const live = (table: Record<string, Cell>) =>
@@ -134,11 +146,17 @@ export function materialize(state: SyncState, local: Pick<Group, "id" | "meId" |
 	const expenses = live(state.e)
 		.map(([id, c]) => toExpense(id, c.v, ids))
 		.filter((x): x is Expense => !!x);
+	const expenseIds = new Set(expenses.map((x) => x.id));
+	const comments = live(state.c)
+		.map(([id, c]) => toComment(id, c.v, expenseIds, ids))
+		.filter((x): x is ExpenseComment => !!x)
+		.sort((a, b) => a.at - b.at);
 	return {
 		id: local.id,
 		name: str(state.g.name?.v, 60).trim() || "Shared group",
 		members,
 		expenses,
+		...(comments.length ? { comments } : {}),
 		currency: toCurrency(state.g.currency?.v),
 		...(isThemeId(state.g.theme?.v) ? { theme: state.g.theme.v as string } : {}),
 		...(local.meId !== undefined ? { meId: local.meId } : {}),
@@ -183,11 +201,12 @@ export function diffGroup(before: Group, after: Group): Change[] {
 	if ((before.theme ?? null) !== (after.theme ?? null)) out.push({ k: "g", e: "theme", v: after.theme ?? null });
 	diffTable("m", before.members, after.members, out);
 	diffTable("e", before.expenses, after.expenses, out);
+	diffTable("c", before.comments ?? [], after.comments ?? [], out);
 	return out;
 }
 
 /** Every entity of a group as changes, for the first upload. */
-export const groupAsChanges = (g: Group): Change[] => diffGroup({ ...g, name: "", currency: { code: "", symbol: "", name: "" }, members: [], expenses: [] }, g);
+export const groupAsChanges = (g: Group): Change[] => diffGroup({ ...g, name: "", currency: { code: "", symbol: "", name: "" }, members: [], expenses: [], comments: [] }, g);
 
 /** The parts of a group that are shared with everyone (device-only fields stripped). */
-export const sharedView = (g: Group) => canon([g.name, g.currency.code, g.theme ?? null, g.members, g.expenses]);
+export const sharedView = (g: Group) => canon([g.name, g.currency.code, g.theme ?? null, g.members, g.expenses, g.comments ?? []]);

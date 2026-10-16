@@ -1,4 +1,5 @@
-import { Expense, Group, SplitMethod } from "@/types";
+import { Expense, ExpenseComment, Group, SplitMethod } from "@/types";
+import { MAX_COMMENT } from "@/utils/groupOps";
 import { newId } from "@/utils/ids";
 import { firstRepeat } from "@/utils/recurring";
 import { splitFields } from "@/utils/calculations";
@@ -128,8 +129,30 @@ export const useExpenses = (
     setGroups((prev) =>
       prev.map((g) =>
         g.id === groupId
-          ? { ...g, expenses: g.expenses.filter((e) => e.id !== expenseId) }
+          ? {
+            ...g,
+            expenses: g.expenses.filter((e) => e.id !== expenseId),
+            comments: g.comments?.filter((c) => c.expenseId !== expenseId),
+          }
           : g
+      )
+    );
+  };
+
+  /** Adds a comment from whoever this device is in the group. */
+  const addComment = (expenseId: string, text: string): void => {
+    const trimmed = text.trim().slice(0, MAX_COMMENT);
+    if (!currentGroup || !trimmed) return;
+    const comment: ExpenseComment = {
+      id: newId("comment"),
+      expenseId,
+      text: trimmed,
+      at: Date.now(),
+      ...(currentGroup.meId ? { by: currentGroup.meId } : {}),
+    };
+    setGroups((prev) =>
+      prev.map((g) =>
+        g.id === currentGroup.id ? { ...g, comments: [...(g.comments ?? []), comment] } : g
       )
     );
   };
@@ -140,6 +163,7 @@ export const useExpenses = (
     deleteExpense,
     recordPayment,
     restoreExpense,
+    addComment,
   };
 };
 
