@@ -3,10 +3,12 @@ import { TextInput, NumberInput, SegmentedControl } from "@mantine/core";
 import { Check, Repeat } from "lucide-react";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
-import { Currency, Person, SplitMethod } from "@/types";
+import { Currency, Expense, Person, SplitMethod } from "@/types";
 import type { ExpenseInput } from "@/hooks/useExpenses";
 import { DEFAULT_CURRENCY } from "@/constants";
 import { formatCurrency, fromDateInput, toDateInput } from "@/utils/formatting";
+import { splitWeights } from "@/utils/calculations";
+import { findDuplicate, looksMonthly, suggestPast } from "@/utils/suggestions";
 import { track } from "@/lib/analytics";
 import { OrderSplit } from "@/components/Scan/OrderSplit";
 import { ScanOrderButton } from "@/components/Scan/ScanOrderButton";
@@ -18,6 +20,8 @@ interface ExpenseFormModalProps {
 	onClose: () => void;
 	onSubmit: (input: ExpenseInput) => void;
 	people: Person[];
+	/** The group's expenses, for suggestions on a new one. */
+	history?: Expense[];
 	currency?: Currency;
 	/** Pre-selected payer for a new expense (the viewer, or whoever paid last). */
 	defaultPayerId?: string;
@@ -46,6 +50,7 @@ export const ExpenseFormModal = ({
 	onClose,
 	onSubmit,
 	people,
+	history = [],
 	currency = DEFAULT_CURRENCY,
 	defaultPayerId,
 	initialAmount = "",
@@ -196,6 +201,32 @@ export const ExpenseFormModal = ({
 	const unit = (n: number) => (isPercentage ? `${Math.round(n * 100) / 100}%` : formatCurrency(n, currency));
 	const isEdit = title.includes("Edit");
 
+	// Suggestions from this group's history, for new expenses only.
+	const suggestions = isEdit ? [] : suggestPast(history, description);
+	const monthlyHint = !isEdit && !repeat && looksMonthly(history, description);
+	const duplicate = !isEdit && hasAmount ? findDuplicate(history, amountNum, date ? fromDateInput(date) : Date.now()) : undefined;
+
+	/** Starts from a past expense: its details, its payer(s) and its split, among people still here. */
+	const usePast = (e: Expense) => {
+		const here = new Set(people.map((p) => p.id));
+		const sharing = new Set(e.participants.filter((id) => here.has(id)));
+		setDescription(e.description ?? "");
+		if (!hasAmount) setAmount(e.amount.toString());
+		const amountChanged = hasAmount && Math.abs(amountNum - e.amount) > 0.01;
+		if (e.payers && !amountChanged && Object.keys(e.payers).every((id) => here.has(id))) setPayerAmounts({ ...e.payers });
+		else if (here.has(e.paidBy)) {
+			setPayerAmounts(null);
+			setPaidBy(e.paidBy);
+		}
+		if (sharing.size === 0) return;
+		setParticipants(sharing);
+		// Exact amounts only fit the same total; percentages fit any.
+		const method = e.splitMethod === "exact" && amountChanged ? "equally" : e.splitMethod;
+		setSplitMethod(method);
+		setWeights(method === "equally" ? {} : { ...splitWeights(e) });
+		track("expense_suggestion_used", { kind: "past" });
+	};
+
 	// The button says what's still missing instead of just going grey.
 	const submitLabel = !hasAmount
 		? "Enter an amount"
@@ -209,6 +240,8 @@ export const ExpenseFormModal = ({
 		? isPercentage ? "Make it add up to 100%" : "Amounts don't add up"
 		: isEdit
 		? "Save changes"
+		: duplicate
+		? "Add it anyway"
 		: "Add expense";
 
 	const handleSubmit = () => {
@@ -385,6 +418,21 @@ export const ExpenseFormModal = ({
 						w={148}
 					/>
 				</div>
+
+				{suggestions.length > 0 && (
+					<div className="-mt-2 flex flex-wrap gap-2" aria-label="Add one like before">
+						{suggestions.map((e) => (
+							<button
+								key={e.id}
+								type="button"
+								onClick={() => usePast(e)}
+								className="min-h-9 max-w-full truncate rounded-full border border-line-strong bg-surface px-3 text-sm text-ink-soft hover:border-ink-muted hover:text-ink"
+							>
+								{e.description} · {formatCurrency(e.amount, currency)}
+							</button>
+						))}
+					</div>
+				)}
 
 				<fieldset>
 					<legend className="mb-2 flex w-full items-center justify-between gap-3 text-[13px] font-semibold text-ink-soft">
@@ -589,7 +637,7 @@ export const ExpenseFormModal = ({
 					role="switch"
 					aria-checked={repeat}
 					onClick={() => setRepeat(!repeat)}
-					className="flex w-full items-center gap-3 rounded-xl border border-line px-3 py-2.5 text-left"
+					className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left ${monthlyHint ? "border-brand-700 bg-brand-50" : "border-line"}`}
 				>
 					<Repeat className={`h-4 w-4 shrink-0 ${repeat ? "text-brand-700" : "text-ink-muted"}`} aria-hidden />
 					<span className="min-w-0 flex-1">
@@ -597,6 +645,8 @@ export const ExpenseFormModal = ({
 						<span className="block text-xs text-ink-muted">
 							{repeat && date
 								? `Added again on the ${ordinal(Number(date.slice(8)))} of each month`
+								: monthlyHint
+								? `You add ${description.trim()} most months. Turn this on and it's added for you.`
 								: "For rent, Wi-Fi and subscriptions"}
 						</span>
 					</span>
@@ -609,6 +659,16 @@ export const ExpenseFormModal = ({
 						/>
 					</span>
 				</button>
+
+				{duplicate && (
+					<p role="alert" className="rounded-xl bg-paper px-3 py-2.5 text-sm text-ink-soft">
+						{people.find((p) => p.id === duplicate.paidBy)?.name ?? "Someone"} already added{" "}
+						<span className="font-medium text-ink">{duplicate.description || "an expense"}</span> for{" "}
+						{formatCurrency(duplicate.amount, currency)} on{" "}
+						{new Date(duplicate.createdAt!).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}. Add this only if
+						it&apos;s a separate bill.
+					</p>
+				)}
 
 				<div className="sticky bottom-0 -mx-4 flex gap-2 border-t border-line bg-surface px-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
 					<Button variant="secondary" type="button" onClick={onClose} className="flex-1" size="md">

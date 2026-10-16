@@ -20,6 +20,7 @@ export type AnalyticsEvent =
 	| "dashboard_group_created"
 	| "dashboard_member_added"
 	| "dashboard_expense_added"
+	| "expense_suggestion_used"
 	| "quick_add_previewed"
 	| "quick_add_saved"
 	| "dashboard_settlements_tab_viewed"

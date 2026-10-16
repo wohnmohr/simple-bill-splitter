@@ -591,6 +591,7 @@ export default function Home() {
 					onClose={() => setShowExpenseForm(false)}
 					onSubmit={handleAddExpense}
 					people={people}
+					history={expenses}
 					currency={currency}
 					defaultPayerId={defaultPayerId}
 				/>
