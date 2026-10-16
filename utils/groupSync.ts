@@ -51,7 +51,10 @@ const storeKey = (groupId: string) => `splitbiller-sync:${groupId}`;
 function load(groupId: string): Saved | null {
 	try {
 		const s = JSON.parse(localStorage.getItem(storeKey(groupId)) || "null");
-		return s && typeof s.seq === "number" && s.state ? s : null;
+		if (!s || typeof s.seq !== "number" || !s.state) return null;
+		// Saved before comments existed: give it their table.
+		s.state = { ...emptyState(), ...s.state };
+		return s;
 	} catch {
 		return null;
 	}
