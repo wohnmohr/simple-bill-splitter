@@ -1,30 +1,23 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { ArrowUp, Sparkles } from "lucide-react";
-import { suggestQuickAdd } from "@/utils/quickAddSuggest";
+import { quickAddTemplates, suggestQuickAdd } from "@/utils/quickAddSuggest";
 
 interface QuickAddBoxProps {
 	onSubmit: (text: string) => void;
-	/** Shown in turn while the box is empty, so people see the formats it reads. */
-	examples: string[];
 	label: string;
 	/** The group's members, offered as names while typing. */
 	memberNames?: string[];
 }
 
 /** Type an expense like a message; the preview that follows does the rest. */
-export const QuickAddBox = ({ onSubmit, examples, label, memberNames = [] }: QuickAddBoxProps) => {
+export const QuickAddBox = ({ onSubmit, label, memberNames = [] }: QuickAddBoxProps) => {
 	const [text, setText] = useState("");
-	const [example, setExample] = useState(0);
 	const [focused, setFocused] = useState(false);
 	const input = useRef<HTMLTextAreaElement>(null);
 	const submit = () => text.trim() && onSubmit(text.trim());
-	const suggestions = focused ? suggestQuickAdd(text, memberNames) : [];
-
-	useEffect(() => {
-		if (text || examples.length < 2) return;
-		const timer = setInterval(() => setExample((i) => (i + 1) % examples.length), 3500);
-		return () => clearInterval(timer);
-	}, [text, examples.length]);
+	const templates = quickAddTemplates(memberNames);
+	// Empty: whole sentences to start from. Typing: what usually comes next.
+	const chips = !text ? templates : focused ? suggestQuickAdd(text, memberNames) : [];
 
 	const apply = (next: string) => {
 		setText(next);
@@ -53,12 +46,12 @@ export const QuickAddBox = ({ onSubmit, examples, label, memberNames = [] }: Qui
 						if (e.key === "Enter" && !e.shiftKey) {
 							e.preventDefault();
 							submit();
-						} else if (e.key === "Tab" && !e.shiftKey && suggestions.length) {
+						} else if (e.key === "Tab" && !e.shiftKey && text && chips.length) {
 							e.preventDefault();
-							apply(suggestions[0].text);
+							apply(chips[0].text);
 						}
 					}}
-					placeholder={examples[example % examples.length]}
+					placeholder={templates[0].text}
 					rows={1}
 					maxLength={1000}
 					// Grows with what is typed, where browsers support it.
@@ -69,12 +62,13 @@ export const QuickAddBox = ({ onSubmit, examples, label, memberNames = [] }: Qui
 					<ArrowUp className="h-4 w-4" />
 				</button>
 			</div>
-			{suggestions.length > 0 && (
-				<div className="mt-1.5 flex flex-wrap gap-1.5 pl-6" aria-label="Suggestions">
-					{suggestions.map((s) => (
+			{chips.length > 0 && (
+				<div className="mt-1.5 flex flex-wrap gap-1.5 pl-6" aria-label={text ? "Suggestions" : "Start from"}>
+					{chips.map((s) => (
 						<button
 							key={s.label}
 							type="button"
+							title={s.text}
 							// Keep the keyboard open: act before the textarea loses focus.
 							onMouseDown={(e) => e.preventDefault()}
 							onClick={() => apply(s.text)}

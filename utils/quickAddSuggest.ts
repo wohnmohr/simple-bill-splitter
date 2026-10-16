@@ -42,23 +42,19 @@ export function suggestQuickAdd(text: string, memberNames: string[]): QuickSugge
 	return [];
 }
 
-/** Example sentences for the empty box, using the group's own names when it has them. */
-export function quickAddExamples(memberNames: string[]): string[] {
+/**
+ * Whole sentences to start from, one per common kind, using the group's own
+ * names when it has them. The first one doubles as the placeholder.
+ */
+export function quickAddTemplates(memberNames: string[]): QuickSuggestion[] {
 	const [a = "Asha", b = "Ben"] = memberNames.map((n) => n.trim().split(/\s+/)[0]).filter(Boolean);
-	if (!memberNames.length) {
-		return [
-			"Goa trip: Asha 5000 hotel, Ben 1200 fuel, everyone equal",
-			"Dinner 2400 split with Asha and Ben",
-			"Rent 30k split 3 ways monthly",
-			"Priya paid 900 for the cab, split with me",
-			"Asha owes me 500 for lunch",
-		];
-	}
+	const trip = memberNames.length ? [] : [{ label: "Trip", text: `Goa trip: ${a} 5000 hotel, ${b} 1200 fuel, everyone equal` }];
 	return [
-		`Dinner 2400 split with ${a} and ${b}`,
-		`${a} paid 900 for the cab`,
-		`Groceries 1500: ${a} 1000, me 500`,
-		"Wifi 999 monthly split with everyone",
-		`${a} owes me 300 for coffee`,
+		...trip,
+		{ label: "Split equally", text: `Dinner 2400 split with ${a} and ${b}` },
+		{ label: "Someone paid", text: `${a} paid 900 for the cab` },
+		{ label: "Exact shares", text: `Groceries 1500: ${a} 1000, me 500` },
+		{ label: "Monthly", text: "Rent 30k monthly split 3 ways" },
+		{ label: "Owes me", text: `${a} owes me 500 for lunch` },
 	];
 }

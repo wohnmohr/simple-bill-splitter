@@ -41,9 +41,6 @@ import { parseQuickAdd, resolveQuickAdd, type QuickResolved } from "@/utils/quic
 import { applyQuickAdd } from "@/utils/quickAddSave";
 import { QuickAddBox } from "@/components/QuickAdd/QuickAddBox";
 import { QuickAddPreview } from "@/components/QuickAdd/QuickAddPreview";
-import { quickAddExamples } from "@/utils/quickAddSuggest";
-
-const NEW_GROUP_EXAMPLES = quickAddExamples([]);
 
 export default function Home() {
 	const router = useRouter();
@@ -360,7 +357,7 @@ export default function Home() {
 				{groups.length === 0 ? (
 					<EmptyGroupState
 						onCreateGroup={() => setShowGroupForm(true)}
-						quickAdd={<QuickAddBox key={quickAddSaves} label="Describe a shared expense" examples={NEW_GROUP_EXAMPLES} onSubmit={(t) => handleQuickAdd(t, true)} />}
+						quickAdd={<QuickAddBox key={quickAddSaves} label="Describe a shared expense" onSubmit={(t) => handleQuickAdd(t, true)} />}
 					/>
 				) : selectedGroupId === null ? (
 					<GroupsHome
@@ -368,7 +365,7 @@ export default function Home() {
 						onSelectGroup={setSelectedGroupId}
 						onDeleteGroup={handleDeleteGroup}
 						onCreateGroup={() => setShowGroupForm(true)}
-						quickAdd={<QuickAddBox key={quickAddSaves} label="Start a group by describing an expense" examples={NEW_GROUP_EXAMPLES} onSubmit={(t) => handleQuickAdd(t, true)} />}
+						quickAdd={<QuickAddBox key={quickAddSaves} label="Start a group by describing an expense" onSubmit={(t) => handleQuickAdd(t, true)} />}
 					/>
 				) : (
 					<>
@@ -444,8 +441,7 @@ export default function Home() {
 												<QuickAddBox
 													key={quickAddSaves}
 													label="Add an expense by typing it"
-													examples={quickAddExamples(people.filter((p) => p.id !== currentGroup?.meId).map((p) => p.name))}
-													memberNames={people.map((p) => p.name)}
+													memberNames={people.filter((p) => p.id !== currentGroup?.meId).map((p) => p.name)}
 													onSubmit={(t) => handleQuickAdd(t, false)}
 												/>
 											</div>

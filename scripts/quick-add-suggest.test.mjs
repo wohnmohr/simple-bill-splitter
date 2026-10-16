@@ -2,7 +2,7 @@
 //   node --test --experimental-strip-types scripts/quick-add-suggest.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { quickAddExamples, suggestQuickAdd } from "../utils/quickAddSuggest.ts";
+import { quickAddTemplates, suggestQuickAdd } from "../utils/quickAddSuggest.ts";
 import { parseQuickAdd } from "../utils/quickAdd.ts";
 
 const members = ["Asha Rao", "Ben", "Kiran"];
@@ -33,10 +33,11 @@ test("nothing to offer mid-word or at the start", () => {
 	assert.deepEqual(labels("Dinner 24"), []);
 });
 
-test("every example parses into at least one expense with an amount", () => {
-	for (const text of [...quickAddExamples([]), ...quickAddExamples(members)]) {
+test("every template parses into expenses with an amount", () => {
+	for (const { text } of [...quickAddTemplates([]), ...quickAddTemplates(members)]) {
 		const { expenses } = parseQuickAdd(text, members);
 		assert.ok(expenses.length && expenses.every((e) => e.amount > 0), text);
 	}
-	assert.match(quickAddExamples(members)[0], /Asha and Ben/, "uses the group's first names");
+	assert.equal(quickAddTemplates([])[0].label, "Trip", "a new group starts from a trip");
+	assert.match(quickAddTemplates(members)[0].text, /Asha and Ben/, "uses the group's first names");
 });
