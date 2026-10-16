@@ -1,11 +1,13 @@
 // Tests for utils/quickAdd.ts: typed sentences into expenses.
 //   node --test --experimental-strip-types scripts/quick-add.test.mjs
-// Prints accuracy per field on fixtures/quick-add.mjs (the phrasings the rules
-// were written against) and fixtures/quick-add-heldout.mjs (never tuned on).
+// Prints accuracy per field on fixtures/quick-add.mjs and quick-add-hard.mjs (the
+// phrasings the rules were written against) and the two held-out sets (never tuned on).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import cases from "./fixtures/quick-add.mjs";
+import hard from "./fixtures/quick-add-hard.mjs";
 import heldOut from "./fixtures/quick-add-heldout.mjs";
+import heldOut2 from "./fixtures/quick-add-heldout-2.mjs";
 import { ME, NEW_ME, parseQuickAdd, resolveQuickAdd } from "../utils/quickAdd.ts";
 
 const low = (s) => s.toLowerCase();
@@ -66,7 +68,7 @@ function score(set) {
 	};
 }
 
-for (const [name, set] of [["phrasings", cases], ["held-out phrasings", heldOut]]) {
+for (const [name, set] of [["phrasings", cases], ["hard phrasings", hard], ["held-out phrasings", heldOut], ["second held-out phrasings", heldOut2]]) {
 	test(`at least 90% of ${set.length} ${name} parse fully correctly`, () => {
 		const result = score(set);
 		console.log(JSON.stringify({ ...result, misses: result.misses.map((m) => `${m.text} [${m.wrong}]`) }, null, 1));
@@ -78,9 +80,52 @@ test("defaults are flagged, never silent", () => {
 	const [e] = parseQuickAdd("Pizza 900").expenses;
 	assert.deepEqual(e.unsure.sort(), ["participants", "payer"]);
 	assert.deepEqual(parseQuickAdd("Asha paid 900 for pizza with Ben").expenses[0].unsure, []);
-	assert.ok(parseQuickAdd("Goa: Asha 5000 hotel").expenses[0].unsure.includes("payer"), "a name read from capitals alone");
 	assert.ok(parseQuickAdd("Gym 2000 weekly").expenses[0].unsure.includes("repeat"));
 	assert.ok(parseQuickAdd("split with Ben").expenses[0].unsure.includes("amount"));
+});
+
+test("a word before an amount is the payer only if it is a name", () => {
+	assert.equal(parseQuickAdd("Riya 4000 villa").expenses[0].payer, "Riya");
+	assert.equal(parseQuickAdd("riya 4000 villa").expenses[0].payer, "riya");
+	const [dish] = parseQuickAdd("Biryani 900 split with Asha").expenses;
+	assert.equal(dish.payer, ME);
+	assert.equal(dish.description, "Biryani");
+	assert.ok(dish.unsure.includes("payer"));
+	assert.deepEqual(parseQuickAdd("Paragliding 3000 for Zuvoka").expenses[0].participants, "everyone", "for + unknown word is not a person");
+	assert.deepEqual(parseQuickAdd("Paragliding 3000 split with Zuvoka").expenses[0].participants, [ME, "Zuvoka"]);
+});
+
+test("amounts in words", () => {
+	const amount = (text) => parseQuickAdd(text).expenses[0].amount;
+	assert.equal(amount("pizza five hundred"), 500);
+	assert.equal(amount("rent fifteen hundred"), 1500);
+	assert.equal(amount("hotel two thousand five hundred"), 2500);
+	assert.equal(amount("flight one lakh twenty thousand"), 120000);
+	assert.equal(amount("deposit 3 lakh"), 300000);
+	assert.deepEqual(parseQuickAdd("cab 600 split three ways").expenses[0].participants, { ways: 3 });
+	assert.equal(parseQuickAdd("two pizzas 700").expenses[0].amount, 700);
+});
+
+test("dates are read and always in the past", () => {
+	const now = new Date(2026, 9, 16, 9).getTime(); // Friday 16 Oct 2026
+	const date = (text) => {
+		const d = parseQuickAdd(text, [], now).expenses[0].date;
+		return d && new Date(d).toDateString();
+	};
+	assert.equal(date("dinner 2400"), undefined);
+	assert.equal(date("dinner 2400 yesterday"), "Thu Oct 15 2026");
+	assert.equal(date("dinner 2400 day before yesterday"), "Wed Oct 14 2026");
+	assert.equal(date("cab 300 last night"), "Thu Oct 15 2026");
+	assert.equal(date("cab 300 on friday"), "Fri Oct 09 2026");
+	assert.equal(date("movie 900 last monday"), "Mon Oct 12 2026");
+	assert.equal(date("rent 30k on the 5th"), "Mon Oct 05 2026");
+	assert.equal(date("rent 30k on 20th"), "Sun Sep 20 2026");
+	assert.equal(date("hotel 9000 on 3 oct"), "Sat Oct 03 2026");
+	assert.equal(date("hotel 9000 dec 28"), "Sun Dec 28 2025");
+	assert.equal(parseQuickAdd("rent 30k on the 5th", [], now).expenses[0].amount, 30000);
+	assert.equal(parseQuickAdd("dinner for 5 people 3000", [], now).expenses[0].date, undefined);
+	const [a, b] = parseQuickAdd("Asha 500 lunch, Ben 300 snacks, yesterday", [], now).expenses;
+	assert.equal(a.date, b.date, "a trailing date applies to every expense");
 });
 
 test("lowercase names are known once the group has them", () => {

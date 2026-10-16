@@ -29,7 +29,7 @@ export function applyQuickAdd(group: Group, quick: QuickResolved, now = Date.now
 		participants: e.participants.map(id),
 		description: e.description.trim() || undefined,
 		...splitFields(e.splitMethod, e.weights && byId(e.weights)),
-		createdAt: now,
+		createdAt: e.date ?? now,
 		...(e.monthly ? { repeat: { next: firstRepeat(now) } } : {}),
 	}));
 

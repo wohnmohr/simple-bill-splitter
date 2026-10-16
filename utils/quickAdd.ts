@@ -37,6 +37,8 @@ export type QuickExpense = {
 	/** Only the shares the text stated; the rest are filled in by resolveQuickAdd. */
 	split: QuickSplit;
 	monthly: boolean;
+	/** When it happened, as local noon, if the text said ("yesterday", "on the 5th"). */
+	date?: number;
 	/** Fields filled in by default or read with doubt: show them highlighted. */
 	unsure: QuickField[];
 };
@@ -70,16 +72,46 @@ const MONTHLY_WORDS = words("monthly recurring");
 const OTHER_REPEAT_WORDS = words("weekly yearly annually daily");
 /** Joins a name to its share: "Kiran pays 50%", "my share 400". */
 const SHARE_LINKS = words("pays pay owes share 's is gets : -");
-const NUMBER_WORDS: Record<string, string> = {
-	two: "2", three: "3", four: "4", five: "5", six: "6", seven: "7", eight: "8", nine: "9", ten: "10", eleven: "11", twelve: "12",
-};
+
+// Amounts in words: "fifteen hundred", "two lakh fifty thousand"
+const UNITS = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split(" ");
+const TENS = "twenty thirty forty fifty sixty seventy eighty ninety".split(" ");
+const SCALES: Record<string, number> = { hundred: 100, thousand: 1e3, lakh: 1e5, lakhs: 1e5, lac: 1e5, crore: 1e7 };
+const NUMBER_WORD = `(?:${[...UNITS, ...TENS, ...Object.keys(SCALES)].join("|")})`;
+const NUMBER_RUN = new RegExp(`\\b${NUMBER_WORD}(?:[\\s-]+(?:and[\\s-]+)?${NUMBER_WORD})*\\b`, "gi");
+
+function wordsToNumber(run: string) {
+	let total = 0;
+	let current = 0;
+	for (const w of run.toLowerCase().split(/[\s-]+/)) {
+		if (UNITS.includes(w)) current += UNITS.indexOf(w);
+		else if (TENS.includes(w)) current += (TENS.indexOf(w) + 2) * 10;
+		else if (w === "hundred") current = (current || 1) * 100;
+		else if (SCALES[w]) (total += (current || 1) * SCALES[w]), (current = 0);
+	}
+	return total + current;
+}
+
+/**
+ * Writes amounts in words as digits. A lone small number stays a word ("two
+ * pizzas") unless it counts people ("three ways"), and a lone "lakh" is left
+ * for the number before it ("3 lakh").
+ */
+const numbersInWords = (text: string) =>
+	text.replace(NUMBER_RUN, (run, at: number) => {
+		const parts = run.toLowerCase().split(/[\s-]+/);
+		if (parts.every((w) => SCALES[w])) return run;
+		const counting = /^\s+(?:ways?|people|persons|of us|friends)\b/i.test(text.slice(at + run.length));
+		if (parts.length === 1 && UNITS.includes(parts[0]) && !counting) return run;
+		return String(wordsToNumber(run));
+	});
 
 /** Small words that are never names and are trimmed from the ends of a description. */
 const FILLER = words(
 	"a an the for on of at to towards in into and & with by from between among amongst split splitting divide divided " +
 		"shared share sharing it its this that is was are were our your my his total worth just only about around approx some " +
 		"per head person month every each then also plus : - paid pay pays spent got had bought booked covered put " +
-		"gave ordered went ate today tonight yesterday ok please add new expense expenses",
+		"gave ordered went ate ok please add new expense expenses",
 );
 
 /**
@@ -103,6 +135,54 @@ const NOT_NAMES = new Set(
 	[FILLER, THINGS, ALL_WORDS, MONTHLY_WORDS, EQUAL_WORDS, UNEQUAL_WORDS, MONEY_WORDS, PAY_VERBS, OWE_VERBS, LEND_VERBS, HAD_VERBS].flatMap((set) => [...set]),
 );
 
+/**
+ * Common first names in India, plus common English ones. A name written right
+ * before an amount, or after "for", must be one of these (or a member, or named
+ * elsewhere in the text): "Riya 4000 villa" means Riya paid, "Biryani 900" means
+ * biryani cost 900. Where only a name can go ("split with Zuvoka"), any name works.
+ */
+const FIRST_NAMES = words(
+	// Indian
+	"aadhya aadi aakash aarav aarohi aarti aaryan aditi aditya advait advik afreen afsana agastya ahaan ahana aisha " +
+		"ajay ajit akash akhil akshay akshara alia alok amaan aman amar amarnath amey amir amit amitabh amol amrita amruta " +
+		"anand ananya anant anaya anika anil anirudh anisha anita anjali anju ankit ankita ankur anmol annapurna anoop " +
+		"anshul anu anuj anup anupam anurag anushka anvi apoorva aravind archana arijit arjun arnav arpita arun aruna " +
+		"arundhati arvind aryan asha ashish ashok ashwin ashwini asif atul avani avantika avinash ayaan ayan ayesha " +
+		"ayush azhar babita balaji bhagat bharat bhavana bhavesh bhavya bhumi bhushan bindu brijesh chaitanya chandan " +
+		"chandra chetan chinmay chirag chitra daksh deepa deepak deepika deepti dev devansh devika dhanush dharini " +
+		"dharmesh dhruv dhruvi diksha dilip dinesh disha divya divyanshi farah farhan fatima ganesh gaurav gautam gayatri " +
+		"geeta girish gopal govind gunjan gurpreet harini harish harleen harpreet harsh harsha harshit hema hemant " +
+		"himanshu hrithik indira indu inaya irfan isha ishaan ishani ishita jagdish jai jasleen jaspreet jatin jay " +
+		"jayant jaya jayesh jeevan jignesh jyoti kabir kajal kalpana kamal kamala kanika kapil karan kareena karthik " +
+		"kartik kashish kavita kavya keerthi ketan khushi kiara kiran kishore komal krish krishna kriti kshitij kunal " +
+		"kushal lakshay lakshmi lalit lata leela lokesh madhav madhavi madhu madhuri mahesh mahi manav manish manisha " +
+		"manju manoj mansi meena meenakshi meera megha mehul mihir mira mitali mohan mohit mohini mukesh muskan nadia " +
+		"nagesh naina naman namita nandini naresh naveen navya neel neelam neeraj neha nidhi nikhil nikita nilesh nina " +
+		"nirmala nisha nishant nitin nivedita omkar padma pallavi pankaj parag paras parth parul pavan pawan payal " +
+		"pooja poonam prabhu pradeep prajakta prakash pranav prasad prashant pratik pratima praveen preeti prem prerna " +
+		"priya priyanka puja pushpa rachana radha radhika raghav rahul raj rajat rajesh rajiv rajni rakesh rakhi ram " +
+		"raman ramesh rani ranjit rashmi ravi reena rekha renu reva reyansh rhea richa riddhi rishabh rishi ritesh " +
+		"ritika ritu riya rohan rohini rohit roshan ruchi rudra rupali rutuja saanvi sachin sagar sahil sai saira " +
+		"sakshi salman sameer samir sana sandeep sandhya sangeeta sanjana sanjay sanjeev sankalp santosh sanya sapna " +
+		"sara sarika saroj satish saurabh savita seema shabnam shaan shalini shankar sharad shashank shefali shikha " +
+		"shilpa shiv shivam shivani shobha shraddha shravan shreya shreyas shruti shubham shweta siddharth siddhi " +
+		"simran sneha sonal sonali sonam sonia sourav sridhar srinivas sruthi subhash suchitra sudha sudhir sujata " +
+		"sukhwinder sumit sumitra sunaina sunil sunita suraj surbhi suresh surya sushant sushma swapnil swati tanisha " +
+		"tanmay tanvi tanya tara tarun tejas trisha tushar uday ujjwal uma umesh urmila urvashi utkarsh vaibhav " +
+		"vaishnavi vandana vani varsha varun vasudha vedant venkat vidya vihaan vijay vikas vikram vimal vinay vineet " +
+		"vinita vinod vipin vishal vishnu vivaan vivek yamini yash yashika yogesh yuvraj zain zara zeenat zoya " +
+		// English and elsewhere
+		"aaron abby adam adrian alan albert alex alexander alice alicia amanda amelia amy andrea andrew angela anna " +
+		"anne anthony arthur ashley ben benjamin beth brandon brian bruce carl carlos carol caroline catherine charles " +
+		"charlie chloe chris christina christopher claire daniel david deborah dennis diana donald dorothy dylan " +
+		"edward elizabeth ella ellie emily emma eric ethan eva frank gary george grace greg hannah harry helen henry " +
+		"ian isaac isabella jack jacob james jane jason jeff jennifer jerry jessica joe john jonathan joseph joshua " +
+		"julia julie justin karen kate katherine kevin kyle laura lauren leo liam linda lisa logan lucas lucy luke " +
+		"maria mark martin mary matt matthew megan melissa michael michelle mike nancy nathan nicholas nick nicole " +
+		"noah olivia oscar patrick paul peter rachel rebecca richard robert ryan sam samantha samuel sandra sarah " +
+		"scott sean sophia sophie stephen steve steven susan thomas tim timothy tom tony tyler victoria william zoe",
+);
+
 // ---------------------------------------------------------------------------
 // Tokens
 
@@ -111,7 +191,7 @@ type Tok = {
 	low: string;
 	used: boolean;
 	/** For number tokens: what the number turned out to be. */
-	role?: "money" | "pct" | "ways" | "ratio";
+	role?: "money" | "pct" | "ways" | "ratio" | "date";
 	value?: number;
 	/** On the first number of a ratio like 60/40: all its parts. */
 	ratio?: number[];
@@ -131,8 +211,50 @@ const normalize = (text: string) =>
 		.replace(/\brs\.\s*/gi, "rs ")
 		.replace(/\/-/g, " ")
 		.replace(/\bb\/w\b/gi, "between")
-		.replace(/\bper\s+cent\b/gi, "percent")
-		.replace(/\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b(?=\s+(?:ways?|people|persons|of us|friends))/gi, (w) => NUMBER_WORDS[w.toLowerCase()]);
+		.replace(/\bper\s+cent\b/gi, "percent");
+
+// Dates: "yesterday", "last friday", "on the 5th", "5 oct", "oct 5th"
+const MONTHS = "jan feb mar apr may jun jul aug sep oct nov dec".split(" ");
+const WEEKDAYS = "sunday monday tuesday wednesday thursday friday saturday".split(" ");
+const ORDINALS = words("st nd rd th");
+const monthOf = (t?: Tok) => (t && /^[a-z]{3,9}$/.test(t.low) ? MONTHS.indexOf(t.low.slice(0, 3)) : -1);
+const isMonth = (t?: Tok) => monthOf(t) >= 0 && (t!.low.length <= 4 || t!.low.startsWith(MONTHS[monthOf(t)]));
+const isDay = (t?: Tok) => !!t && /^\d{1,2}$/.test(t.text) && +t.text >= 1 && +t.text <= 31;
+
+/** Local noon of a day, so time zones never move the date. */
+const noon = (y: number, m: number, d: number) => new Date(y, m, d, 12).getTime();
+
+/** Finds a date in the piece and uses up its words. Dates are always in the past. */
+function readDate(toks: Tok[], now: number): number | undefined {
+	const today = new Date(now);
+	const [y, m, d] = [today.getFullYear(), today.getMonth(), today.getDate()];
+	const daysAgo = (n: number) => noon(y, m, d - n);
+	for (let i = 0; i < toks.length; i++) {
+		const t = toks[i];
+		const next = toks[i + 1];
+		const done = (...used: (Tok | undefined)[]) => used.forEach((u) => u && (u.used = true));
+		if (t.low === "today" || t.low === "tonight") return done(t), daysAgo(0);
+		// "yesterday's dinner" keeps the word in the description.
+		if (t.low === "yesterday's") return daysAgo(1);
+		if (t.low === "yesterday") return toks[i - 1]?.low === "before" ? (done(t, toks[i - 1], toks[i - 2]), daysAgo(2)) : (done(t), daysAgo(1));
+		if (t.low === "last" && next?.low === "night") return done(t, next), daysAgo(1);
+		const weekday = next ? WEEKDAYS.indexOf(next.low) : -1;
+		if ((t.low === "last" || t.low === "on") && weekday >= 0) return done(t, next), daysAgo(((today.getDay() - weekday + 6) % 7) + 1);
+		if (!isDay(t)) continue;
+		// A day of the month needs "th" or a month next to it, so "5 people" stays a count.
+		const ordinal = ORDINALS.has(next?.low ?? "") ? next : undefined;
+		const after = toks[i + (ordinal ? 2 : 1)];
+		const month = isMonth(after) ? monthOf(after) : isMonth(toks[i - 1]) ? monthOf(toks[i - 1]) : -1;
+		if (!ordinal && month < 0) continue;
+		done(t, ordinal, month >= 0 ? (isMonth(after) ? after : toks[i - 1]) : undefined);
+		if (["on", "the"].includes(toks[i - 1]?.low ?? "")) done(toks[i - 1], toks[i - 2]?.low === "on" ? toks[i - 2] : undefined);
+		t.role = "date";
+		const date = noon(y, month >= 0 ? month : m, +t.text);
+		// Not yet this month (or this year): it was last month (or last year).
+		return date <= now ? date : month >= 0 ? noon(y - 1, month, +t.text) : noon(y, m - 1, +t.text);
+	}
+	return undefined;
+}
 
 /** Marks every number as money, a percentage, a head count or a ratio, and uses up the words around it. */
 function classifyNumbers(toks: Tok[]) {
@@ -210,6 +332,7 @@ type Bit = {
 	unequal?: boolean;
 	monthly?: boolean;
 	otherRepeat?: boolean;
+	date?: number;
 	description: string;
 };
 
@@ -222,17 +345,22 @@ const isCapitalised = (t: Tok) => /^[A-Z][a-z]/.test(t.text);
 const isWord = (t?: Tok) => !!t && /^[a-z]/i.test(t.text);
 
 /**
- * The name a token stands for, or undefined. `loose` accepts any lowercase
- * word, for places where only a name can go ("split with rahul"). A new name
- * is remembered, so later mentions in any case get the same spelling.
+ * How sure a place in the sentence is that a word there is a name: "loose"
+ * where only a name can go ("split with rahul"), "strict" where a capitalised
+ * word or a common first name is enough ("Cab 450 Asha"), and "lead", before an
+ * amount or after "for", where it must be a known or common first name.
  */
-function nameOf(t: Tok | undefined, names: Names, loose: boolean): string | undefined {
+type Slot = "loose" | "strict" | "lead";
+
+/** The name a token stands for in that slot. A new name is remembered, so later mentions get the same spelling. */
+function nameOf(t: Tok | undefined, names: Names, slot: Slot): string | undefined {
 	if (!t || !isWord(t) || t.low.endsWith("'s")) return undefined;
 	if (ME_WORDS.has(t.low)) return ME;
 	if (PRONOUNS.has(t.low)) return PAYER;
 	const known = names.known.get(t.low);
 	if (known) return known;
-	if (NOT_NAMES.has(t.low) || t.low.length < 2 || (!loose && !isCapitalised(t))) return undefined;
+	if (NOT_NAMES.has(t.low) || t.low.length < 2) return undefined;
+	if (!(FIRST_NAMES.has(t.low) || slot === "loose" || (slot === "strict" && isCapitalised(t)))) return undefined;
 	names.known.set(t.low, t.text);
 	return t.text;
 }
@@ -240,11 +368,19 @@ function nameOf(t: Tok | undefined, names: Names, loose: boolean): string | unde
 const isVerb = (t?: Tok) =>
 	!!t && (PAY_VERBS.has(t.low) || OWE_VERBS.has(t.low) || LEND_VERBS.has(t.low) || BORROW_VERBS.has(t.low) || HAD_VERBS.has(t.low));
 
-function readPiece(text: string, names: Names, listOpen: boolean): Bit {
+function readPiece(text: string, names: Names, listOpen: boolean, now: number): Bit {
 	const toks = tokenize(text);
 	const bit: Bit = { lists: [], shares: [], description: "" };
+	bit.date = readDate(toks, now);
 	classifyNumbers(toks);
 	const use = (t: Tok) => (t.used = true);
+
+	/** Whether token i comes straight after an amount ("2.5 thousand rupees each"). */
+	const afterMoney = (i: number) => {
+		let j = i - 1;
+		while (j >= 0 && (MULTIPLIERS[toks[j].low] || MONEY_WORDS.has(toks[j].low))) j--;
+		return toks[j]?.role === "money";
+	};
 
 	// Repeats, equal or not, "each"
 	toks.forEach((t, i) => {
@@ -256,8 +392,8 @@ function readPiece(text: string, names: Names, listOpen: boolean): Bit {
 		} else if (OTHER_REPEAT_WORDS.has(t.low)) (bit.otherRepeat = true), use(t);
 		else if (EQUAL_WORDS.has(t.low)) (bit.equal = true), use(t);
 		else if (UNEQUAL_WORDS.has(t.low)) (bit.unequal = true), use(t);
-		else if (EACH_WORDS.has(t.low) && toks[i - 1]?.role === "money") (bit.perHead = true), use(t);
-		else if ((t.low === "per" || t.low === "a") && next && ["head", "person", "pax"].includes(next.low) && toks[i - 1]?.role === "money") {
+		else if (EACH_WORDS.has(t.low) && afterMoney(i)) (bit.perHead = true), use(t);
+		else if ((t.low === "per" || t.low === "a") && next && ["head", "person", "pax"].includes(next.low) && afterMoney(i)) {
 			bit.perHead = true;
 			use(t), use(next);
 		}
@@ -278,14 +414,14 @@ function readPiece(text: string, names: Names, listOpen: boolean): Bit {
 		const subject: string[] = [];
 		for (let j = v - 1; j >= 0; j--) {
 			if (toks[j].low === "and" || toks[j].low === "&") continue;
-			const n = nameOf(toks[j], names, true);
+			const n = nameOf(toks[j], names, "loose");
 			if (!n) break;
 			subject.unshift(n);
 			use(toks[j]);
 		}
 		const object = () => {
 			const t = toks[v + 1];
-			const n = nameOf(t, names, true);
+			const n = nameOf(t, names, "loose");
 			if (n) use(t);
 			return n;
 		};
@@ -298,7 +434,7 @@ function readPiece(text: string, names: Names, listOpen: boolean): Bit {
 			if (o) bit.lists.push({ kind: "exact", names: [o] });
 		} else if (BORROW_VERBS.has(verb.low)) {
 			const from = toks.findIndex((t, j) => j > v && t.low === "from");
-			const lender = from >= 0 ? nameOf(toks[from + 1], names, true) : undefined;
+			const lender = from >= 0 ? nameOf(toks[from + 1], names, "loose") : undefined;
 			if (lender) use(toks[from]), use(toks[from + 1]), (bit.payer = lender);
 			bit.lists.push({ kind: "exact", names: subject.length ? subject : [ME] });
 		} else if (HAD_VERBS.has(verb.low)) {
@@ -312,7 +448,7 @@ function readPiece(text: string, names: Names, listOpen: boolean): Bit {
 	// "by X": "paid by Asha"
 	toks.forEach((t, i) => {
 		if (t.low !== "by" || bit.payer) return;
-		const n = nameOf(toks[i + 1], names, true);
+		const n = nameOf(toks[i + 1], names, "loose");
 		if (n) (bit.payer = n), use(t), use(toks[i + 1]);
 	});
 
@@ -335,8 +471,8 @@ function readPiece(text: string, names: Names, listOpen: boolean): Bit {
 				use(u);
 				continue;
 			}
-			// After "for", only something that is clearly a person: "for Ben", not "for cab".
-			const n = nameOf(u, names, kind !== "for");
+			// After "for", only someone clearly a person: "for Ben", not "for Biryani".
+			const n = nameOf(u, names, kind === "for" ? "lead" : "loose");
 			if (!n) break;
 			listed.push(n);
 			use(u);
@@ -353,10 +489,10 @@ function readPiece(text: string, names: Names, listOpen: boolean): Bit {
 		if (!(t.role === "pct" || (t.role === "money" && t !== firstMoney))) return;
 		let j = i - 1;
 		while (j >= 0 && SHARE_LINKS.has(toks[j].low)) j--;
-		let name = toks[j]?.low === "my" ? ME : nameOf(toks[j], names, false);
+		let name = toks[j]?.low === "my" ? ME : nameOf(toks[j], names, "strict");
 		if (name && !toks[j].used) {
 			for (let k = j; k < i; k++) use(toks[k]);
-		} else if (t.role === "pct" && (name = nameOf(toks[i + 1], names, false))) {
+		} else if (t.role === "pct" && (name = nameOf(toks[i + 1], names, "strict"))) {
 			use(toks[i + 1]);
 		} else return;
 		bit.shares.push({ name, value: t.value!, pct: t.role === "pct" });
@@ -364,19 +500,20 @@ function readPiece(text: string, names: Names, listOpen: boolean): Bit {
 
 	// A name right before the amount: "Asha 5000 hotel", "Arjun: 780 petrol", "me 30%"
 	const firstNumber = toks.findIndex((t) => t.role === "money" || t.role === "pct");
-	const before = toks.slice(0, firstNumber).filter((t) => !t.used && t.text !== ":");
+	const before = toks.slice(0, firstNumber).filter((t) => !t.used && !FILLER.has(t.low));
 	if (firstMoney && before.length === 1 && !bit.payer) {
-		const n = nameOf(before[0], names, false);
+		const n = nameOf(before[0], names, "lead");
 		if (n) (bit.lead = n), use(before[0]);
 	}
 
 	// Names after the amount, with nothing joining them: "Cab 450 me and Rahul"
 	if (firstMoney) {
 		const after = toks.slice(toks.indexOf(firstMoney) + 1);
-		const implicit = after.filter((t) => !t.used && t.low !== "and" && nameOf(t, names, false));
+		after.filter((t) => !t.used && ALL_WORDS.has(t.low)).forEach((t) => (use(t), (bit.everyone = true)));
+		const implicit = after.filter((t) => !t.used && t.low !== "and" && nameOf(t, names, "lead"));
 		if (implicit.length) {
 			implicit.forEach(use);
-			bit.lists.push({ kind: "implicit", names: implicit.map((t) => nameOf(t, names, false)!) });
+			bit.lists.push({ kind: "implicit", names: implicit.map((t) => nameOf(t, names, "lead")!) });
 			if (after.every((t) => t.used || t.low === "and")) bit.openList = "implicit";
 		}
 	}
@@ -385,7 +522,7 @@ function readPiece(text: string, names: Names, listOpen: boolean): Bit {
 	if (!toks.some((t) => t.role)) {
 		const rest = toks.filter((t) => !t.used && t.low !== "and" && t.low !== "&");
 		const isAll = (t: Tok) => ALL_WORDS.has(t.low) || t.low === "of";
-		const named = rest.filter((t) => !isAll(t)).map((t) => nameOf(t, names, listOpen));
+		const named = rest.filter((t) => !isAll(t)).map((t) => nameOf(t, names, listOpen ? "loose" : "strict"));
 		if (rest.length && named.every(Boolean)) {
 			rest.forEach(use);
 			if (named.length) bit.namesOnly = named as string[];
@@ -410,7 +547,7 @@ function describe(toks: Tok[]) {
 
 const hasMeaning = (b: Bit) =>
 	b.amount !== undefined || b.payer || b.lead || b.lists.length || b.namesOnly || b.everyone || b.ways || b.ratio ||
-	b.shares.length || b.equal || b.unequal || b.monthly || b.otherRepeat;
+	b.shares.length || b.equal || b.unequal || b.monthly || b.otherRepeat || b.date;
 
 // ---------------------------------------------------------------------------
 // Sentence → expenses
@@ -420,7 +557,6 @@ type Building = {
 	amount?: number;
 	perHead?: boolean;
 	payer?: string;
-	payerFromLead?: boolean;
 	lists: { kind: ListKind; names: string[] }[];
 	everyone?: boolean;
 	ways?: number;
@@ -430,13 +566,14 @@ type Building = {
 	unequal?: boolean;
 	monthly?: boolean;
 	otherRepeat?: boolean;
+	date?: number;
 	description: string;
 };
 
 const SEPARATOR = /(\s*(?:,(?!\d)|;|\n|\.(?=\s|$)|\s(?:and|&|then|also|plus)\s)\s*)/i;
 
 /** Splits a sentence at commas, "and", full stops and new lines, joining back bits that are only words. */
-function pieces(text: string, names: Names): string[] {
+function pieces(text: string, names: Names, now: number): string[] {
 	const parts = text.split(SEPARATOR);
 	const out: { text: string; sep: string }[] = [];
 	for (let i = 0; i < parts.length; i += 2) {
@@ -445,11 +582,11 @@ function pieces(text: string, names: Names): string[] {
 	// "drinks and snacks 800": "drinks" alone means nothing, so it belongs with a neighbour.
 	for (let i = 0; i < out.length; i++) {
 		const probe = { known: new Map(names.known) };
-		if (hasMeaning(readPiece(out[i].text, probe, false)) || out.length === 1) continue;
+		if (hasMeaning(readPiece(out[i].text, probe, false, now)) || out.length === 1) continue;
 		const next = out[i + 1];
 		const nextFirst = next ? tokenize(next.text)[0] : undefined;
 		// Forward when the next piece starts with more words ("snacks 800"), back when it starts with someone ("Ben paid").
-		if (next && nextFirst && !isNumber(nextFirst) && !nameOf(nextFirst, { known: new Map(names.known) }, false)) {
+		if (next && nextFirst && !isNumber(nextFirst) && !nameOf(nextFirst, { known: new Map(names.known) }, "strict")) {
 			next.text = out[i].text + next.sep + next.text;
 			next.sep = out[i].sep;
 			out.splice(i--, 1);
@@ -477,6 +614,7 @@ function absorb(e: Building, b: Bit) {
 	e.unequal ||= b.unequal;
 	e.monthly ||= b.monthly;
 	e.otherRepeat ||= b.otherRepeat;
+	e.date ??= b.date;
 	if (b.description && !e.description) e.description = b.description;
 }
 
@@ -485,14 +623,15 @@ const emptyBuilding = (): Building => ({ bits: [], lists: [], shares: [], descri
 const sharedTotal = (e: Building) => e.shares.filter((s) => !s.pct).reduce((s, x) => s + x.value, 0);
 
 /** Reads typed text. `memberNames` are the group's members, so lowercase names are recognised too. */
-export function parseQuickAdd(input: string, memberNames: string[] = []): QuickDraft {
+export function parseQuickAdd(input: string, memberNames: string[] = [], now = Date.now()): QuickDraft {
 	const names: Names = { known: new Map(memberNames.map((n) => [n.trim().toLowerCase(), n.trim()])) };
-	let text = normalize(input.trim());
+	let text = numbersInWords(normalize(input.trim()));
 
 	// "Goa trip: ..." names the group, unless it's "Arjun: 780 petrol".
 	let groupName: string | undefined;
 	const colon = text.match(/^([^:\d\n]{1,40}):\s*([\s\S]+)$/);
-	if (colon && !(colon[1].trim().split(/\s+/).length === 1 && /^[₹$€£\d]|^rs\b/i.test(colon[2]))) {
+	const prefix = colon ? tokenize(colon[1]) : [];
+	if (colon && !(prefix.length === 1 && nameOf(prefix[0], { known: new Map(names.known) }, "lead"))) {
 		groupName = colon[1].trim();
 		text = colon[2];
 	}
@@ -503,8 +642,8 @@ export function parseQuickAdd(input: string, memberNames: string[] = []): QuickD
 	let trailing: Bit[] = [];
 	let open: ListKind | undefined;
 
-	for (const piece of pieces(text, names)) {
-		const b = readPiece(piece, names, !!open);
+	for (const piece of pieces(text, names, now)) {
+		const b = readPiece(piece, names, !!open, now);
 		const target = cur ?? pending;
 
 		if (b.namesOnly && open) {
@@ -524,10 +663,7 @@ export function parseQuickAdd(input: string, memberNames: string[] = []): QuickD
 		} else if (b.amount !== undefined) {
 			cur = pending.bits.length ? pending : emptyBuilding();
 			pending = emptyBuilding();
-			if (b.lead && !b.payer) {
-				cur.payer = b.lead;
-				cur.payerFromLead = true;
-			}
+			if (b.lead && !b.payer) cur.payer = b.lead;
 			absorb(cur, b);
 			expenses.push(cur);
 			trailing = [];
@@ -558,19 +694,16 @@ export function parseQuickAdd(input: string, memberNames: string[] = []): QuickD
 	}
 
 	const anyMonthly = expenses.some((e) => e.monthly);
-	const members = new Set(memberNames.map((n) => n.trim().toLowerCase()));
-	const drafts = expenses.map((e) => finish(e, members, anyMonthly));
+	const drafts = expenses.map((e) => finish(e, anyMonthly));
 	if (groupName) drafts.forEach((d) => (d.description ||= groupName!));
 	return { groupName, expenses: drafts };
 }
 
 /** Turns what was gathered for one expense into a QuickExpense, noting what was assumed. */
-function finish(e: Building, members: Set<string>, anyMonthly: boolean): QuickExpense {
+function finish(e: Building, anyMonthly: boolean): QuickExpense {
 	const unsure = new Set<QuickField>();
 	const payer = e.payer ?? ME;
 	if (!e.payer) unsure.add("payer");
-	// "Asha 5000 hotel": a capitalised word read as a name, not one the group has.
-	if (e.payerFromLead && payer !== ME && !members.has(payer.toLowerCase())) unsure.add("payer");
 
 	const listed: string[] = [];
 	const add = (n: string) => {
@@ -619,7 +752,7 @@ function finish(e: Building, members: Set<string>, anyMonthly: boolean): QuickEx
 	if (e.otherRepeat || (!e.monthly && anyMonthly)) unsure.add("repeat");
 
 	const description = e.description.charAt(0).toUpperCase() + e.description.slice(1);
-	return { description, amount, payer, participants, split, monthly: !!e.monthly, unsure: [...unsure] };
+	return { description, amount, payer, participants, split, monthly: !!e.monthly, date: e.date, unsure: [...unsure] };
 }
 
 // ---------------------------------------------------------------------------
@@ -637,6 +770,7 @@ export type QuickResolvedExpense = {
 	/** Percentages or exact amounts for every participant, by key; absent when equal. */
 	weights?: Record<string, number>;
 	monthly: boolean;
+	date?: number;
 	unsure: QuickField[];
 };
 
@@ -724,6 +858,7 @@ export function resolveQuickAdd(draft: QuickDraft, members: Person[], meId?: str
 			splitMethod: e.split.method,
 			weights,
 			monthly: e.monthly,
+			date: e.date,
 			unsure: [...unsure],
 		};
 	});

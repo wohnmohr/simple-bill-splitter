@@ -4,7 +4,7 @@ import { Repeat, X } from "lucide-react";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
 import type { Currency } from "@/types";
-import { formatCurrency } from "@/utils/formatting";
+import { formatCurrency, fromDateInput, toDateInput } from "@/utils/formatting";
 import type { QuickField, QuickPerson, QuickResolved, QuickResolvedExpense } from "@/utils/quickAdd";
 
 interface QuickAddPreviewProps {
@@ -161,6 +161,19 @@ export const QuickAddPreview = ({ quick, currency, newGroup, onConfirm, onClose 
 										/>
 									</Check>
 								</div>
+
+								{e.date !== undefined && (
+									<label className="flex items-center gap-2 text-sm text-ink-soft">
+										On
+										<input
+											type="date"
+											value={toDateInput(e.date)}
+											max={toDateInput(Date.now())}
+											onChange={(ev) => ev.target.value && editExpense(i, { date: fromDateInput(ev.target.value) })}
+											className="min-h-9 rounded-lg border border-line-strong bg-surface px-2 font-medium text-ink"
+										/>
+									</label>
+								)}
 
 								<Check on={flagged("payer")}>
 									<label className="flex items-center gap-2 text-sm text-ink-soft">
