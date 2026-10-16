@@ -39,6 +39,7 @@ import { track } from "@/lib/analytics";
 import { consumeOpenOnSettleUp } from "@/utils/shareImport";
 import { parseQuickAdd, resolveQuickAdd, type QuickResolved } from "@/utils/quickAdd";
 import { applyQuickAdd } from "@/utils/quickAddSave";
+import { takeQuickAdd } from "@/utils/quickAddHandoff";
 import { QuickAddBox } from "@/components/QuickAdd/QuickAddBox";
 import { QuickAddPreview } from "@/components/QuickAdd/QuickAddPreview";
 
@@ -180,6 +181,12 @@ export default function Home() {
 		});
 		setQuickAdd({ quick, newGroup });
 	};
+
+	// Typed on the home page: preview it as a new group straight away.
+	useEffect(() => {
+		const text = takeQuickAdd();
+		if (text) handleQuickAdd(text, true);
+	}, []);
 
 	const handleSaveQuickAdd = (quick: QuickResolved, groupName: string, edited: boolean) => {
 		if (!quickAdd) return;
