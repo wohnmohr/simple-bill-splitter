@@ -46,6 +46,8 @@ export type Group = {
    * this device and in the link's #fragment, never on the server.
    */
   sync?: GroupSyncLink;
+  /** Epoch ms when the group was closed as finished (a trip that's over). Shared. */
+  closedAt?: number;
   /** Theme id from utils/themes. Shared with everyone in a synced group. */
   theme?: string;
   /**
