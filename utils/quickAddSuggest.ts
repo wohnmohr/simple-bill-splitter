@@ -44,7 +44,7 @@ export function suggestQuickAdd(text: string, memberNames: string[]): QuickSugge
 
 /**
  * Whole sentences to start from, one per common kind, using the group's own
- * names when it has them. The first one doubles as the placeholder.
+ * names when it has them.
  */
 export function quickAddTemplates(memberNames: string[]): QuickSuggestion[] {
 	const [a = "Asha", b = "Ben"] = memberNames.map((n) => n.trim().split(/\s+/)[0]).filter(Boolean);
