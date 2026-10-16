@@ -79,7 +79,7 @@ export default [
 	one("Movie 750 for me, Priya and Sam", 750, "me", ["me", "Priya", "Sam"], "movie"),
 	one("Asha paid 1200 for me and Ben", 1200, "Asha", ["me", "Ben"], "", {}),
 	one("I paid 300 for Ben", 300, "me", ["Ben"], ""),
-	one("Asha paid 600 for Ben's ticket", 600, "Asha", "everyone", "ben's ticket"),
+	one("Asha paid 600 for Ben's ticket", 600, "Asha", ["Ben"], "ticket"),
 	one("Dinner 3000 split 5 ways", 3000, "me", { ways: 5 }, "dinner"),
 	one("Dinner 3000 for 5 people", 3000, "me", { ways: 5 }, "dinner"),
 	one("dinner 3000 between 4 of us", 3000, "me", { ways: 4 }, "dinner"),
@@ -110,14 +110,14 @@ export default [
 	one("Groceries 3000 Priya 50 percent, Sam 50 percent", 3000, "me", ["Priya", "Sam"], "groceries", { split: { percent: { Priya: 50, Sam: 50 } } }),
 
 	// Owes / lent
-	one("Ben owes me 500", 500, "me", ["Ben"], ""),
+	one("Ben owes me 500", 500, "me", ["Ben"], "loan"),
 	one("Ben owes me 500 for lunch", 500, "me", ["Ben"], "lunch"),
-	one("I owe Asha 300", 300, "Asha", ["me"], ""),
+	one("I owe Asha 300", 300, "Asha", ["me"], "loan"),
 	one("i owe asha 300 for coffee", 300, "asha", ["me"], "coffee"),
-	one("Asha lent me 2000", 2000, "Asha", ["me"], ""),
-	one("lent Rahul 1500", 1500, "me", ["Rahul"], ""),
+	one("Asha lent me 2000", 2000, "Asha", ["me"], "loan"),
+	one("lent Rahul 1500", 1500, "me", ["Rahul"], "loan"),
 	one("I lent Kiran 700 for the cab", 700, "me", ["Kiran"], "cab"),
-	one("Priya owes Sam 250", 250, "Sam", ["Priya"], ""),
+	one("Priya owes Sam 250", 250, "Sam", ["Priya"], "loan"),
 
 	// Several expenses
 	{
@@ -185,7 +185,7 @@ export default [
 	one("Swiggy order 640 with Dev and Sam", 640, "me", ["me", "Dev", "Sam"], "swiggy order"),
 	one("Zomato 520 split equally with Neha", 520, "me", ["me", "Neha"], "zomato"),
 	one("Bowling 1800, Ben paid, split between Ben, Kiran and me", 1800, "Ben", ["Ben", "Kiran", "me"], "bowling"),
-	one("Yesterday's dinner 2200 split with Asha", 2200, "me", ["me", "Asha"], "yesterday's dinner"),
+	one("Yesterday's dinner 2200 split with Asha", 2200, "me", ["me", "Asha"], "dinner"),
 	one("Water bill 450 monthly, split with Priya and Rahul", 450, "me", ["me", "Priya", "Rahul"], "water bill", { monthly: true }),
 	one("Gym 2000 every month", 2000, "me", "everyone", "gym", { monthly: true }),
 	one("Spotify 179 a month with Asha", 179, "me", ["me", "Asha"], "spotify", { monthly: true }),

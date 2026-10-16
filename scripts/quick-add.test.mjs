@@ -1,16 +1,29 @@
 // Tests for utils/quickAdd.ts: typed sentences into expenses.
 //   node --test --experimental-strip-types scripts/quick-add.test.mjs
-// Prints accuracy per field on fixtures/quick-add.mjs and quick-add-hard.mjs (the
-// phrasings the rules were written against) and the two held-out sets (never tuned on).
+// Prints accuracy per field on fixtures/quick-add.mjs, quick-add-hard.mjs and the two
+// quick-add-kinds sets (the phrasings the rules were written against), and on the held-out
+// sets (never tuned on). Tuned sets with a `kind` per case must reach 90% on every kind.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import cases from "./fixtures/quick-add.mjs";
 import hard from "./fixtures/quick-add-hard.mjs";
 import heldOut from "./fixtures/quick-add-heldout.mjs";
 import heldOut2 from "./fixtures/quick-add-heldout-2.mjs";
+import kinds from "./fixtures/quick-add-kinds.mjs";
+import kinds2 from "./fixtures/quick-add-kinds-2.mjs";
+import kinds3 from "./fixtures/quick-add-kinds-3.mjs";
+import kinds4 from "./fixtures/quick-add-kinds-4.mjs";
+import kinds5 from "./fixtures/quick-add-kinds-5.mjs";
+import kindsHeldOut from "./fixtures/quick-add-kinds-heldout.mjs";
 import { ME, NEW_ME, parseQuickAdd, resolveQuickAdd } from "../utils/quickAdd.ts";
 
 const low = (s) => s.toLowerCase();
+// "chai n samosa", "chai & samosa" and "chai and samosa" read the same; so do "go-karting" and
+// "go karting", and "" and "loan" for money lent with nothing named.
+const desc = (s) => low(s).replace(/-/g, " ").replace(/,/g, "").replace(/\s(?:n|&)\s/g, " and ").replace(/^loan$/, "");
+/** The fixed "now" the fixtures' dates assume: Friday 16 Oct 2026. */
+const NOW = new Date(2026, 9, 16, 12).getTime();
+const ymd = (t) => new Date(t).toLocaleDateString("en-CA");
 const sameNames = (a, b) => a.length === b.length && a.map(low).sort().join() === b.map(low).sort().join();
 const sameWeights = (a, b) =>
 	Object.keys(a).length === Object.keys(b).length &&
@@ -31,8 +44,9 @@ const FIELDS = {
 			: want.split.percent
 				? got.split.method === "percentage" && sameWeights(got.split.weights, want.split.percent)
 				: got.split.method === "exact" && sameWeights(got.split.weights, want.split.exact),
-	description: (got, want) => low(got.description) === low(want.description),
+	description: (got, want) => desc(got.description) === desc(want.description),
 	monthly: (got, want) => got.monthly === want.monthly,
+	date: (got, want) => !want.date || (got.date !== undefined && ymd(got.date) === want.date),
 };
 
 /** Scores a set of cases; returns per-field and whole-input accuracy, and the misses. */
@@ -41,8 +55,9 @@ function score(set) {
 	let total = 0;
 	let whole = 0;
 	const misses = [];
+	const kinds = {};
 	for (const c of set) {
-		const draft = parseQuickAdd(c.text);
+		const draft = parseQuickAdd(c.text, [], NOW);
 		const wrong = [];
 		if (draft.expenses.length === c.expenses.length) right.count++;
 		else wrong.push("count");
@@ -56,23 +71,40 @@ function score(set) {
 				else if (!wrong.includes(f)) wrong.push(f);
 			}
 		});
+		const kind = c.kind && (kinds[c.kind] ??= { right: 0, of: 0 });
+		if (kind) kind.of++;
 		if (wrong.length) misses.push({ text: c.text, wrong, got: draft });
-		else whole++;
+		else whole++, kind && kind.right++;
 	}
 	const pct = (n, of) => Math.round((n / of) * 1000) / 10;
 	return {
 		inputs: set.length,
 		fullyCorrect: pct(whole, set.length),
 		fields: Object.fromEntries(Object.entries(right).map(([f, n]) => [f, pct(n, f === "count" || f === "group" ? set.length : total)])),
+		kinds: Object.fromEntries(Object.entries(kinds).map(([k, { right, of }]) => [k, pct(right, of)])),
 		misses,
 	};
 }
 
-for (const [name, set] of [["phrasings", cases], ["hard phrasings", hard], ["held-out phrasings", heldOut], ["second held-out phrasings", heldOut2]]) {
+// [name, set, tuned on]
+const SETS = [
+	["phrasings", cases, true],
+	["hard phrasings", hard, true],
+	["sentences by kind", kinds, true],
+	["second set of sentences by kind", kinds2, true],
+	["third set of sentences by kind", kinds3, true],
+	["fourth set of sentences by kind", kinds4, true],
+	["fifth set of sentences by kind", kinds5, true],
+	["held-out phrasings", heldOut, false],
+	["second held-out phrasings", heldOut2, false],
+	["held-out sentences by kind", kindsHeldOut, false],
+];
+for (const [name, set, tuned] of SETS) {
 	test(`at least 90% of ${set.length} ${name} parse fully correctly`, () => {
 		const result = score(set);
 		console.log(JSON.stringify({ ...result, misses: result.misses.map((m) => `${m.text} [${m.wrong}]`) }, null, 1));
 		assert.ok(result.fullyCorrect >= 90, `${result.fullyCorrect}% fully correct`);
+		if (tuned) for (const [kind, pct] of Object.entries(result.kinds)) assert.ok(pct >= 90, `${kind}: ${pct}% fully correct`);
 	});
 }
 
