@@ -13,6 +13,11 @@ export type Expense = {
   id: string;
   amount: number;
   paidBy: string; // person id
+  /**
+   * When several people paid: how much each put in, adding up to `amount`.
+   * `paidBy` is then whoever paid most, so older app versions still show a payer.
+   */
+  payers?: Record<string, number>;
   participants: string[]; // array of person ids
   description?: string; // optional description for the expense
   splitMethod: SplitMethod; // how the expense is split
@@ -29,11 +34,24 @@ export type Expense = {
   repeat?: { next: string };
 };
 
+/** A note on an expense ("why ₹900 for the cab?"), shared with the group. */
+export type ExpenseComment = {
+  id: string;
+  expenseId: string;
+  /** Who wrote it; missing when they hadn't said who they are in the group. */
+  by?: string;
+  text: string;
+  /** Epoch ms. */
+  at: number;
+};
+
 export type Group = {
   id: string;
   name: string;
   members: Person[];
   expenses: Expense[];
+  /** Oldest first. Comments on deleted expenses are dropped. */
+  comments?: ExpenseComment[];
   currency: Currency;
   /**
    * Who is using this device, for this group. Stays on the device and is
@@ -46,6 +64,8 @@ export type Group = {
    * this device and in the link's #fragment, never on the server.
    */
   sync?: GroupSyncLink;
+  /** Epoch ms when the group was closed as finished (a trip that's over). Shared. */
+  closedAt?: number;
   /** Theme id from utils/themes. Shared with everyone in a synced group. */
   theme?: string;
   /**

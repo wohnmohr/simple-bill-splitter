@@ -1,6 +1,7 @@
 import { Person } from "@/types";
 import { Group } from "@/types";
 import { newId } from "@/utils/ids";
+import { expensePayers } from "@/utils/calculations";
 
 export const useGroupMembers = (
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>,
@@ -64,7 +65,7 @@ export const useGroupMembers = (
       ...g,
       members: g.members.filter((p) => p.id !== personId),
       expenses: g.expenses.filter(
-        (e) => e.paidBy !== personId && !e.participants.includes(personId)
+        (e) => !expensePayers(e).has(personId) && !e.participants.includes(personId)
       ),
     }));
   };

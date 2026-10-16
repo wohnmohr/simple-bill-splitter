@@ -1,8 +1,11 @@
-import { Expense, Person, Currency } from "@/types";
+import { Expense, ExpenseComment, Person, Currency } from "@/types";
 import { ExpenseCard } from "./ExpenseCard";
+import { expensePayers } from "@/utils/calculations";
+import { joinNames } from "@/utils/formatting";
 
 interface ExpenseListProps {
 	expenses: Expense[];
+	comments?: ExpenseComment[];
 	people: Person[];
 	currency: Currency;
 	onExpenseClick: (expenseId: string) => void;
@@ -13,6 +16,7 @@ interface ExpenseListProps {
 
 export const ExpenseList = ({
 	expenses,
+	comments = [],
 	people,
 	currency,
 	onExpenseClick,
@@ -36,6 +40,9 @@ export const ExpenseList = ({
 		);
 	}
 
+	const commentCounts = new Map<string, number>();
+	for (const c of comments) commentCounts.set(c.expenseId, (commentCounts.get(c.expenseId) ?? 0) + 1);
+
 	// Newest first: the most recent bill is the one people look for.
 	const ordered = [...expenses].reverse();
 
@@ -46,8 +53,9 @@ export const ExpenseList = ({
 					key={expense.id}
 					expense={expense}
 					currency={currency}
-					paidByName={getPersonName(expense.paidBy)}
+					paidByName={joinNames([...expensePayers(expense).keys()].map(getPersonName))}
 					toName={getPersonName(expense.participants[0])}
+					commentCount={commentCounts.get(expense.id)}
 					onClick={() => onExpenseClick(expense.id)}
 					onEdit={(e) => {
 						e.stopPropagation();

@@ -9,7 +9,7 @@ import { DEFAULT_CURRENCY } from "@/constants";
 import { calculateBalances, calculateSettlements, splitWeights } from "@/utils/calculations";
 import { useGroups } from "@/hooks/useGroups";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
-import { useExpenses } from "@/hooks/useExpenses";
+import { type ExpenseInput, useExpenses } from "@/hooks/useExpenses";
 import { Header } from "@/components/Header/Header";
 import { GroupSelector } from "@/components/Group/GroupSelector";
 import { CreateGroupModal } from "@/components/Group/CreateGroupModal";
@@ -19,6 +19,7 @@ import { SyncModal } from "@/components/Group/SyncModal";
 import { ThemeModal } from "@/components/Group/ThemeModal";
 import { IdentitySheet } from "@/components/Group/IdentitySheet";
 import { InviteNudge } from "@/components/Group/InviteNudge";
+import { TripCard } from "@/components/Group/TripCard";
 import { shownMembers } from "@/utils/identity";
 import { applyTheme } from "@/utils/themes";
 import { TabNavigation } from "@/components/Tabs/TabNavigation";
@@ -52,6 +53,8 @@ export default function Home() {
 	}, []);
 
 	const [showGroupForm, setShowGroupForm] = useState(false);
+	/** "Start the next one": a new group with this group's people. */
+	const [nextFrom, setNextFrom] = useState<Group | null>(null);
 	const [showExpenseForm, setShowExpenseForm] = useState(false);
 	const [showMembersModal, setShowMembersModal] = useState(false);
 	const [showSync, setShowSync] = useState(false);
@@ -67,6 +70,7 @@ export default function Home() {
 	const [editExpenseData, setEditExpenseData] = useState<{
 		amount: string;
 		paidBy: string;
+		payers?: Record<string, number>;
 		participants: Set<string>;
 		description?: string;
 		splitMethod?: string;
@@ -85,6 +89,7 @@ export default function Home() {
 		updateGroupCurrency,
 		setGroupMe,
 		setGroupTheme,
+		setGroupClosed,
 		setGroups,
 		sync,
 	} = useGroups();
@@ -97,7 +102,7 @@ export default function Home() {
 
 	const { addMember, updateMemberUpi, renameMember, markJoined, setNickname, deleteMember } = useGroupMembers(setGroups, currentGroup);
 
-	const { addExpense, updateExpense, deleteExpense, recordPayment } = useExpenses(
+	const { addExpense, updateExpense, deleteExpense, recordPayment, addComment } = useExpenses(
 		groups,
 		setGroups,
 		currentGroup
@@ -132,38 +137,44 @@ export default function Home() {
 	const defaultPayerId = currentGroup?.meId || lastPayer;
 
 	const handleCreateGroup = (name: string, currency: Currency) => {
-		const ok = createGroup(name, currency);
+		// The next trip brings the same people (and who you are), not their joins or the old link.
+		const from = nextFrom;
+		const ok = createGroup(name, currency, from ? (g) => ({
+			...g,
+			members: from.members.map(({ id, name, upiId }) => ({ id, name, ...(upiId ? { upiId } : {}) })),
+			...(from.meId ? { meId: from.meId } : {}),
+			...(from.theme ? { theme: from.theme } : {}),
+		}) : undefined);
 		if (ok) {
-			track("dashboard_group_created", { currency: currency.code });
+			track(from ? "group_next_started" : "dashboard_group_created", { currency: currency.code });
 		}
 		setShowGroupForm(false);
+		setNextFrom(null);
 	};
 
-	const handleAddExpense = (
-		amount: number,
-		paidBy: string,
-		participants: Set<string>,
-		description?: string,
-		splitMethod?: string,
-		weights?: Record<string, number>,
-		date?: number,
-		repeatMonthly?: boolean
-	) => {
-		addExpense(
-			amount,
-			paidBy,
-			participants,
-			description,
-			splitMethod as any,
-			weights,
-			date,
-			repeatMonthly
-		);
+	const closeGroup = (closed: boolean) => {
+		if (!currentGroup) return;
+		setGroupClosed(currentGroup.id, closed ? Date.now() : undefined);
+		track(closed ? "group_closed" : "group_reopened", { synced: !!currentGroup.sync });
+	};
+
+	const tripCard = currentGroup && (
+		<TripCard
+			group={currentGroup}
+			onClose={() => closeGroup(true)}
+			onReopen={() => closeGroup(false)}
+			onStartNext={() => setNextFrom(currentGroup)}
+		/>
+	);
+
+	const handleAddExpense = (input: ExpenseInput) => {
+		addExpense(input);
 		track("dashboard_expense_added", {
-			participant_count: participants.size,
-			split_method: splitMethod || "equally",
+			participant_count: input.participants.size,
+			payer_count: Object.keys(input.paid).length,
+			split_method: input.splitMethod,
 			currency: currency.code,
-			repeats: Boolean(repeatMonthly),
+			repeats: input.repeatMonthly,
 		});
 		setShowExpenseForm(false);
 	};
@@ -232,6 +243,7 @@ export default function Home() {
 		setEditExpenseData({
 			amount: expense.amount.toString(),
 			paidBy: expense.paidBy,
+			payers: expense.payers,
 			participants: new Set(expense.participants),
 			description: expense.description,
 			splitMethod: expense.splitMethod || "equally",
@@ -241,28 +253,9 @@ export default function Home() {
 		});
 	};
 
-	const handleSaveEditExpense = (
-		amount: number,
-		paidBy: string,
-		participants: Set<string>,
-		description?: string,
-		splitMethod?: string,
-		weights?: Record<string, number>,
-		date?: number,
-		repeatMonthly?: boolean
-	) => {
+	const handleSaveEditExpense = (input: ExpenseInput) => {
 		if (editingExpenseId) {
-			updateExpense(
-				editingExpenseId,
-				amount,
-				paidBy,
-				participants,
-				description,
-				splitMethod as any,
-				weights,
-				date,
-				repeatMonthly
-			);
+			updateExpense(editingExpenseId, input);
 			setEditingExpenseId(null);
 			setEditExpenseData(null);
 		}
@@ -346,6 +339,8 @@ export default function Home() {
 	// On wide screens Balances lives in a side panel, so it leaves the tab bar.
 	const isWide = useMediaQuery("(min-width: 1024px)") ?? false;
 	const inGroup = !!currentGroup && currentGroup.members.length > 0;
+	// A closed group is a record: no new expenses until it's reopened.
+	const canAdd = inGroup && !currentGroup.closedAt;
 	const shownTab: Tab = isWide && activeTab === "balances" ? "transactions" : activeTab;
 
 	return (
@@ -422,10 +417,13 @@ export default function Home() {
 								{currentGroup.members.length > 0 && (
 									<>
 										{!currentGroup.sync &&
+											!currentGroup.closedAt &&
 											currentGroup.members.length > 1 &&
 											expenses.some((e) => e.kind !== "payment") && (
 												<InviteNudge groupId={currentGroup.id} onInvite={startInvite} />
 											)}
+
+										{currentGroup.closedAt && <div className="mb-3">{tripCard}</div>}
 
 										<TabNavigation
 											activeTab={shownTab}
@@ -444,16 +442,17 @@ export default function Home() {
 										>
 										{shownTab === "transactions" && (
 											<>
-											<div className="mb-3">
+											{canAdd && <div className="mb-3">
 												<QuickAddBox
 													key={quickAddSaves}
 													label="Add an expense by typing it"
 													memberNames={people.filter((p) => p.id !== currentGroup?.meId).map((p) => p.name)}
 													onSubmit={(t) => handleQuickAdd(t, false)}
 												/>
-											</div>
+											</div>}
 											<ExpenseList
 												expenses={expenses}
+												comments={currentGroup.comments}
 												people={people}
 												currency={currency}
 												onExpenseClick={setViewingExpenseId}
@@ -485,6 +484,8 @@ export default function Home() {
 												onSetMe={(id) => setGroupMe(currentGroup.id, id)}
 												onRecordPayment={handleRecordPayment}
 												settledSlot={
+													<>
+													{!currentGroup.closedAt && expenses.some((e) => e.kind !== "payment") && tripCard}
 													<SettledFeedbackCard
 														groupId={currentGroup.id}
 														getContext={() =>
@@ -495,13 +496,14 @@ export default function Home() {
 															})
 														}
 													/>
+													</>
 												}
 											/>
 										)}
 										</div>
 
 										{/* On wide screens "Add expense" sits at the top of the side panel instead. */}
-										{!isWide && (
+										{!isWide && canAdd && (
 											<FloatingActionButton
 												onClick={() => setShowExpenseForm(true)}
 												showTooltip={expenses.length === 0}
@@ -515,10 +517,12 @@ export default function Home() {
 
 					{isWide && inGroup && currentGroup && (
 						<aside className="sticky top-5 space-y-3" aria-labelledby="balances-heading">
-							<button onClick={() => setShowExpenseForm(true)} className="btn-primary w-full !py-3 !text-base">
-								<Plus className="h-5 w-5" strokeWidth={2.5} />
-								Add expense
-							</button>
+							{canAdd && (
+								<button onClick={() => setShowExpenseForm(true)} className="btn-primary w-full !py-3 !text-base">
+									<Plus className="h-5 w-5" strokeWidth={2.5} />
+									Add expense
+								</button>
+							)}
 							<h2 id="balances-heading" className="label-text px-1 pt-2">
 								Balances
 							</h2>
@@ -552,10 +556,14 @@ export default function Home() {
 				</Modal>
 
 				<CreateGroupModal
-					isOpen={showGroupForm}
-					onClose={() => setShowGroupForm(false)}
+					isOpen={showGroupForm || !!nextFrom}
+					onClose={() => {
+						setShowGroupForm(false);
+						setNextFrom(null);
+					}}
 					onCreate={handleCreateGroup}
 					groupCount={groups.length}
+					note={nextFrom ? `With the same people: ${new Intl.ListFormat("en-IN").format(nextFrom.members.map((m) => m.name))}.` : undefined}
 				/>
 
 				{currentGroup && (
@@ -625,6 +633,7 @@ export default function Home() {
 					onClose={() => setShowExpenseForm(false)}
 					onSubmit={handleAddExpense}
 					people={people}
+					history={expenses}
 					currency={currency}
 					defaultPayerId={defaultPayerId}
 				/>
@@ -640,10 +649,18 @@ export default function Home() {
 				)}
 
 				<ExpenseViewModal
+					key={viewingExpenseId ?? ""}
 					isOpen={!!viewingExpenseId}
 					expense={viewingExpense || null}
 					people={people}
 					currency={currency}
+					comments={currentGroup?.comments?.filter((c) => c.expenseId === viewingExpenseId) ?? []}
+					meId={currentGroup?.meId}
+					onComment={(text) => {
+						if (!viewingExpenseId) return;
+						addComment(viewingExpenseId, text);
+						track("expense_comment_added", { synced: !!currentGroup?.sync });
+					}}
 					onClose={() => setViewingExpenseId(null)}
 					onEdit={() => {
 						if (viewingExpense) {
@@ -667,6 +684,7 @@ export default function Home() {
 						people={people}
 						initialAmount={editExpenseData.amount}
 						initialPaidBy={editExpenseData.paidBy}
+						initialPayers={editExpenseData.payers}
 						initialParticipants={editExpenseData.participants}
 						initialDescription={editExpenseData.description}
 						initialSplitMethod={editExpenseData.splitMethod as any}

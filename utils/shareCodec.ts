@@ -80,6 +80,7 @@ function toCompact(snapshot: ShareSnapshot): CompactSharePayload {
 				p: e.paidBy,
 				t: e.participants,
 			};
+			if (e.payers) item.y = e.payers;
 			if (e.description) item.d = e.description;
 			item.s = e.splitMethod === "percentage" ? "p" : e.splitMethod === "exact" ? "x" : "e";
 			const weights = splitWeights(e);
@@ -105,6 +106,7 @@ function fromCompact(payload: CompactSharePayload): ShareSnapshot {
 		id: `shared-exp-${index}`,
 		amount: e.a,
 		paidBy: e.p,
+		...(e.y ? { payers: e.y } : {}),
 		participants: e.t,
 		description: e.d,
 		splitMethod: e.s === "p" ? "percentage" : e.s === "x" ? "exact" : "equally",

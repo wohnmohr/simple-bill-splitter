@@ -1,4 +1,4 @@
-import { Currency } from "@/types";
+import type { Currency } from "@/types";
 
 export const CURRENCIES: Currency[] = [
   { code: "INR", symbol: "₹", name: "Indian Rupee" },

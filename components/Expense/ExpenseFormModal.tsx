@@ -3,9 +3,12 @@ import { TextInput, NumberInput, SegmentedControl } from "@mantine/core";
 import { Check, Repeat } from "lucide-react";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
-import { Currency, Person, SplitMethod } from "@/types";
+import { Currency, Expense, Person, SplitMethod } from "@/types";
+import type { ExpenseInput } from "@/hooks/useExpenses";
 import { DEFAULT_CURRENCY } from "@/constants";
 import { formatCurrency, fromDateInput, toDateInput } from "@/utils/formatting";
+import { splitWeights } from "@/utils/calculations";
+import { findDuplicate, looksMonthly, suggestPast } from "@/utils/suggestions";
 import { track } from "@/lib/analytics";
 import { OrderSplit } from "@/components/Scan/OrderSplit";
 import { ScanOrderButton } from "@/components/Scan/ScanOrderButton";
@@ -15,24 +18,17 @@ import { draftFromOrder, draftShares, draftTotals, emptyDraft, type DraftOrder }
 interface ExpenseFormModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onSubmit: (
-		amount: number,
-		paidBy: string,
-		participants: Set<string>,
-		description?: string,
-		splitMethod?: SplitMethod,
-		/** Percentages or exact amounts per person, for those split methods. */
-		weights?: Record<string, number>,
-		date?: number,
-		/** Add it again every month, on the same day. */
-		repeatMonthly?: boolean
-	) => void;
+	onSubmit: (input: ExpenseInput) => void;
 	people: Person[];
+	/** The group's expenses, for suggestions on a new one. */
+	history?: Expense[];
 	currency?: Currency;
 	/** Pre-selected payer for a new expense (the viewer, or whoever paid last). */
 	defaultPayerId?: string;
 	initialAmount?: string;
 	initialPaidBy?: string;
+	/** How much each person paid, when several did. */
+	initialPayers?: Record<string, number>;
 	initialParticipants?: Set<string>;
 	initialDescription?: string;
 	initialSplitMethod?: SplitMethod;
@@ -54,10 +50,12 @@ export const ExpenseFormModal = ({
 	onClose,
 	onSubmit,
 	people,
+	history = [],
 	currency = DEFAULT_CURRENCY,
 	defaultPayerId,
 	initialAmount = "",
 	initialPaidBy = "",
+	initialPayers,
 	initialParticipants = new Set(),
 	initialDescription = "",
 	initialSplitMethod = "equally",
@@ -68,6 +66,8 @@ export const ExpenseFormModal = ({
 }: ExpenseFormModalProps) => {
 	const [amount, setAmount] = React.useState(initialAmount);
 	const [paidBy, setPaidBy] = React.useState(initialPaidBy);
+	// What each person put in, when several paid; null while one person paid it all.
+	const [payerAmounts, setPayerAmounts] = React.useState<Record<string, number> | null>(initialPayers ?? null);
 	const [participants, setParticipants] =
 		React.useState<Set<string>>(initialParticipants);
 	const [description, setDescription] = React.useState(initialDescription);
@@ -84,6 +84,7 @@ export const ExpenseFormModal = ({
 	const initialValuesRef = React.useRef({
 		amount: initialAmount,
 		paidBy: initialPaidBy,
+		payers: initialPayers,
 		participants: initialParticipants,
 		description: initialDescription,
 		splitMethod: initialSplitMethod,
@@ -104,6 +105,7 @@ export const ExpenseFormModal = ({
 		initialValuesRef.current = {
 			amount: initialAmount,
 			paidBy: initialPaidBy,
+			payers: initialPayers,
 			participants: initialParticipants,
 			description: initialDescription,
 			splitMethod: initialSplitMethod,
@@ -115,6 +117,7 @@ export const ExpenseFormModal = ({
 	}, [
 		initialAmount,
 		initialPaidBy,
+		initialPayers,
 		initialParticipantsArray,
 		initialDescription,
 		initialSplitMethod,
@@ -159,6 +162,7 @@ export const ExpenseFormModal = ({
 					? people[0].id
 					: "");
 			setPaidBy(payer);
+			setPayerAmounts(init.payers ? { ...init.payers } : null);
 			// If no initial participants (new expense), select all members by default
 			const defaultParticipants =
 				init.participants.size > 0
@@ -190,21 +194,54 @@ export const ExpenseFormModal = ({
 	) / 100;
 	const target = isPercentage ? 100 : amountNum;
 	const splitOff = (isPercentage || isExact) && Math.abs(assigned - target) > 0.01;
-	const canSubmit = hasAmount && !!paidBy && participants.size > 0 && !splitOff;
+	const paidTotal = payerAmounts ? Math.round(Object.values(payerAmounts).reduce((sum, n) => sum + n, 0) * 100) / 100 : 0;
+	const hasPayer = payerAmounts ? paidTotal > 0 : !!paidBy;
+	const paidOff = !!payerAmounts && hasAmount && Math.abs(paidTotal - amountNum) > 0.01;
+	const canSubmit = hasAmount && hasPayer && !paidOff && participants.size > 0 && !splitOff;
 	const unit = (n: number) => (isPercentage ? `${Math.round(n * 100) / 100}%` : formatCurrency(n, currency));
 	const isEdit = title.includes("Edit");
+
+	// Suggestions from this group's history, for new expenses only.
+	const suggestions = isEdit ? [] : suggestPast(history, description);
+	const monthlyHint = !isEdit && !repeat && looksMonthly(history, description);
+	const duplicate = !isEdit && hasAmount ? findDuplicate(history, amountNum, date ? fromDateInput(date) : Date.now()) : undefined;
+
+	/** Starts from a past expense: its details, its payer(s) and its split, among people still here. */
+	const usePast = (e: Expense) => {
+		const here = new Set(people.map((p) => p.id));
+		const sharing = new Set(e.participants.filter((id) => here.has(id)));
+		setDescription(e.description ?? "");
+		if (!hasAmount) setAmount(e.amount.toString());
+		const amountChanged = hasAmount && Math.abs(amountNum - e.amount) > 0.01;
+		if (e.payers && !amountChanged && Object.keys(e.payers).every((id) => here.has(id))) setPayerAmounts({ ...e.payers });
+		else if (here.has(e.paidBy)) {
+			setPayerAmounts(null);
+			setPaidBy(e.paidBy);
+		}
+		if (sharing.size === 0) return;
+		setParticipants(sharing);
+		// Exact amounts only fit the same total; percentages fit any.
+		const method = e.splitMethod === "exact" && amountChanged ? "equally" : e.splitMethod;
+		setSplitMethod(method);
+		setWeights(method === "equally" ? {} : { ...splitWeights(e) });
+		track("expense_suggestion_used", { kind: "past" });
+	};
 
 	// The button says what's still missing instead of just going grey.
 	const submitLabel = !hasAmount
 		? "Enter an amount"
-		: !paidBy
+		: !hasPayer
 		? "Choose who paid"
+		: paidOff
+		? "Payments don't add up"
 		: participants.size === 0
 		? "Choose who shared it"
 		: splitOff
 		? isPercentage ? "Make it add up to 100%" : "Amounts don't add up"
 		: isEdit
 		? "Save changes"
+		: duplicate
+		? "Add it anyway"
 		: "Add expense";
 
 	const handleSubmit = () => {
@@ -213,18 +250,19 @@ export const ExpenseFormModal = ({
 		const sharing = isExact
 			? new Set(Array.from(participants).filter((id) => (weights[id] || 0) > 0))
 			: participants;
-		onSubmit(
-			amountNum,
-			paidBy,
-			sharing,
-			description.trim() || undefined,
+		onSubmit({
+			amount: amountNum,
+			paid: payerAmounts ?? { [paidBy]: amountNum },
+			participants: sharing,
+			description: description.trim() || undefined,
 			splitMethod,
-			splitMethod === "equally"
-				? undefined
-				: Object.fromEntries(Array.from(sharing).map((id) => [id, weights[id] || 0])),
-			date ? fromDateInput(date) : undefined,
-			repeat
-		);
+			weights:
+				splitMethod === "equally"
+					? undefined
+					: Object.fromEntries(Array.from(sharing).map((id) => [id, weights[id] || 0])),
+			date: date ? fromDateInput(date) : undefined,
+			repeatMonthly: repeat,
+		});
 		// State is re-initialised when the modal next opens, so the closing
 		// animation keeps showing what was just submitted.
 		onClose();
@@ -246,6 +284,22 @@ export const ExpenseFormModal = ({
 		const next = all ? new Set(people.map((p) => p.id)) : new Set<string>();
 		setParticipants(next);
 		if (isPercentage) setWeights(equalShares(next, 100));
+	};
+
+	/** Several payers start from whoever was picked, holding the whole amount. */
+	const toggleSeveralPayers = () => {
+		if (payerAmounts) {
+			const top = Object.entries(payerAmounts).sort((a, b) => b[1] - a[1])[0];
+			if (top) setPaidBy(top[0]);
+			setPayerAmounts(null);
+		} else {
+			setPayerAmounts(paidBy ? { [paidBy]: hasAmount ? amountNum : 0 } : {});
+		}
+	};
+
+	const setPayerAmount = (personId: string, value: number | undefined) => {
+		const { [personId]: _old, ...rest } = payerAmounts ?? {};
+		setPayerAmounts(value ? { ...rest, [personId]: value } : rest);
 	};
 
 	const handleWeightChange = (personId: string, value: number | undefined) => {
@@ -365,30 +419,97 @@ export const ExpenseFormModal = ({
 					/>
 				</div>
 
-				<fieldset>
-					<legend className="mb-2 text-[13px] font-semibold text-ink-soft">
-						Paid by
-					</legend>
-					<div className="flex flex-wrap gap-2">
-						{people.map((person) => {
-							const selected = paidBy === person.id;
-							return (
-								<button
-									key={person.id}
-									type="button"
-									aria-pressed={selected}
-									onClick={() => setPaidBy(person.id)}
-									className={`min-h-10 rounded-full px-4 text-sm font-medium transition-colors ${
-										selected
-											? "bg-ink text-on-ink"
-											: "border border-line-strong bg-surface text-ink-soft hover:border-ink-muted hover:text-ink"
-									}`}
-								>
-									{person.name}
-								</button>
-							);
-						})}
+				{suggestions.length > 0 && (
+					<div className="-mt-2 flex flex-wrap gap-2" aria-label="Add one like before">
+						{suggestions.map((e) => (
+							<button
+								key={e.id}
+								type="button"
+								onClick={() => usePast(e)}
+								className="min-h-9 max-w-full truncate rounded-full border border-line-strong bg-surface px-3 text-sm text-ink-soft hover:border-ink-muted hover:text-ink"
+							>
+								{e.description} · {formatCurrency(e.amount, currency)}
+							</button>
+						))}
 					</div>
+				)}
+
+				<fieldset>
+					<legend className="mb-2 flex w-full items-center justify-between gap-3 text-[13px] font-semibold text-ink-soft">
+						Paid by
+						{people.length > 1 && (
+							<button type="button" onClick={toggleSeveralPayers} className="text-sm font-medium text-brand-700 hover:underline">
+								{payerAmounts ? "One person paid" : "Several people paid"}
+							</button>
+						)}
+					</legend>
+					{payerAmounts ? (
+						<>
+							<ul className="divide-y divide-line rounded-xl border border-line">
+								{people.map((person) => (
+									<li key={person.id} className="flex items-center gap-3 px-3 py-2">
+										<span className={`min-w-0 flex-1 truncate ${payerAmounts[person.id] ? "font-medium text-ink" : "text-ink-muted"}`}>
+											{person.name}
+										</span>
+										<NumberInput
+											aria-label={`What ${person.name} paid`}
+											value={payerAmounts[person.id] ?? ""}
+											onChange={(value) => setPayerAmount(person.id, value === "" ? undefined : parseFloat(value.toString()))}
+											placeholder="0"
+											min={0}
+											decimalScale={2}
+											prefix={currency.symbol}
+											thousandSeparator=","
+											thousandsGroupStyle={currency.code === "INR" ? "lakh" : "thousand"}
+											hideControls
+											inputMode="decimal"
+											size="sm"
+											w={108}
+											styles={{ input: { minHeight: 36, fontSize: 15, textAlign: "right" } }}
+										/>
+									</li>
+								))}
+							</ul>
+							{!hasAmount && paidTotal > 0 ? (
+								<button
+									type="button"
+									onClick={() => setAmount(paidTotal.toString())}
+									className="mt-2 text-sm font-medium text-brand-700 hover:underline"
+								>
+									Use {formatCurrency(paidTotal, currency)} as the amount
+								</button>
+							) : (
+								hasAmount && (
+									<p className={`mt-2 text-sm tabular-nums ${paidOff ? "text-negative" : "text-ink-muted"}`} role={paidOff ? "alert" : undefined}>
+										{formatCurrency(paidTotal, currency)} of {formatCurrency(amountNum, currency)} paid
+										{paidOff &&
+											` — ${formatCurrency(Math.round(Math.abs(amountNum - paidTotal) * 100) / 100, currency)} ${paidTotal < amountNum ? "still to add" : "too much"}`}
+									</p>
+								)
+							)}
+						</>
+					) : (
+						<div className="flex flex-wrap gap-2">
+							{people.map((person) => {
+								const selected = paidBy === person.id;
+								return (
+									<button
+										key={person.id}
+										type="button"
+										aria-pressed={selected}
+										onClick={() => setPaidBy(person.id)}
+										className={`min-h-10 rounded-full px-4 text-sm font-medium transition-colors ${
+											selected
+												? "bg-ink text-on-ink"
+												: "border border-line-strong bg-surface text-ink-soft hover:border-ink-muted hover:text-ink"
+										}`}
+									>
+										{person.name}
+									</button>
+								);
+							})}
+						</div>
+					)}
 				</fieldset>
 
 				<fieldset>
@@ -516,7 +637,7 @@ export const ExpenseFormModal = ({
 					role="switch"
 					aria-checked={repeat}
 					onClick={() => setRepeat(!repeat)}
-					className="flex w-full items-center gap-3 rounded-xl border border-line px-3 py-2.5 text-left"
+					className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left ${monthlyHint ? "border-brand-700 bg-brand-50" : "border-line"}`}
 				>
 					<Repeat className={`h-4 w-4 shrink-0 ${repeat ? "text-brand-700" : "text-ink-muted"}`} aria-hidden />
 					<span className="min-w-0 flex-1">
@@ -524,6 +645,8 @@ export const ExpenseFormModal = ({
 						<span className="block text-xs text-ink-muted">
 							{repeat && date
 								? `Added again on the ${ordinal(Number(date.slice(8)))} of each month`
+								: monthlyHint
+								? `You add ${description.trim()} most months. Turn this on and it's added for you.`
 								: "For rent, Wi-Fi and subscriptions"}
 						</span>
 					</span>
@@ -536,6 +659,16 @@ export const ExpenseFormModal = ({
 						/>
 					</span>
 				</button>
+
+				{duplicate && (
+					<p role="alert" className="rounded-xl bg-paper px-3 py-2.5 text-sm text-ink-soft">
+						{people.find((p) => p.id === duplicate.paidBy)?.name ?? "Someone"} already added{" "}
+						<span className="font-medium text-ink">{duplicate.description || "an expense"}</span> for{" "}
+						{formatCurrency(duplicate.amount, currency)} on{" "}
+						{new Date(duplicate.createdAt!).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}. Add this only if
+						it&apos;s a separate bill.
+					</p>
+				)}
 
 				<div className="sticky bottom-0 -mx-4 flex gap-2 border-t border-line bg-surface px-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
 					<Button variant="secondary" type="button" onClick={onClose} className="flex-1" size="md">

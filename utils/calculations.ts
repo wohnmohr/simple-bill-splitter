@@ -1,4 +1,4 @@
-import { Expense, Person, Balance, Settlement, SplitMethod } from "@/types";
+import type { Expense, Person, Balance, Settlement, SplitMethod } from "@/types";
 
 /** A custom split is stored in the field its method reads: percentages or exact amounts. */
 export const splitFields = (splitMethod: SplitMethod, weights?: Record<string, number>) => ({
@@ -14,6 +14,19 @@ export const splitWeights = (expense: Expense): Record<string, number> | undefin
     : expense.splitMethod === "exact"
       ? expense.amounts
       : undefined;
+
+/** Who paid for an expense, and how much each. */
+export const expensePayers = (expense: Expense): Map<string, number> =>
+  new Map(expense.payers ? Object.entries(expense.payers) : [[expense.paidBy, expense.amount]]);
+
+/**
+ * Stores who paid from what each person put in: one payer is just `paidBy`;
+ * several keep `payers`, with the biggest as `paidBy`.
+ */
+export const payerFields = (paid: Record<string, number>): Pick<Expense, "paidBy" | "payers"> => {
+  const ranked = Object.entries(paid).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+  return { paidBy: ranked[0]?.[0] ?? "", payers: ranked.length > 1 ? Object.fromEntries(ranked) : undefined };
+};
 
 /**
  * What each participant owes for an expense. Percentages and exact amounts
@@ -50,10 +63,9 @@ export const calculateBalances = (
       balances.set(participantId, (balances.get(participantId) || 0) - share);
     });
 
-    balances.set(
-      expense.paidBy,
-      (balances.get(expense.paidBy) || 0) + expense.amount
-    );
+    expensePayers(expense).forEach((paid, payerId) => {
+      balances.set(payerId, (balances.get(payerId) || 0) + paid);
+    });
   });
 
   return Array.from(balances.entries()).map(([personId, balance]) => ({
@@ -121,6 +133,21 @@ export const calculateSettlements = (
   return settlements;
 };
 
+
+const DAY = 24 * 60 * 60 * 1000;
+
+/** The headline numbers of a group: what it cost, over how many days, and roughly per person. */
+export const groupSummary = (expenses: Expense[], memberCount: number) => {
+  const spent = expenses.filter((e) => e.kind !== "payment");
+  const dates = spent.map((e) => e.createdAt).filter((t): t is number => !!t);
+  const total = totalSpent(expenses);
+  return {
+    total,
+    count: spent.length,
+    days: dates.length ? Math.round((Math.max(...dates) - Math.min(...dates)) / DAY) + 1 : 0,
+    perPerson: memberCount ? total / memberCount : 0,
+  };
+};
 
 /** Money actually spent by the group — recorded payments are transfers, not spending. */
 export const totalSpent = (expenses: Expense[]): number =>
