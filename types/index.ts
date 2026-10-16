@@ -34,11 +34,24 @@ export type Expense = {
   repeat?: { next: string };
 };
 
+/** A note on an expense ("why ₹900 for the cab?"), shared with the group. */
+export type ExpenseComment = {
+  id: string;
+  expenseId: string;
+  /** Who wrote it; missing when they hadn't said who they are in the group. */
+  by?: string;
+  text: string;
+  /** Epoch ms. */
+  at: number;
+};
+
 export type Group = {
   id: string;
   name: string;
   members: Person[];
   expenses: Expense[];
+  /** Oldest first. Comments on deleted expenses are dropped. */
+  comments?: ExpenseComment[];
   currency: Currency;
   /**
    * Who is using this device, for this group. Stays on the device and is

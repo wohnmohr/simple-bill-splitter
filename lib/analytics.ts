@@ -21,6 +21,7 @@ export type AnalyticsEvent =
 	| "dashboard_member_added"
 	| "dashboard_expense_added"
 	| "expense_suggestion_used"
+	| "expense_comment_added"
 	| "quick_add_previewed"
 	| "quick_add_saved"
 	| "dashboard_settlements_tab_viewed"

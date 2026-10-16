@@ -1,6 +1,6 @@
 import { Expense, Currency } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
-import { Check, Pencil, Repeat, Trash2 } from "lucide-react";
+import { Check, MessageCircle, Pencil, Repeat, Trash2 } from "lucide-react";
 
 /**
  * Edit and delete slide in at the end of a row on hover or keyboard focus,
@@ -19,6 +19,7 @@ interface ExpenseCardProps {
 	paidByName: string;
 	/** For payments: who received the money. */
 	toName?: string;
+	commentCount?: number;
 	onClick: () => void;
 	onEdit: (e: React.MouseEvent) => void;
 	onDelete: (e: React.MouseEvent) => void;
@@ -29,6 +30,7 @@ export const ExpenseCard = ({
 	currency,
 	paidByName,
 	toName,
+	commentCount = 0,
 	onClick,
 	onEdit,
 	onDelete,
@@ -97,6 +99,12 @@ export const ExpenseCard = ({
 							</>
 						)}
 						<span className="text-ink-soft">{paidByName}</span> paid · {splitLabel}
+						{commentCount > 0 && (
+							<>
+								{" "}·{" "}
+								<MessageCircle className="inline h-3.5 w-3.5 align-[-2px]" aria-label="Comments" /> {commentCount}
+							</>
+						)}
 					</span>
 				</span>
 				<span className="shrink-0 text-right">
