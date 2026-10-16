@@ -106,6 +106,15 @@ function toExpense(id: string, v: unknown, members: Set<string>): Expense | null
 	if (x.kind === "payment") expense.kind = "payment";
 	if (Number.isSafeInteger(x.createdAt) && (x.createdAt as number) > 0) expense.createdAt = x.createdAt;
 	if (!expense.kind && isMonthKey(x.repeat?.next)) expense.repeat = { next: x.repeat.next };
+	const payers = x.payers && typeof x.payers === "object" ? Object.entries(x.payers as Record<string, unknown>) : [];
+	if (payers.length > 1 && !expense.kind) {
+		if (payers.some(([p]) => !members.has(p))) return null;
+		// Kept only when every part is a real amount and they add up to what was spent.
+		const parts = payers.map(([p, n]) => [p, money(n)] as const);
+		if (parts.every(([, n]) => n > 0) && Math.abs(parts.reduce((s, [, n]) => s + n, 0) - amount) < 0.01) {
+			expense.payers = Object.fromEntries(parts);
+		}
+	}
 	// Percentages run 0–100; exact amounts can't exceed what was spent.
 	const field = splitMethod === "percentage" ? "percentages" : splitMethod === "exact" ? "amounts" : null;
 	const raw = field && x[field];

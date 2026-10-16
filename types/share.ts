@@ -9,6 +9,7 @@ export type CompactSharePayload = {
 	e: {
 		a: number; // amount
 		p: string; // paidBy
+		y?: Record<string, number>; // payers, when several people paid
 		t: string[]; // participants
 		d?: string; // description
 		s?: "e" | "p" | "x"; // equally | percentage | exact amounts

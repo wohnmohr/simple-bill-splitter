@@ -2,38 +2,50 @@ import { Expense, ExpenseComment, Group, SplitMethod } from "@/types";
 import { MAX_COMMENT } from "@/utils/groupOps";
 import { newId } from "@/utils/ids";
 import { firstRepeat } from "@/utils/recurring";
-import { splitFields } from "@/utils/calculations";
+import { payerFields, splitFields } from "@/utils/calculations";
+
+/** What the expense form produces; the hook stores it as an expense. */
+export type ExpenseInput = {
+  amount: number;
+  /** How much each person paid, by person id. One entry when one person paid. */
+  paid: Record<string, number>;
+  participants: Set<string>;
+  description?: string;
+  splitMethod: SplitMethod;
+  /** Percentages or exact amounts per person, for those split methods. */
+  weights?: Record<string, number>;
+  date?: number;
+  /** Add it again every month, on the same day. */
+  repeatMonthly: boolean;
+};
+
+/** The stored fields of an expense, from what was entered. */
+const expenseFields = (input: ExpenseInput) => ({
+  amount: input.amount,
+  ...payerFields(input.paid),
+  // Split only among the people ticked: the payer may have paid for others.
+  participants: Array.from(input.participants),
+  description: input.description,
+  ...splitFields(input.splitMethod, input.weights),
+});
+
+const isValid = (input: ExpenseInput) =>
+  input.amount > 0 && !!payerFields(input.paid).paidBy && input.participants.size > 0;
 
 export const useExpenses = (
   groups: Group[],
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>,
   currentGroup: Group | undefined
 ) => {
-  const addExpense = (
-    amount: number,
-    paidBy: string,
-    participants: Set<string>,
-    description?: string,
-    splitMethod: SplitMethod = "equally",
-    weights?: Record<string, number>,
-    date?: number,
-    repeatMonthly = false
-  ): boolean => {
-    if (amount <= 0 || !paidBy || participants.size === 0 || !currentGroup) {
-      return false;
-    }
+  const addExpense = (input: ExpenseInput): boolean => {
+    if (!currentGroup || !isValid(input)) return false;
 
-    // Split only among the people ticked: the payer may have paid for others.
     const newExpense: Expense = {
       id: newId("expense"),
-      amount,
-      paidBy,
-      participants: Array.from(participants),
-      description,
-      ...splitFields(splitMethod, weights),
-      createdAt: date ?? Date.now(),
+      ...expenseFields(input),
+      createdAt: input.date ?? Date.now(),
       // The first copy is next month's, even for a back-dated expense.
-      ...(repeatMonthly ? { repeat: { next: firstRepeat(Date.now()) } } : {}),
+      ...(input.repeatMonthly ? { repeat: { next: firstRepeat(Date.now()) } } : {}),
     };
 
     const updatedGroups = groups.map((g) =>
@@ -46,23 +58,11 @@ export const useExpenses = (
     return true;
   };
 
-  const updateExpense = (
-    expenseId: string,
-    amount: number,
-    paidBy: string,
-    participants: Set<string>,
-    description?: string,
-    splitMethod: SplitMethod = "equally",
-    weights?: Record<string, number>,
-    date?: number,
-    repeatMonthly = false
-  ): boolean => {
-    if (amount <= 0 || !paidBy || participants.size === 0 || !currentGroup) {
-      return false;
-    }
+  const updateExpense = (expenseId: string, input: ExpenseInput): boolean => {
+    if (!currentGroup || !isValid(input)) return false;
 
     // Keeps its place in the schedule if it already repeated; otherwise the first copy is next month's.
-    const repeatFor = (e: Expense) => (repeatMonthly ? { repeat: e.repeat ?? { next: firstRepeat(Date.now()) } } : {});
+    const repeatFor = (e: Expense) => (input.repeatMonthly ? { repeat: e.repeat ?? { next: firstRepeat(Date.now()) } } : {});
 
     const updatedGroups = groups.map((g) =>
       g.id === currentGroup.id
@@ -72,12 +72,8 @@ export const useExpenses = (
             e.id === expenseId
               ? {
                 id: e.id,
-                createdAt: date ?? e.createdAt,
-                amount,
-                paidBy,
-                participants: Array.from(participants),
-                description,
-                ...splitFields(splitMethod, weights),
+                createdAt: input.date ?? e.createdAt,
+                ...expenseFields(input),
                 ...repeatFor(e),
               }
               : e

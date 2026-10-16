@@ -14,8 +14,8 @@ import {
 import { ShareSnapshot } from "@/types/share";
 import { decodeShareUrl } from "@/utils/shareCodec";
 import { IMPORT_LIMIT_MESSAGE, importShareSnapshot } from "@/utils/shareImport";
-import { calculateBalances, calculateSettlements, totalSpent } from "@/utils/calculations";
-import { formatCurrency } from "@/utils/formatting";
+import { calculateBalances, calculateSettlements, expensePayers, totalSpent } from "@/utils/calculations";
+import { formatCurrency, joinNames } from "@/utils/formatting";
 import { BalanceList } from "@/components/Balances/BalanceList";
 import { SettlementList } from "@/components/Settlements/SettlementList";
 import { Button } from "@/components/UI/Button";
@@ -222,7 +222,7 @@ export const ShareViewer = () => {
 					{snapshot.expenses.map((expense) => {
 						const nameOf = (id: string) =>
 							snapshot.members.find((m) => m.id === id)?.name || "Unknown";
-						const payer = nameOf(expense.paidBy);
+						const payer = joinNames([...expensePayers(expense).keys()].map(nameOf));
 						if (expense.kind === "payment") {
 							return (
 								<div key={expense.id} className="px-4 py-3 flex justify-between gap-3 bg-paper/60">

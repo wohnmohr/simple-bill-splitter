@@ -9,7 +9,7 @@ import { DEFAULT_CURRENCY } from "@/constants";
 import { calculateBalances, calculateSettlements, splitWeights } from "@/utils/calculations";
 import { useGroups } from "@/hooks/useGroups";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
-import { useExpenses } from "@/hooks/useExpenses";
+import { type ExpenseInput, useExpenses } from "@/hooks/useExpenses";
 import { Header } from "@/components/Header/Header";
 import { GroupSelector } from "@/components/Group/GroupSelector";
 import { CreateGroupModal } from "@/components/Group/CreateGroupModal";
@@ -70,6 +70,7 @@ export default function Home() {
 	const [editExpenseData, setEditExpenseData] = useState<{
 		amount: string;
 		paidBy: string;
+		payers?: Record<string, number>;
 		participants: Set<string>;
 		description?: string;
 		splitMethod?: string;
@@ -166,31 +167,14 @@ export default function Home() {
 		/>
 	);
 
-	const handleAddExpense = (
-		amount: number,
-		paidBy: string,
-		participants: Set<string>,
-		description?: string,
-		splitMethod?: string,
-		weights?: Record<string, number>,
-		date?: number,
-		repeatMonthly?: boolean
-	) => {
-		addExpense(
-			amount,
-			paidBy,
-			participants,
-			description,
-			splitMethod as any,
-			weights,
-			date,
-			repeatMonthly
-		);
+	const handleAddExpense = (input: ExpenseInput) => {
+		addExpense(input);
 		track("dashboard_expense_added", {
-			participant_count: participants.size,
-			split_method: splitMethod || "equally",
+			participant_count: input.participants.size,
+			payer_count: Object.keys(input.paid).length,
+			split_method: input.splitMethod,
 			currency: currency.code,
-			repeats: Boolean(repeatMonthly),
+			repeats: input.repeatMonthly,
 		});
 		setShowExpenseForm(false);
 	};
@@ -259,6 +243,7 @@ export default function Home() {
 		setEditExpenseData({
 			amount: expense.amount.toString(),
 			paidBy: expense.paidBy,
+			payers: expense.payers,
 			participants: new Set(expense.participants),
 			description: expense.description,
 			splitMethod: expense.splitMethod || "equally",
@@ -268,28 +253,9 @@ export default function Home() {
 		});
 	};
 
-	const handleSaveEditExpense = (
-		amount: number,
-		paidBy: string,
-		participants: Set<string>,
-		description?: string,
-		splitMethod?: string,
-		weights?: Record<string, number>,
-		date?: number,
-		repeatMonthly?: boolean
-	) => {
+	const handleSaveEditExpense = (input: ExpenseInput) => {
 		if (editingExpenseId) {
-			updateExpense(
-				editingExpenseId,
-				amount,
-				paidBy,
-				participants,
-				description,
-				splitMethod as any,
-				weights,
-				date,
-				repeatMonthly
-			);
+			updateExpense(editingExpenseId, input);
 			setEditingExpenseId(null);
 			setEditExpenseData(null);
 		}
@@ -667,6 +633,7 @@ export default function Home() {
 					onClose={() => setShowExpenseForm(false)}
 					onSubmit={handleAddExpense}
 					people={people}
+					history={expenses}
 					currency={currency}
 					defaultPayerId={defaultPayerId}
 				/>
@@ -717,6 +684,7 @@ export default function Home() {
 						people={people}
 						initialAmount={editExpenseData.amount}
 						initialPaidBy={editExpenseData.paidBy}
+						initialPayers={editExpenseData.payers}
 						initialParticipants={editExpenseData.participants}
 						initialDescription={editExpenseData.description}
 						initialSplitMethod={editExpenseData.splitMethod as any}

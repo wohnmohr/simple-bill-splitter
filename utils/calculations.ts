@@ -15,6 +15,19 @@ export const splitWeights = (expense: Expense): Record<string, number> | undefin
       ? expense.amounts
       : undefined;
 
+/** Who paid for an expense, and how much each. */
+export const expensePayers = (expense: Expense): Map<string, number> =>
+  new Map(expense.payers ? Object.entries(expense.payers) : [[expense.paidBy, expense.amount]]);
+
+/**
+ * Stores who paid from what each person put in: one payer is just `paidBy`;
+ * several keep `payers`, with the biggest as `paidBy`.
+ */
+export const payerFields = (paid: Record<string, number>): Pick<Expense, "paidBy" | "payers"> => {
+  const ranked = Object.entries(paid).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+  return { paidBy: ranked[0]?.[0] ?? "", payers: ranked.length > 1 ? Object.fromEntries(ranked) : undefined };
+};
+
 /**
  * What each participant owes for an expense. Percentages and exact amounts
  * are both weights, scaled so the shares always add up to the amount; with
@@ -50,10 +63,9 @@ export const calculateBalances = (
       balances.set(participantId, (balances.get(participantId) || 0) - share);
     });
 
-    balances.set(
-      expense.paidBy,
-      (balances.get(expense.paidBy) || 0) + expense.amount
-    );
+    expensePayers(expense).forEach((paid, payerId) => {
+      balances.set(payerId, (balances.get(payerId) || 0) + paid);
+    });
   });
 
   return Array.from(balances.entries()).map(([personId, balance]) => ({

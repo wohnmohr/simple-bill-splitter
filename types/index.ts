@@ -13,6 +13,11 @@ export type Expense = {
   id: string;
   amount: number;
   paidBy: string; // person id
+  /**
+   * When several people paid: how much each put in, adding up to `amount`.
+   * `paidBy` is then whoever paid most, so older app versions still show a payer.
+   */
+  payers?: Record<string, number>;
   participants: string[]; // array of person ids
   description?: string; // optional description for the expense
   splitMethod: SplitMethod; // how the expense is split
