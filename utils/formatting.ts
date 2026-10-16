@@ -14,3 +14,16 @@ export const formatCurrency = (amount: number, currency: Currency): string => {
 
   return `${currency.symbol}${amount.toFixed(2)}`;
 };
+
+/** yyyy-mm-dd in local time, for <input type="date">. */
+export const toDateInput = (ms: number) => {
+	const d = new Date(ms);
+	const pad = (n: number) => String(n).padStart(2, "0");
+	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+/** Local noon of the chosen day, so time zones never shift the date. */
+export const fromDateInput = (value: string) => {
+	const [y, m, d] = value.split("-").map(Number);
+	return new Date(y, m - 1, d, 12).getTime();
+};

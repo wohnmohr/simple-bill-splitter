@@ -1,13 +1,7 @@
 import { Expense, Group, SplitMethod } from "@/types";
 import { newId } from "@/utils/ids";
 import { firstRepeat } from "@/utils/recurring";
-
-/** A custom split is stored in the field its method reads: percentages or exact amounts. */
-const splitFields = (splitMethod: SplitMethod, weights?: Record<string, number>) => ({
-  splitMethod,
-  percentages: splitMethod === "percentage" ? weights : undefined,
-  amounts: splitMethod === "exact" ? weights : undefined,
-});
+import { splitFields } from "@/utils/calculations";
 
 export const useExpenses = (
   groups: Group[],

@@ -5,7 +5,7 @@ import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
 import { Currency, Person, SplitMethod } from "@/types";
 import { DEFAULT_CURRENCY } from "@/constants";
-import { formatCurrency } from "@/utils/formatting";
+import { formatCurrency, fromDateInput, toDateInput } from "@/utils/formatting";
 import { track } from "@/lib/analytics";
 import { OrderSplit } from "@/components/Scan/OrderSplit";
 import { ScanOrderButton } from "@/components/Scan/ScanOrderButton";
@@ -47,19 +47,6 @@ const ordinal = (n: number) => {
 	const tens = n % 100;
 	const suffix = tens >= 11 && tens <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th";
 	return `${n}${suffix}`;
-};
-
-/** yyyy-mm-dd in local time, for <input type="date">. */
-const toDateInput = (ms: number) => {
-	const d = new Date(ms);
-	const pad = (n: number) => String(n).padStart(2, "0");
-	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-};
-
-/** Local noon of the chosen day, so time zones never shift the date. */
-const fromDateInput = (value: string) => {
-	const [y, m, d] = value.split("-").map(Number);
-	return new Date(y, m - 1, d, 12).getTime();
 };
 
 export const ExpenseFormModal = ({

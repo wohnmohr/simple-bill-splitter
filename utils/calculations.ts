@@ -1,4 +1,11 @@
-import { Expense, Person, Balance, Settlement } from "@/types";
+import { Expense, Person, Balance, Settlement, SplitMethod } from "@/types";
+
+/** A custom split is stored in the field its method reads: percentages or exact amounts. */
+export const splitFields = (splitMethod: SplitMethod, weights?: Record<string, number>) => ({
+  splitMethod,
+  percentages: splitMethod === "percentage" ? weights : undefined,
+  amounts: splitMethod === "exact" ? weights : undefined,
+});
 
 /** The custom split an expense carries: percentages or exact amounts, per person. */
 export const splitWeights = (expense: Expense): Record<string, number> | undefined =>

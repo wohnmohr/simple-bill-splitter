@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ChevronRight, Lock, Plus, Trash2 } from "lucide-react";
 import { Group } from "@/types";
 import { MAX_GROUPS } from "@/constants";
@@ -11,6 +12,8 @@ interface GroupsHomeProps {
 	onSelectGroup: (groupId: string) => void;
 	onDeleteGroup: (groupId: string) => void;
 	onCreateGroup: () => void;
+	/** Start a new group by typing an expense. */
+	quickAdd: ReactNode;
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -20,6 +23,7 @@ export const GroupsHome = ({
 	onSelectGroup,
 	onDeleteGroup,
 	onCreateGroup,
+	quickAdd,
 }: GroupsHomeProps) => {
 	const canCreate = groups.length < MAX_GROUPS;
 
@@ -41,6 +45,8 @@ export const GroupsHome = ({
 					</button>
 				)}
 			</div>
+
+			{canCreate && <div className="mb-4">{quickAdd}</div>}
 
 			{/* A list on phones; a grid of cards on wide screens. */}
 			<ul className="surface divide-y divide-line overflow-hidden lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none">

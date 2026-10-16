@@ -53,21 +53,23 @@ export const useGroups = () => {
     if (due) setGroups(next);
   }, [groups, awake]);
 
+  /** Creates and opens a group; `fill` adds its first members and expenses (quick add). */
   const createGroup = (
     name: string,
-    currency: Currency = DEFAULT_CURRENCY
+    currency: Currency = DEFAULT_CURRENCY,
+    fill: (g: Group) => Group = (g) => g
   ): boolean => {
     if (!name.trim() || groups.length >= MAX_GROUPS) {
       return false;
     }
 
-    const newGroup: Group = {
+    const newGroup: Group = fill({
       id: newId("group"),
       name: name.trim(),
       members: [],
       expenses: [],
       currency,
-    };
+    });
 
     setGroups([...groups, newGroup]);
     setSelectedGroupId(newGroup.id);
