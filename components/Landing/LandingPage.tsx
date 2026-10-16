@@ -4,6 +4,7 @@ import { StickyCta } from "@/components/Landing/StickyCta";
 import { SiteNav } from "@/components/Landing/SiteNav";
 import { SiteFooter } from "@/components/Landing/SiteFooter";
 import { PromoVideo } from "@/components/Landing/PromoVideo";
+import { HeroQuickAdd } from "@/components/Landing/HeroQuickAdd";
 import { BillLinkPromo } from "@/components/PayStory/BillLinkPromo";
 import { ALL_TOOL_SLUGS } from "@/content/tools";
 import { TEMPLATES } from "@/utils/payStory";
@@ -127,14 +128,15 @@ export const LandingPage = () => {
 			{/* Hero */}
 			<header className="px-4 sm:px-6 pt-10 pb-16 sm:pt-16 sm:pb-24">
 				<div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
-					<div className="text-center lg:text-left">
+					<div className="min-w-0 text-center lg:text-left">
 						<h1 className="font-display text-[clamp(2.25rem,6vw,4rem)] font-semibold leading-[1.05] text-ink">
 							Split bills in ₹, settle&nbsp;with&nbsp;UPI
 						</h1>
 						<p className="mx-auto mt-5 max-w-xl text-lg text-ink-soft lg:mx-0">
 							Who owes whom in seconds — share privately, pay via UPI. No signup, no app download.
 						</p>
-						<div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
+						<HeroQuickAdd />
+						<div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
 							<TrackedLink
 								id="hero-cta"
 								href="/dashboard"
