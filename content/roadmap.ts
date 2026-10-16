@@ -47,6 +47,10 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "More than one person can pay for an expense", href: "/features#expenses" },
+			{ title: "Comment on an expense, encrypted like everything else", href: "/features#sync" },
+			{ title: "Close a group when everyone is settled, and start the next one with the same people", href: "/features#groups" },
+			{ title: "Suggestions for expenses you add often, and a warning for likely duplicates", href: "/features#expenses" },
 			{ title: "Monthly expenses for rent, Wi-Fi and subscriptions", href: "/features#expenses" },
 			{ title: "Payment reminders that open the group on what you owe", href: "/features#sync" },
 			{ title: "Scan Swiggy, Zomato and Instamart screenshots (beta)", href: "/split-swiggy-zomato-bill" },
