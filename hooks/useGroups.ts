@@ -45,6 +45,8 @@ export const useGroups = () => {
     const now = Date.now();
     let due = false;
     const next = groups.map((g) => {
+      // A closed group is finished: its monthly expenses stop.
+      if (g.closedAt) return g;
       const expenses = addDueRepeats(g.expenses, now);
       if (expenses === g.expenses) return g;
       due = true;
@@ -98,6 +100,11 @@ export const useGroups = () => {
     setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, theme } : g)));
   };
 
+  /** Closes a finished group for everyone, or reopens it (undefined). */
+  const setGroupClosed = (groupId: string, closedAt: number | undefined): void => {
+    setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, closedAt } : g)));
+  };
+
   const setGroupMe = (groupId: string, meId: string | null | undefined): void => {
     setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, meId } : g)));
   };
@@ -114,6 +121,7 @@ export const useGroups = () => {
     updateGroupCurrency,
     setGroupMe,
     setGroupTheme,
+    setGroupClosed,
     setGroups,
     sync,
   };

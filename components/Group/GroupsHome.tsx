@@ -50,7 +50,8 @@ export const GroupsHome = ({
 
 			{/* A list on phones; a grid of cards on wide screens. */}
 			<ul className="surface divide-y divide-line overflow-hidden lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none">
-				{groups.map((group) => {
+				{/* Closed groups are records: they go below the ones still in use. */}
+				{[...groups].sort((a, b) => Number(!!a.closedAt) - Number(!!b.closedAt)).map((group) => {
 					const total = totalSpent(group.expenses);
 					const mine = myBalance(group);
 					return (
@@ -68,7 +69,9 @@ export const GroupsHome = ({
 										{group.sync && <Lock className="h-3.5 w-3.5 shrink-0 text-positive" aria-label="Shared, end-to-end encrypted" />}
 									</span>
 									<span className="mt-0.5 block text-sm text-ink-muted">
-										{mine !== null ? (
+										{group.closedAt ? (
+											<>Closed · {plural(group.expenses.filter((e) => e.kind !== "payment").length, "expense")}</>
+										) : mine !== null ? (
 											<BalanceHeadline balance={mine} group={group} size="sm" />
 										) : (
 											<>
