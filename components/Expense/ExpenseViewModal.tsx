@@ -1,8 +1,8 @@
 import { Expense, Person, Currency } from "@/types";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
-import { formatCurrency } from "@/utils/formatting";
-import { expenseShares } from "@/utils/calculations";
+import { formatCurrency, joinNames } from "@/utils/formatting";
+import { expensePayers, expenseShares } from "@/utils/calculations";
 import { Pencil, Trash2 } from "lucide-react";
 
 interface ExpenseViewModalProps {
@@ -71,6 +71,7 @@ export const ExpenseViewModal = ({
 
 	const isPercentage = expense.splitMethod === "percentage" && !!expense.percentages;
 	const shares = expenseShares(expense);
+	const payers = expensePayers(expense);
 	const splitLabel = isPercentage ? "by percentage" : expense.splitMethod === "exact" ? "by exact amounts" : "equally";
 
 	return (
@@ -83,11 +84,25 @@ export const ExpenseViewModal = ({
 					<p className="mt-1 text-sm text-ink-muted">
 						Paid by{" "}
 						<span className="font-medium text-ink-soft">
-							{getPersonName(expense.paidBy)}
+							{joinNames([...payers.keys()].map(getPersonName))}
 						</span>{" "}
 						· split {splitLabel}
 					</p>
 				</div>
+
+				{payers.size > 1 && (
+					<div>
+						<p className="label-text mb-2">Who paid</p>
+						<ul className="divide-y divide-line rounded-xl border border-line">
+							{[...payers].map(([id, paid]) => (
+								<li key={id} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+									<span className="truncate text-ink">{getPersonName(id)}</span>
+									<span className="shrink-0 font-semibold tabular-nums text-ink">{formatCurrency(paid, currency)}</span>
+								</li>
+							))}
+						</ul>
+					</div>
+				)}
 
 				<div>
 					<p className="label-text mb-2">Each person&apos;s share</p>

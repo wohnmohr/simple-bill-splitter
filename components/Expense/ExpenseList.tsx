@@ -1,5 +1,7 @@
 import { Expense, Person, Currency } from "@/types";
 import { ExpenseCard } from "./ExpenseCard";
+import { expensePayers } from "@/utils/calculations";
+import { joinNames } from "@/utils/formatting";
 
 interface ExpenseListProps {
 	expenses: Expense[];
@@ -46,7 +48,7 @@ export const ExpenseList = ({
 					key={expense.id}
 					expense={expense}
 					currency={currency}
-					paidByName={getPersonName(expense.paidBy)}
+					paidByName={joinNames([...expensePayers(expense).keys()].map(getPersonName))}
 					toName={getPersonName(expense.participants[0])}
 					onClick={() => onExpenseClick(expense.id)}
 					onEdit={(e) => {

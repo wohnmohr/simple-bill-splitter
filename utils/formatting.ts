@@ -15,6 +15,10 @@ export const formatCurrency = (amount: number, currency: Currency): string => {
   return `${currency.symbol}${amount.toFixed(2)}`;
 };
 
+/** "Priya", "Priya and Asha", "Priya + 2". */
+export const joinNames = (names: string[]) =>
+  names.length <= 2 ? names.join(" and ") : `${names[0]} + ${names.length - 1}`;
+
 /** yyyy-mm-dd in local time, for <input type="date">. */
 export const toDateInput = (ms: number) => {
 	const d = new Date(ms);
