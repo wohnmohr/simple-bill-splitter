@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, Download, Globe, Languages, Repeat, ScanLine } from "lucide-react";
+import { ArrowRight, Check, Download, Globe, Languages, Repeat, ScanLine, Sparkles } from "lucide-react";
 import { SiteNav } from "@/components/Landing/SiteNav";
 import { SiteFooter } from "@/components/Landing/SiteFooter";
 import { TallyForm } from "@/components/UI/TallyForm";
@@ -19,6 +19,7 @@ const ICONS: Record<RoadmapIcon, typeof Repeat> = {
 	globe: Globe,
 	download: Download,
 	languages: Languages,
+	type: Sparkles,
 };
 
 const Stage = ({ id, label, title, items, muted }: { id: string; label: string; title: string; items: PlannedItem[]; muted?: boolean }) => (

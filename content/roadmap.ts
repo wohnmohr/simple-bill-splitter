@@ -4,13 +4,18 @@
  * checkboxes in Tally (form REQUEST_FORM_ID) in step with NEXT and LATER.
  */
 
-export type RoadmapIcon = "repeat" | "scan" | "globe" | "download" | "languages";
+export type RoadmapIcon = "repeat" | "scan" | "globe" | "download" | "languages" | "type";
 
 export type PlannedItem = { title: string; body: string; icon: RoadmapIcon };
 export type ShippedItem = { title: string; href: string };
 
 /** Being designed or built now. */
 export const NEXT: PlannedItem[] = [
+	{
+		icon: "type",
+		title: "Type an expense like a message",
+		body: "Write \"Dinner 2400 split between me, Asha and Ben\" and check the preview. It is read on your phone, never sent anywhere.",
+	},
 	{
 		icon: "scan",
 		title: "Scan paper restaurant bills",

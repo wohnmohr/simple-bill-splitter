@@ -1,7 +1,10 @@
+import type { ReactNode } from "react";
 import { Plus } from "lucide-react";
 
 interface EmptyGroupStateProps {
 	onCreateGroup: () => void;
+	/** Start the group by typing an expense. */
+	quickAdd: ReactNode;
 }
 
 const STEPS = [
@@ -10,7 +13,7 @@ const STEPS = [
 	["Settle in fewest payments", "One-tap UPI links for every transfer."],
 ] as const;
 
-export const EmptyGroupState = ({ onCreateGroup }: EmptyGroupStateProps) => {
+export const EmptyGroupState = ({ onCreateGroup, quickAdd }: EmptyGroupStateProps) => {
 	return (
 		<section className="surface p-6 sm:p-8 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:p-12">
 			<div>
@@ -20,6 +23,10 @@ export const EmptyGroupState = ({ onCreateGroup }: EmptyGroupStateProps) => {
 				<p className="mt-2 max-w-md text-ink-soft">
 					No signup. Everything stays on this device until you choose to share it.
 				</p>
+				<div className="mt-5 max-w-md">
+					{quickAdd}
+					<p className="mt-2 text-sm text-ink-muted">Type it like a message, or create a group step by step.</p>
+				</div>
 			</div>
 
 			<ol className="mt-6 space-y-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0 lg:self-center lg:rounded-2xl lg:bg-paper lg:p-6">

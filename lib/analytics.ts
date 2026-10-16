@@ -20,6 +20,8 @@ export type AnalyticsEvent =
 	| "dashboard_group_created"
 	| "dashboard_member_added"
 	| "dashboard_expense_added"
+	| "quick_add_previewed"
+	| "quick_add_saved"
 	| "dashboard_settlements_tab_viewed"
 	| "upi_pay_link_clicked"
 	| "settlement_marked_paid"
