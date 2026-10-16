@@ -101,7 +101,7 @@ export default function Home() {
 
 	const { addMember, updateMemberUpi, renameMember, markJoined, setNickname, deleteMember } = useGroupMembers(setGroups, currentGroup);
 
-	const { addExpense, updateExpense, deleteExpense, recordPayment } = useExpenses(
+	const { addExpense, updateExpense, deleteExpense, recordPayment, addComment } = useExpenses(
 		groups,
 		setGroups,
 		currentGroup
@@ -486,6 +486,7 @@ export default function Home() {
 											</div>}
 											<ExpenseList
 												expenses={expenses}
+												comments={currentGroup.comments}
 												people={people}
 												currency={currency}
 												onExpenseClick={setViewingExpenseId}
@@ -681,10 +682,18 @@ export default function Home() {
 				)}
 
 				<ExpenseViewModal
+					key={viewingExpenseId ?? ""}
 					isOpen={!!viewingExpenseId}
 					expense={viewingExpense || null}
 					people={people}
 					currency={currency}
+					comments={currentGroup?.comments?.filter((c) => c.expenseId === viewingExpenseId) ?? []}
+					meId={currentGroup?.meId}
+					onComment={(text) => {
+						if (!viewingExpenseId) return;
+						addComment(viewingExpenseId, text);
+						track("expense_comment_added", { synced: !!currentGroup?.sync });
+					}}
 					onClose={() => setViewingExpenseId(null)}
 					onEdit={() => {
 						if (viewingExpense) {
