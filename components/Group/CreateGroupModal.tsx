@@ -11,6 +11,8 @@ interface CreateGroupModalProps {
 	onClose: () => void;
 	onCreate: (name: string, currency: Currency) => void;
 	groupCount: number;
+	/** A line under the title, e.g. who comes along to the next trip. */
+	note?: string;
 }
 
 export const CreateGroupModal = ({
@@ -18,6 +20,7 @@ export const CreateGroupModal = ({
 	onClose,
 	onCreate,
 	groupCount,
+	note,
 }: CreateGroupModalProps) => {
 	const [groupName, setGroupName] = React.useState("");
 	const [selectedCurrency, setSelectedCurrency] =
@@ -48,6 +51,7 @@ export const CreateGroupModal = ({
 					handleSubmit();
 				}}
 			>
+				{note && <p className="text-sm text-ink-muted">{note}</p>}
 				<TextInput
 					label="Group name"
 					value={groupName}
