@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "@mantine/hooks";
 import { ChevronLeft, Link2, Plus, UserPlus } from "lucide-react";
-import { Tab, Currency, Expense, Group, Settlement } from "@/types";
+import { Tab, Currency, Expense, Group, Settlement, SplitChoice } from "@/types";
 import { DEFAULT_CURRENCY } from "@/constants";
-import { calculateBalances, calculateSettlements, splitWeights } from "@/utils/calculations";
+import { calculateBalances, calculateSettlements, enteredWeights, splitChoice } from "@/utils/calculations";
 import { useGroups } from "@/hooks/useGroups";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
 import { type ExpenseInput, useExpenses } from "@/hooks/useExpenses";
@@ -14,7 +14,7 @@ import { Header } from "@/components/Header/Header";
 import { GroupSelector } from "@/components/Group/GroupSelector";
 import { CreateGroupModal } from "@/components/Group/CreateGroupModal";
 import { AddMembersModal } from "@/components/Group/AddMembersModal";
-import { GroupsHome } from "@/components/Group/GroupsHome";
+import { GroupsHome, GroupsSkeleton } from "@/components/Group/GroupsHome";
 import { SyncModal } from "@/components/Group/SyncModal";
 import { ThemeModal } from "@/components/Group/ThemeModal";
 import { IdentitySheet } from "@/components/Group/IdentitySheet";
@@ -73,13 +73,14 @@ export default function Home() {
 		payers?: Record<string, number>;
 		participants: Set<string>;
 		description?: string;
-		splitMethod?: string;
+		splitMethod: SplitChoice;
 		weights?: Record<string, number>;
 		date?: number;
 		repeat: boolean;
 	} | null>(null);
 
 	const {
+		loaded,
 		groups,
 		selectedGroupId,
 		setSelectedGroupId,
@@ -92,6 +93,7 @@ export default function Home() {
 		setGroupClosed,
 		setGroups,
 		sync,
+		backup,
 	} = useGroups();
 
 	// An open group paints the whole page (modals included) in its theme;
@@ -147,6 +149,8 @@ export default function Home() {
 		}) : undefined);
 		if (ok) {
 			track(from ? "group_next_started" : "dashboard_group_created", { currency: currency.code });
+			// A brand-new group needs its people before anything else, so go straight there.
+			if (!from) setShowMembersModal(true);
 		}
 		setShowGroupForm(false);
 		setNextFrom(null);
@@ -210,9 +214,12 @@ export default function Home() {
 	};
 
 	const handleAddMember = (memberName: string, upiId?: string) => {
-		const ok = addMember(memberName, upiId);
-		if (ok) track("dashboard_member_added");
-		return ok;
+		const id = addMember(memberName, upiId);
+		if (id) track("dashboard_member_added");
+		// The first person added to a new group is the one setting it up, so they're
+		// the default payer from the first expense on (the form asks for "Your name").
+		if (id && currentGroup?.members.length === 0 && currentGroup.meId === undefined) setGroupMe(currentGroup.id, id);
+		return id;
 	};
 
 	// Who you are in this group. Opening a shared group for the first time asks
@@ -246,8 +253,8 @@ export default function Home() {
 			payers: expense.payers,
 			participants: new Set(expense.participants),
 			description: expense.description,
-			splitMethod: expense.splitMethod || "equally",
-			weights: splitWeights(expense),
+			splitMethod: splitChoice(expense) || "equally",
+			weights: enteredWeights(expense),
 			date: expense.createdAt,
 			repeat: !!expense.repeat,
 		});
@@ -356,7 +363,10 @@ export default function Home() {
 					}}
 				/>
 
-				{groups.length === 0 ? (
+				{/* Until this device's groups are read, show their shape, not the first-run screen. */}
+				{!loaded ? (
+					<GroupsSkeleton />
+				) : groups.length === 0 ? (
 					<EmptyGroupState
 						onCreateGroup={() => setShowGroupForm(true)}
 						quickAdd={<QuickAddBox key={quickAddSaves} label="Describe a shared expense" onSubmit={(t) => handleQuickAdd(t, true)} />}
@@ -368,6 +378,7 @@ export default function Home() {
 						onDeleteGroup={handleDeleteGroup}
 						onCreateGroup={() => setShowGroupForm(true)}
 						quickAdd={<QuickAddBox key={quickAddSaves} label="Start a group by describing an expense" onSubmit={(t) => handleQuickAdd(t, true)} />}
+						backup={backup}
 					/>
 				) : (
 					<>
@@ -687,7 +698,7 @@ export default function Home() {
 						initialPayers={editExpenseData.payers}
 						initialParticipants={editExpenseData.participants}
 						initialDescription={editExpenseData.description}
-						initialSplitMethod={editExpenseData.splitMethod as any}
+						initialSplitMethod={editExpenseData.splitMethod}
 						initialWeights={editExpenseData.weights}
 						initialDate={editExpenseData.date}
 						initialRepeat={editExpenseData.repeat}

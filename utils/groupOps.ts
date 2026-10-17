@@ -92,6 +92,9 @@ function toPerson(id: string, v: unknown): Person | null {
 	return person;
 }
 
+/** Most shares one person can hold in a split by shares. */
+export const MAX_SHARES = 1000;
+
 function toExpense(id: string, v: unknown, members: Set<string>): Expense | null {
 	const x = v as Partial<Expense>;
 	const amount = money(x?.amount);
@@ -126,6 +129,11 @@ function toExpense(id: string, v: unknown, members: Set<string>): Expense | null
 			if (typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= max) weights[p] = n;
 		}
 		expense[field] = weights;
+	}
+	// Shares (2:1:1) only label an exact split, so they're kept only when every participant has one.
+	const shares = splitMethod === "exact" && x.shares && typeof x.shares === "object" ? (x.shares as Record<string, unknown>) : null;
+	if (shares && participants.every((p) => typeof shares[p] === "number" && (shares[p] as number) > 0 && (shares[p] as number) <= MAX_SHARES)) {
+		expense.shares = Object.fromEntries(participants.map((p) => [p, shares[p] as number]));
 	}
 	return expense;
 }

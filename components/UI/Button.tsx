@@ -27,7 +27,7 @@ export const Button = ({
 			color={mantineColor}
 			size={size}
 			radius="md"
-			className={`${className} !font-semibold ${variant === "primary" ? "!text-on-brand" : ""}`}
+			className={`${className} !font-semibold ${variant === "primary" ? "!text-on-brand disabled:!text-ink-muted" : ""}`}
 			{...props}
 		>
 			{children}

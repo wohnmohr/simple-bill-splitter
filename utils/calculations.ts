@@ -1,11 +1,38 @@
-import type { Expense, Person, Balance, Settlement, SplitMethod } from "@/types";
+import type { Expense, Person, Balance, Settlement, SplitChoice } from "@/types";
 
-/** A custom split is stored in the field its method reads: percentages or exact amounts. */
-export const splitFields = (splitMethod: SplitMethod, weights?: Record<string, number>) => ({
-  splitMethod,
-  percentages: splitMethod === "percentage" ? weights : undefined,
-  amounts: splitMethod === "exact" ? weights : undefined,
-});
+const cents = (n: number) => Math.round(n * 100) / 100;
+
+/** Shares (2:1:1) as amounts that add up to exactly `amount`; the rounding remainder goes to the last person. */
+export const sharesToAmounts = (shares: Record<string, number>, amount: number): Record<string, number> => {
+  const ids = Object.keys(shares).filter((id) => shares[id] > 0);
+  const total = ids.reduce((sum, id) => sum + shares[id], 0);
+  const amounts: Record<string, number> = {};
+  let left = amount;
+  ids.forEach((id, i) => {
+    amounts[id] = i === ids.length - 1 ? cents(left) : cents((amount * shares[id]) / total);
+    left -= amounts[id];
+  });
+  return amounts;
+};
+
+/** A custom split is stored in the field its method reads: percentages or exact amounts (plus the shares they came from). */
+export const splitFields = (choice: SplitChoice, weights: Record<string, number> | undefined, amount: number) =>
+  choice === "shares"
+    ? { splitMethod: "exact" as const, percentages: undefined, amounts: sharesToAmounts(weights ?? {}, amount), shares: weights }
+    : {
+        splitMethod: choice,
+        percentages: choice === "percentage" ? weights : undefined,
+        amounts: choice === "exact" ? weights : undefined,
+        shares: undefined,
+      };
+
+/** How an expense's split was entered, for showing and editing it. */
+export const splitChoice = (expense: Expense): SplitChoice =>
+  expense.splitMethod === "exact" && expense.shares ? "shares" : expense.splitMethod;
+
+/** The numbers that were typed for a split: shares, percentages or exact amounts. */
+export const enteredWeights = (expense: Expense): Record<string, number> | undefined =>
+  splitChoice(expense) === "shares" ? expense.shares : splitWeights(expense);
 
 /** The custom split an expense carries: percentages or exact amounts, per person. */
 export const splitWeights = (expense: Expense): Record<string, number> | undefined =>

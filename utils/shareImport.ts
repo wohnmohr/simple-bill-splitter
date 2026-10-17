@@ -70,6 +70,12 @@ export function consumeOpenOnSettleUp(): boolean {
 
 export function consumePendingGroupSelection(): string | null {
 	if (typeof window === "undefined") return null;
+	// Tapping a group alert opens /dashboard#open=<this device's group id>.
+	const opened = /^#open=([\w-]{1,64})$/.exec(window.location.hash)?.[1];
+	if (opened) {
+		window.history.replaceState(null, "", window.location.pathname);
+		return opened;
+	}
 	const id = window.sessionStorage.getItem("splitbiller-select-group");
 	if (id) {
 		window.sessionStorage.removeItem("splitbiller-select-group");

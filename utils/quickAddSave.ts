@@ -28,7 +28,7 @@ export function applyQuickAdd(group: Group, quick: QuickResolved, now = Date.now
 		paidBy: id(e.paidBy),
 		participants: e.participants.map(id),
 		description: e.description.trim() || undefined,
-		...splitFields(e.splitMethod, e.weights && byId(e.weights)),
+		...splitFields(e.splitMethod, e.weights && byId(e.weights), e.amount),
 		createdAt: e.date ?? now,
 		...(e.monthly ? { repeat: { next: firstRepeat(now) } } : {}),
 	}));
