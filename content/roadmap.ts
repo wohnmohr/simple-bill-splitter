@@ -12,11 +12,6 @@ export type ShippedItem = { title: string; href: string };
 /** Being designed or built now. */
 export const NEXT: PlannedItem[] = [
 	{
-		icon: "type",
-		title: "Type an expense like a message",
-		body: "Write \"Dinner 2400 split between me, Asha and Ben\" and check the preview. It is read on your phone, never sent anywhere.",
-	},
-	{
 		icon: "scan",
 		title: "Scan paper restaurant bills",
 		body: "Take a photo of a printed bill at the table and SplitBiller fills in the items, the way it reads app screenshots today.",
@@ -47,6 +42,9 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "Type an expense like a message, read on your phone", href: "/" },
+			{ title: "Friends tap what they ate from one link", href: "/split-swiggy-zomato-bill" },
+			{ title: "Save any tool's result as a group", href: "/tools" },
 			{ title: "More than one person can pay for an expense", href: "/features#expenses" },
 			{ title: "Comment on an expense, encrypted like everything else", href: "/features#sync" },
 			{ title: "Close a group when everyone is settled, and start the next one with the same people", href: "/features#groups" },
