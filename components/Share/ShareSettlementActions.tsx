@@ -239,7 +239,7 @@ export const ShareSettlementActions = ({
 				onClick={handleCopyLink}
 				disabled={busy}
 				className="icon-btn"
-				title={copiedLink ? "Copied!" : "Copy share link"}
+				title={copiedLink ? "Copied" : "Copy share link"}
 			>
 				{copiedLink ? (
 					<Check className="h-4 w-4 sm:h-5 sm:w-5 text-positive" />

@@ -14,7 +14,7 @@ import { Header } from "@/components/Header/Header";
 import { GroupSelector } from "@/components/Group/GroupSelector";
 import { CreateGroupModal } from "@/components/Group/CreateGroupModal";
 import { AddMembersModal } from "@/components/Group/AddMembersModal";
-import { GroupsHome } from "@/components/Group/GroupsHome";
+import { GroupsHome, GroupsSkeleton } from "@/components/Group/GroupsHome";
 import { SyncModal } from "@/components/Group/SyncModal";
 import { ThemeModal } from "@/components/Group/ThemeModal";
 import { IdentitySheet } from "@/components/Group/IdentitySheet";
@@ -80,6 +80,7 @@ export default function Home() {
 	} | null>(null);
 
 	const {
+		loaded,
 		groups,
 		selectedGroupId,
 		setSelectedGroupId,
@@ -356,7 +357,10 @@ export default function Home() {
 					}}
 				/>
 
-				{groups.length === 0 ? (
+				{/* Until this device's groups are read, show their shape, not the first-run screen. */}
+				{!loaded ? (
+					<GroupsSkeleton />
+				) : groups.length === 0 ? (
 					<EmptyGroupState
 						onCreateGroup={() => setShowGroupForm(true)}
 						quickAdd={<QuickAddBox key={quickAddSaves} label="Describe a shared expense" onSubmit={(t) => handleQuickAdd(t, true)} />}
