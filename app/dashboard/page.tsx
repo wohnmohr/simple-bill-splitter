@@ -148,6 +148,8 @@ export default function Home() {
 		}) : undefined);
 		if (ok) {
 			track(from ? "group_next_started" : "dashboard_group_created", { currency: currency.code });
+			// A brand-new group needs its people before anything else, so go straight there.
+			if (!from) setShowMembersModal(true);
 		}
 		setShowGroupForm(false);
 		setNextFrom(null);
@@ -211,9 +213,12 @@ export default function Home() {
 	};
 
 	const handleAddMember = (memberName: string, upiId?: string) => {
-		const ok = addMember(memberName, upiId);
-		if (ok) track("dashboard_member_added");
-		return ok;
+		const id = addMember(memberName, upiId);
+		if (id) track("dashboard_member_added");
+		// The first person added to a new group is the one setting it up, so they're
+		// the default payer from the first expense on (the form asks for "Your name").
+		if (id && currentGroup?.members.length === 0 && currentGroup.meId === undefined) setGroupMe(currentGroup.id, id);
+		return id;
 	};
 
 	// Who you are in this group. Opening a shared group for the first time asks
