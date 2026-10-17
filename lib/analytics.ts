@@ -56,6 +56,8 @@ export type AnalyticsEvent =
 	| "group_sync_link_shared"
 	| "group_joined"
 	| "group_join_failed"
+	| "group_alerts_on"
+	| "group_alerts_off"
 	| "backup_card_opened"
 	| "backup_turned_on"
 	| "backup_turned_off"

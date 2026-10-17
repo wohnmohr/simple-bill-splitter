@@ -9,6 +9,7 @@ import { groupUrl, syncShareText } from "@/utils/groupSync";
 import { deriveGroupKeys } from "@/utils/groupVault";
 import { track } from "@/lib/analytics";
 import { sendViaWhatsApp } from "@/utils/whatsapp";
+import { AlertsToggle } from "@/components/Group/AlertsToggle";
 
 export const MIN_PASSPHRASE = 6;
 
@@ -241,6 +242,8 @@ export const SyncModal = ({ isOpen, onClose, group, status, expiresAt, onEnable,
 							)}
 						</div>
 
+						<AlertsToggle group={group} />
+
 						{me && (
 							<div className="rounded-xl border border-line p-3">
 								<p className="label-text">Your other devices</p>
@@ -272,7 +275,7 @@ export const SyncModal = ({ isOpen, onClose, group, status, expiresAt, onEnable,
 						{details && (
 							<div className="space-y-2 rounded-xl bg-paper p-3 text-sm text-ink-soft">
 								<p><b className="text-ink">Can&apos;t see:</b> the group name, members, UPI IDs, amounts, descriptions, or who added what. All of it is encrypted on your phone with a key that only exists in the link.</p>
-								<p><b className="text-ink">Can see:</b> that an encrypted group exists, roughly how big it is (sizes are padded), and when changes arrive. Like any website, it sees your IP address when you connect; we don&apos;t store it with the group.</p>
+								<p><b className="text-ink">Can see:</b> that an encrypted group exists, roughly how big it is (sizes are padded), and when changes arrive. Like any website, it sees your IP address when you connect; we don&apos;t store it with the group. If you turn on alerts, it also keeps this device&apos;s push address with the group, so it can say &ldquo;something changed&rdquo; and nothing more.</p>
 								<p><b className="text-ink">Anyone with the link</b>{sync.pass ? " and the passphrase" : ""} can read and edit the group. To remove someone, reset the link.</p>
 								{expiresAt && <p>Deleted from our server on {new Date(expiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} unless the group changes before then.</p>}
 							</div>

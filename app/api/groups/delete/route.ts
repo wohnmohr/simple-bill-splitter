@@ -10,6 +10,7 @@ export const POST = groupRoute({ key: "g-del", perMinute: 10, maxBody: 1024 }, a
 	await db.batch(
 		[
 			{ sql: "DELETE FROM group_ops WHERE group_id = ?", args: [id] },
+			{ sql: "DELETE FROM group_push WHERE group_id = ?", args: [id] },
 			{ sql: "DELETE FROM groups WHERE id = ?", args: [id] },
 		],
 		"write"

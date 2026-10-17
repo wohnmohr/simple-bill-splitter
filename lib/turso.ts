@@ -64,6 +64,16 @@ const SCHEMA = [
 		blob      TEXT NOT NULL,
 		PRIMARY KEY (group_id, seq)
 	)`,
+	// Devices that asked for an alert when a synced group changes (opt-in, per group).
+	// The server learns only that this push address wants alerts for this group id;
+	// alerts carry the id alone, encrypted to the device.
+	`CREATE TABLE IF NOT EXISTS group_push (
+		group_id       TEXT NOT NULL,
+		endpoint_hash  TEXT NOT NULL,
+		sub            TEXT NOT NULL,
+		notified_at    INTEGER NOT NULL DEFAULT 0,
+		PRIMARY KEY (group_id, endpoint_hash)
+	)`,
 	// Global counters per hour and per day ("h:<hour>", "d:<day>"): ceilings on new
 	// splits whatever IPs they come from.
 	`CREATE TABLE IF NOT EXISTS api_quota (

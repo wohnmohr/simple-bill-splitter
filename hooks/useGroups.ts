@@ -5,6 +5,7 @@ import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
 import { consumePendingGroupSelection } from "@/utils/shareImport";
 import { useGroupSync } from "@/hooks/useGroupSync";
 import { useBackup } from "@/hooks/useBackup";
+import { disableAlerts } from "@/utils/groupAlerts";
 import { newId } from "@/utils/ids";
 import { addDueRepeats } from "@/utils/recurring";
 
@@ -86,6 +87,9 @@ export const useGroups = () => {
   /** Removes a group from this device. A synced group stays on the server for everyone else. */
   const deleteGroup = (groupId: string): void => {
     sync.forgetGroup(groupId);
+    // No more alerts for a group this device no longer has.
+    const removed = groups.find((g) => g.id === groupId);
+    if (removed) disableAlerts(removed).catch(() => undefined);
     const updatedGroups = groups.filter((g) => g.id !== groupId);
     setGroups(updatedGroups);
     if (selectedGroupId === groupId) {
