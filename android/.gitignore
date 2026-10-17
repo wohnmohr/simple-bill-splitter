@@ -1,0 +1,6 @@
+# Bubblewrap generates the Android project here from twa-manifest.json; only the config is kept.
+# Never commit the signing keystore: losing or leaking it means losing the Play listing.
+/*
+!/.gitignore
+!/twa-manifest.json
+!/README.md
