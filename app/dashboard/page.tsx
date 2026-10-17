@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "@mantine/hooks";
 import { ChevronLeft, Link2, Plus, UserPlus } from "lucide-react";
-import { Tab, Currency, Expense, Group, Settlement } from "@/types";
+import { Tab, Currency, Expense, Group, Settlement, SplitChoice } from "@/types";
 import { DEFAULT_CURRENCY } from "@/constants";
-import { calculateBalances, calculateSettlements, splitWeights } from "@/utils/calculations";
+import { calculateBalances, calculateSettlements, enteredWeights, splitChoice } from "@/utils/calculations";
 import { useGroups } from "@/hooks/useGroups";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
 import { type ExpenseInput, useExpenses } from "@/hooks/useExpenses";
@@ -73,7 +73,7 @@ export default function Home() {
 		payers?: Record<string, number>;
 		participants: Set<string>;
 		description?: string;
-		splitMethod?: string;
+		splitMethod: SplitChoice;
 		weights?: Record<string, number>;
 		date?: number;
 		repeat: boolean;
@@ -252,8 +252,8 @@ export default function Home() {
 			payers: expense.payers,
 			participants: new Set(expense.participants),
 			description: expense.description,
-			splitMethod: expense.splitMethod || "equally",
-			weights: splitWeights(expense),
+			splitMethod: splitChoice(expense) || "equally",
+			weights: enteredWeights(expense),
 			date: expense.createdAt,
 			repeat: !!expense.repeat,
 		});
@@ -696,7 +696,7 @@ export default function Home() {
 						initialPayers={editExpenseData.payers}
 						initialParticipants={editExpenseData.participants}
 						initialDescription={editExpenseData.description}
-						initialSplitMethod={editExpenseData.splitMethod as any}
+						initialSplitMethod={editExpenseData.splitMethod}
 						initialWeights={editExpenseData.weights}
 						initialDate={editExpenseData.date}
 						initialRepeat={editExpenseData.repeat}

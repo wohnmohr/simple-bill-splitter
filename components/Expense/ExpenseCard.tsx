@@ -1,5 +1,6 @@
 import { Expense, Currency } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
+import { splitChoice } from "@/utils/calculations";
 import { Check, MessageCircle, Pencil, Repeat, Trash2 } from "lucide-react";
 
 /**
@@ -70,6 +71,8 @@ export const ExpenseCard = ({
 	const count = expense.participants.length;
 	const splitLabel = expense.splitMethod === "percentage"
 		? `Split by % among ${count}`
+		: splitChoice(expense) === "shares"
+		? `Split by shares among ${count}`
 		: expense.splitMethod === "exact"
 		? `Split by amount among ${count}`
 		: count === 1
