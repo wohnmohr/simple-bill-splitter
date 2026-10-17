@@ -8,6 +8,8 @@ export type Person = {
 };
 
 export type SplitMethod = "equally" | "percentage" | "exact";
+/** How a split is entered. "shares" (2:1:1) is stored as an exact split that remembers its shares. */
+export type SplitChoice = SplitMethod | "shares";
 
 export type Expense = {
   id: string;
@@ -23,6 +25,11 @@ export type Expense = {
   splitMethod: SplitMethod; // how the expense is split
   percentages?: Record<string, number>; // person id -> percentage (only for percentage split)
   amounts?: Record<string, number>; // person id -> amount owed (only for exact split)
+  /**
+   * Shares per person (2:1:1) when an exact split was entered by shares. The
+   * amounts stay the source of truth, so older app versions still add up.
+   */
+  shares?: Record<string, number>;
   /** "payment" = a recorded settlement: paidBy paid participants[0] back. */
   kind?: "payment";
   /** Epoch ms when the entry was created. Missing on older data. */

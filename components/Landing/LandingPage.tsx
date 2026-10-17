@@ -102,7 +102,7 @@ export const LandingPage = () => {
 				<div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
 					<div className="min-w-0 text-center lg:text-left">
 						<h1 className="font-display text-[clamp(2.25rem,6vw,4rem)] font-semibold leading-[1.05] text-ink">
-							Split bills in ₹, settle&nbsp;with&nbsp;UPI
+							Split bills in&nbsp;₹, settle&nbsp;with&nbsp;UPI
 						</h1>
 						<p className="mx-auto mt-5 max-w-xl text-lg text-ink-soft lg:mx-0">
 							Who owes whom in seconds — share privately, pay via UPI. No signup, no app download.

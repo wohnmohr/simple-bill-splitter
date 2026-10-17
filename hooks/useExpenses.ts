@@ -1,4 +1,4 @@
-import { Expense, ExpenseComment, Group, SplitMethod } from "@/types";
+import { Expense, ExpenseComment, Group, SplitChoice } from "@/types";
 import { MAX_COMMENT } from "@/utils/groupOps";
 import { newId } from "@/utils/ids";
 import { firstRepeat } from "@/utils/recurring";
@@ -11,8 +11,8 @@ export type ExpenseInput = {
   paid: Record<string, number>;
   participants: Set<string>;
   description?: string;
-  splitMethod: SplitMethod;
-  /** Percentages or exact amounts per person, for those split methods. */
+  splitMethod: SplitChoice;
+  /** Percentages, exact amounts or shares per person, for those split methods. */
   weights?: Record<string, number>;
   date?: number;
   /** Add it again every month, on the same day. */
@@ -26,7 +26,7 @@ const expenseFields = (input: ExpenseInput) => ({
   // Split only among the people ticked: the payer may have paid for others.
   participants: Array.from(input.participants),
   description: input.description,
-  ...splitFields(input.splitMethod, input.weights),
+  ...splitFields(input.splitMethod, input.weights, input.amount),
 });
 
 const isValid = (input: ExpenseInput) =>

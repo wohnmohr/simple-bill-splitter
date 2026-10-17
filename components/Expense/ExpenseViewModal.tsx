@@ -3,7 +3,7 @@ import { Expense, ExpenseComment, Person, Currency } from "@/types";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
 import { formatCurrency, joinNames } from "@/utils/formatting";
-import { expensePayers, expenseShares } from "@/utils/calculations";
+import { expensePayers, expenseShares, splitChoice } from "@/utils/calculations";
 import { MAX_COMMENT } from "@/utils/groupOps";
 import { ArrowUp, Pencil, Trash2 } from "lucide-react";
 
@@ -84,9 +84,10 @@ export const ExpenseViewModal = ({
 	}
 
 	const isPercentage = expense.splitMethod === "percentage" && !!expense.percentages;
+	const byShares = splitChoice(expense) === "shares";
 	const shares = expenseShares(expense);
 	const payers = expensePayers(expense);
-	const splitLabel = isPercentage ? "by percentage" : expense.splitMethod === "exact" ? "by exact amounts" : "equally";
+	const splitLabel = isPercentage ? "by percentage" : byShares ? "by shares" : expense.splitMethod === "exact" ? "by exact amounts" : "equally";
 
 	return (
 		<Modal isOpen={isOpen} onClose={onClose} title={expense.description || "Expense"}>
@@ -125,6 +126,9 @@ export const ExpenseViewModal = ({
 							<li key={id} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
 								<span className="truncate text-ink">{getPersonName(id)}</span>
 								<span className="shrink-0 tabular-nums">
+									{byShares && (
+										<span className="mr-2 text-sm text-ink-muted">{expense.shares![id]}×</span>
+									)}
 									{isPercentage && (
 										<span className="mr-2 text-sm text-ink-muted">
 											{(expense.percentages![id] || 0).toFixed(

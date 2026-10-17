@@ -88,7 +88,7 @@ export const AddMembersModal = ({
 						aria-label="Name"
 						value={memberName}
 						onChange={(e) => setMemberName(e.target.value)}
-						placeholder="Name"
+						placeholder={group.members.length === 0 ? "Your name" : "Name"}
 						data-autofocus
 						maxLength={40}
 					/>
@@ -122,7 +122,7 @@ export const AddMembersModal = ({
 					</p>
 					{group.members.length === 0 ? (
 						<p className="text-sm text-ink-muted">
-							Add everyone who shares expenses — including yourself.
+							Start with yourself, then everyone who shares expenses.
 						</p>
 					) : (
 						<ul className="divide-y divide-line rounded-xl border border-line">

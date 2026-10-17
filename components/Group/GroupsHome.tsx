@@ -117,3 +117,21 @@ export const GroupsHome = ({
 		</div>
 	);
 };
+
+/** The groups list's shape while this device's groups are read. */
+export const GroupsSkeleton = () => (
+	<div aria-busy="true" aria-label="Loading your groups" className="animate-pulse">
+		<div className="mb-4 h-8 w-44 rounded-lg bg-ink/[0.06] sm:h-9" />
+		<ul className="surface divide-y divide-line overflow-hidden">
+			{[0, 1].map((i) => (
+				<li key={i} className="flex items-center gap-3 px-4 py-4">
+					<span className="h-10 w-10 shrink-0 rounded-xl bg-ink/[0.06]" />
+					<span className="flex-1 space-y-2">
+						<span className="block h-4 w-2/5 rounded bg-ink/[0.06]" />
+						<span className="block h-3 w-1/4 rounded bg-ink/[0.05]" />
+					</span>
+				</li>
+			))}
+		</ul>
+	</div>
+);

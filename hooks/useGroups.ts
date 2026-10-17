@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Group, Currency } from "@/types";
 import { MAX_GROUPS, DEFAULT_CURRENCY } from "@/constants";
 import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
@@ -11,14 +11,12 @@ import { addDueRepeats } from "@/utils/recurring";
 export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const hasLoadedRef = useRef(false);
   const [loaded, setLoaded] = useState(false);
 
   // Load groups from localStorage on mount
   useEffect(() => {
     const loadedGroups = loadGroupsFromStorage();
     setGroups(loadedGroups);
-    hasLoadedRef.current = true;
     setLoaded(true);
     const pendingId = consumePendingGroupSelection();
     if (pendingId && loadedGroups.some((g) => g.id === pendingId)) {
@@ -33,10 +31,10 @@ export const useGroups = () => {
 
   // Save groups to localStorage whenever groups change (after initial load)
   useEffect(() => {
-    if (hasLoadedRef.current) {
+    if (loaded) {
       saveGroupsToStorage(groups);
     }
-  }, [groups]);
+  }, [groups, loaded]);
 
   // Monthly expenses that have come due: on load, on every change, and when the app comes back to the front.
   const [awake, setAwake] = useState(0);
@@ -46,7 +44,7 @@ export const useGroups = () => {
     return () => document.removeEventListener("visibilitychange", onShow);
   }, []);
   useEffect(() => {
-    if (!hasLoadedRef.current) return;
+    if (!loaded) return;
     const now = Date.now();
     let due = false;
     const next = groups.map((g) => {
@@ -58,7 +56,7 @@ export const useGroups = () => {
       return { ...g, expenses };
     });
     if (due) setGroups(next);
-  }, [groups, awake]);
+  }, [groups, awake, loaded]);
 
   /** Creates and opens a group; `fill` adds its first members and expenses (quick add). */
   const createGroup = (
@@ -117,6 +115,7 @@ export const useGroups = () => {
   const currentGroup = groups.find((g) => g.id === selectedGroupId);
 
   return {
+    loaded,
     groups,
     selectedGroupId,
     setSelectedGroupId,
