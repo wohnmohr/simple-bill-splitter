@@ -23,6 +23,7 @@ import {
 	mergeState,
 	sharedView,
 } from "@/utils/groupOps";
+import { quietTag } from "@/utils/groupAlerts";
 import { HttpError, api } from "@/utils/groupApi";
 import { type GroupKeys, deriveGroupKeys, linkFragment, newGroupSecret, openGroup, sealGroup, stretchPassphrase } from "@/utils/groupVault";
 
@@ -263,7 +264,7 @@ export class GroupSync {
 			while (this.saved.pending.length && !this.disposed) {
 				const batch = this.saved.pending.slice(0, MAX_OPS_PER_PUSH);
 				try {
-					await api("/push", { id: keys.id, token: keys.token, blob: await sealGroup(keys, "ops", { ops: batch }) });
+					await api("/push", { id: keys.id, token: keys.token, blob: await sealGroup(keys, "ops", { ops: batch }), quiet: await quietTag() });
 				} catch (err) {
 					if (err instanceof HttpError && err.status === 409 && err.body.compact) {
 						await this.pull(keys, groupId);
