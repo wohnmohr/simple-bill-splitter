@@ -50,6 +50,10 @@ export const EmptyGroupState = ({ onCreateGroup, quickAdd }: EmptyGroupStateProp
 				<Plus className="h-4 w-4" />
 				Create a group
 			</button>
+
+			<p className="mt-4 text-sm text-ink-muted lg:col-start-1">
+				Had groups on another phone? Open your recovery link here to bring them back.
+			</p>
 		</section>
 	);
 };

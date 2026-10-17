@@ -42,6 +42,7 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "Back up your groups, end-to-end encrypted, with a recovery link only you hold", href: "/dashboard" },
 			{ title: "Type an expense like a message, read on your phone", href: "/" },
 			{ title: "Friends tap what they ate from one link", href: "/split-swiggy-zomato-bill" },
 			{ title: "Save any tool's result as a group", href: "/tools" },

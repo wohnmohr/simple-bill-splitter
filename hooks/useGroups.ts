@@ -4,6 +4,7 @@ import { MAX_GROUPS, DEFAULT_CURRENCY } from "@/constants";
 import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
 import { consumePendingGroupSelection } from "@/utils/shareImport";
 import { useGroupSync } from "@/hooks/useGroupSync";
+import { useBackup } from "@/hooks/useBackup";
 import { newId } from "@/utils/ids";
 import { addDueRepeats } from "@/utils/recurring";
 
@@ -11,12 +12,14 @@ export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
+  const [loaded, setLoaded] = useState(false);
 
   // Load groups from localStorage on mount
   useEffect(() => {
     const loadedGroups = loadGroupsFromStorage();
     setGroups(loadedGroups);
     hasLoadedRef.current = true;
+    setLoaded(true);
     const pendingId = consumePendingGroupSelection();
     if (pendingId && loadedGroups.some((g) => g.id === pendingId)) {
       setSelectedGroupId(pendingId);
@@ -25,6 +28,8 @@ export const useGroups = () => {
 
   // Synced groups: every change below is picked up and sent, encrypted.
   const sync = useGroupSync(groups, setGroups, selectedGroupId);
+  // Opt-in: once turned on, every change is backed up too, encrypted.
+  const backup = useBackup(groups, loaded);
 
   // Save groups to localStorage whenever groups change (after initial load)
   useEffect(() => {
@@ -124,6 +129,7 @@ export const useGroups = () => {
     setGroupClosed,
     setGroups,
     sync,
+    backup,
   };
 };
 

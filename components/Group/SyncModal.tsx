@@ -10,7 +10,7 @@ import { deriveGroupKeys } from "@/utils/groupVault";
 import { track } from "@/lib/analytics";
 import { sendViaWhatsApp } from "@/utils/whatsapp";
 
-const MIN_PASSPHRASE = 6;
+export const MIN_PASSPHRASE = 6;
 
 type Props = {
 	isOpen: boolean;
@@ -33,15 +33,19 @@ const STATUS_TEXT: Record<SyncStatus, string> = {
 };
 
 /** Optional passphrase: a leaked link alone then opens nothing. */
-const PassphraseField = ({ on, setOn, value, setValue }: { on: boolean; setOn: (v: boolean) => void; value: string; setValue: (v: string) => void }) => (
+export const PassphraseField = ({
+	on,
+	setOn,
+	value,
+	setValue,
+	hint = "Then the link alone opens nothing. Tell people the passphrase in person or on a call, not in the same chat as the link.",
+}: { on: boolean; setOn: (v: boolean) => void; value: string; setValue: (v: string) => void; hint?: string }) => (
 	<div className="rounded-xl border border-line p-3">
 		<label className="flex cursor-pointer items-start gap-3">
 			<input type="checkbox" checked={on} onChange={(e) => setOn(e.target.checked)} className="mt-1 h-4 w-4 accent-brand-700" />
 			<span>
 				<span className="block text-sm font-semibold text-ink">Also require a passphrase</span>
-				<span className="block text-sm text-ink-muted">
-					Then the link alone opens nothing. Tell people the passphrase in person or on a call, not in the same chat as the link.
-				</span>
+				<span className="block text-sm text-ink-muted">{hint}</span>
 			</span>
 		</label>
 		{on && (

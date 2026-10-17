@@ -23,6 +23,7 @@ import {
 	mergeState,
 	sharedView,
 } from "@/utils/groupOps";
+import { HttpError, api } from "@/utils/groupApi";
 import { type GroupKeys, deriveGroupKeys, linkFragment, newGroupSecret, openGroup, sealGroup, stretchPassphrase } from "@/utils/groupVault";
 
 /** Fold history into a snapshot once this many batches pile up past the last one. */
@@ -84,24 +85,6 @@ export const groupUrl = (link: GroupSyncLink, me?: string, settle = false) =>
 	`${window.location.origin}/g${settle ? `?${SETTLE_PARAM}` : ""}#${linkFragment(link.secret, Boolean(link.pass), me)}`;
 
 export const SETTLE_PARAM = "settle";
-
-class HttpError extends Error {
-	constructor(readonly status: number, readonly body: Record<string, unknown>) {
-		super(`HTTP ${status}`);
-	}
-}
-
-async function api(path: string, body: unknown): Promise<Record<string, unknown>> {
-	const res = await fetch(`/api/groups${path}`, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(body),
-		cache: "no-store",
-	});
-	const data = await res.json().catch(() => ({}));
-	if (!res.ok) throw new HttpError(res.status, data);
-	return data;
-}
 
 const stamp = (changes: Omit<Op, "i" | "t">[], after: number): Op[] => {
 	let t = Math.max(Date.now(), after + 1);
