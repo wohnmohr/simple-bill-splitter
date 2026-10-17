@@ -364,21 +364,6 @@ export const ExpenseFormModal = ({
 					handleSubmit();
 				}}
 			>
-				{!isEdit && people.length > 1 && (
-					<div>
-						<ScanOrderButton
-							state={scanState}
-							onFile={async (file) => {
-								const parsed = await scan(file);
-								if (parsed) setOrder(draftFromOrder(parsed));
-							}}
-						/>
-						<button type="button" onClick={() => setOrder(emptyDraft())} className="mt-1 text-sm font-medium text-brand-700 hover:underline">
-							or split a bill item by item
-						</button>
-					</div>
-				)}
-
 				<NumberInput
 					label="Amount"
 					value={amount ? parseFloat(amount) : ""}
@@ -400,6 +385,22 @@ export const ExpenseFormModal = ({
 					leftSectionWidth={44}
 					classNames={{ input: "!text-2xl !font-semibold !tabular-nums" }}
 				/>
+
+				{/* Another way to fill in the amount, so it goes once there is one. */}
+				{!isEdit && people.length > 1 && !hasAmount && (
+					<div>
+						<ScanOrderButton
+							state={scanState}
+							onFile={async (file) => {
+								const parsed = await scan(file);
+								if (parsed) setOrder(draftFromOrder(parsed));
+							}}
+						/>
+						<button type="button" onClick={() => setOrder(emptyDraft())} className="mt-1 text-sm font-medium text-brand-700 hover:underline">
+							or split a bill item by item
+						</button>
+					</div>
+				)}
 
 				<div className="grid grid-cols-[1fr_auto] gap-3">
 					<TextInput

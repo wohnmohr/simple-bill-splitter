@@ -147,6 +147,8 @@ export default function Home() {
 		}) : undefined);
 		if (ok) {
 			track(from ? "group_next_started" : "dashboard_group_created", { currency: currency.code });
+			// A brand-new group needs its people before anything else, so go straight there.
+			if (!from) setShowMembersModal(true);
 		}
 		setShowGroupForm(false);
 		setNextFrom(null);
