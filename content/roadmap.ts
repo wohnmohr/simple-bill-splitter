@@ -12,6 +12,11 @@ export type ShippedItem = { title: string; href: string };
 /** Being designed or built now. */
 export const NEXT: PlannedItem[] = [
 	{
+		icon: "download",
+		title: "SplitBiller on Google Play",
+		body: "Install it from the Play Store like any other app. It opens offline, and your groups still stay on your phone.",
+	},
+	{
 		icon: "scan",
 		title: "Scan paper restaurant bills",
 		body: "Take a photo of a printed bill at the table and SplitBiller fills in the items, the way it reads app screenshots today.",

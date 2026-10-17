@@ -4,6 +4,7 @@ import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { VercelAnalytics } from "@/components/providers/VercelAnalytics";
 import { FeedbackNudge } from "@/components/Feedback/FeedbackNudge";
 import { InstallPromptCapture } from "@/components/providers/InstallPromptCapture";
+import { ServiceWorkerRegistration } from "@/components/providers/ServiceWorkerRegistration";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -89,6 +90,7 @@ export default function RootLayout({
 					{children}
 					<FeedbackNudge />
 					<InstallPromptCapture />
+					<ServiceWorkerRegistration />
 					<VercelAnalytics />
 				</PostHogProvider>
 			</body>
