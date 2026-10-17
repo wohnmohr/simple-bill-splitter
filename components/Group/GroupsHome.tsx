@@ -6,6 +6,8 @@ import { formatCurrency } from "@/utils/formatting";
 import { totalSpent } from "@/utils/calculations";
 import { BalanceHeadline, myBalance } from "@/components/Group/GroupSelector";
 import { InstallCard } from "@/components/Group/InstallCard";
+import { BackupCard } from "@/components/Group/BackupCard";
+import type { useBackup } from "@/hooks/useBackup";
 
 interface GroupsHomeProps {
 	groups: Group[];
@@ -14,6 +16,7 @@ interface GroupsHomeProps {
 	onCreateGroup: () => void;
 	/** Start a new group by typing an expense. */
 	quickAdd: ReactNode;
+	backup: ReturnType<typeof useBackup>;
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -24,6 +27,7 @@ export const GroupsHome = ({
 	onDeleteGroup,
 	onCreateGroup,
 	quickAdd,
+	backup,
 }: GroupsHomeProps) => {
 	const canCreate = groups.length < MAX_GROUPS;
 
@@ -108,6 +112,7 @@ export const GroupsHome = ({
 			)}
 
 			{/* Worth a home-screen spot once they've actually split something. */}
+			<BackupCard backup={backup} />
 			{groups.some((g) => g.expenses.length > 0) && <InstallCard />}
 		</div>
 	);

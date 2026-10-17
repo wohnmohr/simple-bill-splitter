@@ -158,7 +158,8 @@ function emojiCode(bytes: Uint8Array): string {
 	return out.join(" ");
 }
 
-export type BlobKind = "ops" | "snapshot";
+/** "backup" is a device's own groups list (utils/groupBackup); bound into the ciphertext, so it can never pass for a group. */
+export type BlobKind = "ops" | "snapshot" | "backup";
 const ad = (id: string, kind: BlobKind) => new TextEncoder().encode(`${AD_PREFIX}/${id}/${kind}`);
 
 /** Size buckets: 512 B, then doubling to 64 KB, then whole 64 KB steps. */

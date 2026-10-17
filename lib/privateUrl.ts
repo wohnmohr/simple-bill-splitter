@@ -1,5 +1,5 @@
-/** Pages whose URL fragment carries private data (split and group keys, shared groups). Never recorded. */
-const PRIVATE_PATH = /^\/(s|g|pay-story|share|secret-santa)(\/|$)/;
+/** Pages whose URL fragment carries private data (split, group and backup keys, shared groups). Never recorded. */
+const PRIVATE_PATH = /^\/(s|g|r|pay-story|share|secret-santa)(\/|$)/;
 export const isPrivatePath = (path: string) => PRIVATE_PATH.test(path);
 
 /** A cloud split's id. With the #key it opens the split, so it never leaves the browser. */

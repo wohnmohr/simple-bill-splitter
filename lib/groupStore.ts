@@ -121,12 +121,13 @@ export async function appendOps(db: Client, g: { ip: string; id: string; token: 
 	return reply({ error: "Not found" }, 404);
 }
 
-/** Deletes groups nobody has changed for GROUP_TTL_MS, with their changes, and stale quota counters. */
+/** Deletes groups nobody has changed for GROUP_TTL_MS, with their changes and alert sign-ups, and stale quota counters. */
 export async function purgeExpiredGroups(db: Client): Promise<void> {
 	const now = Date.now();
 	await db.batch(
 		[
 			{ sql: "DELETE FROM group_ops WHERE group_id IN (SELECT id FROM groups WHERE expires_at <= ?)", args: [now] },
+			{ sql: "DELETE FROM group_push WHERE group_id IN (SELECT id FROM groups WHERE expires_at <= ?)", args: [now] },
 			{ sql: "DELETE FROM groups WHERE expires_at <= ?", args: [now] },
 			{ sql: "DELETE FROM api_quota WHERE at < ?", args: [now - 2 * 86_400_000] },
 		],

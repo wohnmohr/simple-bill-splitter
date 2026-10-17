@@ -93,6 +93,7 @@ export default function Home() {
 		setGroupClosed,
 		setGroups,
 		sync,
+		backup,
 	} = useGroups();
 
 	// An open group paints the whole page (modals included) in its theme;
@@ -377,6 +378,7 @@ export default function Home() {
 						onDeleteGroup={handleDeleteGroup}
 						onCreateGroup={() => setShowGroupForm(true)}
 						quickAdd={<QuickAddBox key={quickAddSaves} label="Start a group by describing an expense" onSubmit={(t) => handleQuickAdd(t, true)} />}
+						backup={backup}
 					/>
 				) : (
 					<>

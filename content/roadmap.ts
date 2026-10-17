@@ -42,6 +42,8 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "Alerts when someone adds an expense to a shared group, sent without revealing what changed", href: "/features#sync" },
+			{ title: "Back up your groups, end-to-end encrypted, with a recovery link only you hold", href: "/dashboard" },
 			{ title: "Split by shares (2:1:1)", href: "/features#expenses" },
 			{ title: "Type an expense like a message, read on your phone", href: "/" },
 			{ title: "Friends tap what they ate from one link", href: "/split-swiggy-zomato-bill" },
