@@ -80,3 +80,28 @@ test("bad shares are dropped, the amounts still count", () => {
 	}
 	assert.equal(synced({ ...e, splitMethod: "percentage", percentages: { p1: 50, p2: 25, p3: 25 } }).shares, undefined);
 });
+
+const centsOf = (amounts) => Object.values(amounts).reduce((sum, a) => sum + Math.round(a * 100), 0);
+
+test("amounts that don't divide evenly still add up to the paisa", () => {
+	assert.deepEqual(sharesToAmounts({ p1: 2, p2: 1, p3: 1 }, 1.01), { p1: 0.51, p2: 0.25, p3: 0.25 });
+	assert.deepEqual(sharesToAmounts({ p1: 2, p2: 1, p3: 1 }, 101), { p1: 50.5, p2: 25.25, p3: 25.25 });
+	for (let paise = 1; paise <= 20000; paise++) {
+		const amounts = sharesToAmounts({ p1: 2, p2: 1, p3: 1 }, paise / 100);
+		assert.equal(centsOf(amounts), paise, `₹${paise / 100}`);
+		assert.ok(Object.values(amounts).every((a) => a >= 0 && Math.abs(a * 100 - Math.round(a * 100)) < 1e-6));
+	}
+});
+
+test("the same split survives a reload, another device and an edit", () => {
+	const cases = [[{ p1: 2, p2: 1, p3: 1 }, 1.01], [{ p1: 2, p2: 1, p3: 1 }, 101], [{ p1: 1, p2: 1, p3: 1 }, 1]];
+	for (const [shares, amount] of cases) {
+		const e = villa(shares, amount);
+		const reloaded = JSON.parse(JSON.stringify(e));
+		const elsewhere = synced(reloaded);
+		// Editing on the other device and saving without changes recalculates from the stored shares.
+		const edited = { ...elsewhere, ...splitFields(splitChoice(elsewhere), enteredWeights(elsewhere), elsewhere.amount) };
+		for (const copy of [reloaded, elsewhere, edited]) assert.deepEqual(copy.amounts, e.amounts, `₹${amount}`);
+		assert.equal(centsOf(edited.amounts), Math.round(amount * 100));
+	}
+});
