@@ -10,7 +10,7 @@ import { UpiSettlementActions } from "@/components/Settlements/UpiSettlementActi
 import { groupUrl } from "@/utils/groupSync";
 import { buildShareSnapshot, encodeShareUrl } from "@/utils/shareCodec";
 import { track, trackError } from "@/lib/analytics";
-import { sendViaWhatsApp } from "@/utils/whatsapp";
+import { oweMessage, sendViaWhatsApp } from "@/utils/whatsapp";
 
 interface SettlementListProps {
 	settlements: Settlement[];
@@ -281,13 +281,7 @@ export const SettlementList = ({
 				? groupUrl(syncLink, s.from, true)
 				: await encodeShareUrl(buildShareSnapshot({ name: groupName, currency, members: sharePeople, expenses }));
 			const sent = await sendViaWhatsApp(
-				[
-					`Hi ${debtor?.name || ""}, a reminder for ${groupName}: you owe me ${formatCurrency(s.amount, currency)}.`,
-					showUpi && creditor?.upiId ? `UPI: ${creditor.upiId}` : "",
-					`See it and pay here: ${url}`,
-				]
-					.filter(Boolean)
-					.join("\n")
+				oweMessage(debtor?.name || "", `a reminder for ${groupName}`, formatCurrency(s.amount, currency), url, showUpi ? creditor?.upiId : undefined)
 			);
 			if (sent === "copied") {
 				setRemindCopied(s.from);
