@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "@mantine/hooks";
-import { ChevronLeft, Link2, Plus, UserPlus } from "lucide-react";
+import { Link2, Plus, UserPlus } from "lucide-react";
 import { Tab, Currency, Expense, Group, Settlement, SplitChoice } from "@/types";
 import { DEFAULT_CURRENCY } from "@/constants";
 import { calculateBalances, calculateSettlements, enteredWeights, splitChoice } from "@/utils/calculations";
@@ -385,29 +385,21 @@ export default function Home() {
 					/>
 				) : (
 					<>
-					<button
-						onClick={() => setSelectedGroupId(null)}
-						className="btn-ghost -ml-2.5 mb-2"
-					>
-						<ChevronLeft className="h-4 w-4" />
-						All groups
-					</button>
 					<div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
 					<div className="min-w-0">
-						<GroupSelector
-							groups={groups}
-							selectedGroupId={selectedGroupId}
-							onSelectGroup={setSelectedGroupId}
-							onDeleteGroup={handleDeleteGroup}
-							onManageMembers={() => setShowMembersModal(true)}
-							onShare={() => setShowSync(true)}
-							onTheme={() => setShowTheme(true)}
-							syncStatus={currentGroup ? sync.status[currentGroup.id] : undefined}
-							onChangeMe={() => setIdentityAsk("pick")}
-						/>
-
 						{currentGroup && (
 							<>
+								<GroupSelector
+									group={currentGroup}
+									onBack={() => setSelectedGroupId(null)}
+									onDeleteGroup={handleDeleteGroup}
+									onManageMembers={() => setShowMembersModal(true)}
+									onShare={() => setShowSync(true)}
+									onTheme={() => setShowTheme(true)}
+									syncStatus={sync.status[currentGroup.id]}
+									onChangeMe={() => setIdentityAsk("pick")}
+								/>
+
 								{currentGroup.members.length === 0 && (
 									<div className="surface px-6 py-10 text-center">
 										<p className="font-semibold text-ink">Who&apos;s in this group?</p>
@@ -460,6 +452,7 @@ export default function Home() {
 												<QuickAddBox
 													key={quickAddSaves}
 													label="Add an expense by typing it"
+													compact
 													memberNames={people.filter((p) => p.id !== currentGroup?.meId).map((p) => p.name)}
 													onSubmit={(t) => handleQuickAdd(t, false)}
 												/>

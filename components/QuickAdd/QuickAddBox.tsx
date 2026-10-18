@@ -7,17 +7,19 @@ interface QuickAddBoxProps {
 	label: string;
 	/** The group's members, offered as names while typing. */
 	memberNames?: string[];
+	/** Starting sentences only once the box is focused, where space is tight (an open group). */
+	compact?: boolean;
 }
 
 /** Type an expense like a message; the preview that follows does the rest. */
-export const QuickAddBox = ({ onSubmit, label, memberNames = [] }: QuickAddBoxProps) => {
+export const QuickAddBox = ({ onSubmit, label, memberNames = [], compact = false }: QuickAddBoxProps) => {
 	const [text, setText] = useState("");
 	const [focused, setFocused] = useState(false);
 	const input = useRef<HTMLTextAreaElement>(null);
 	const submit = () => text.trim() && onSubmit(text.trim());
 	const templates = quickAddTemplates(memberNames);
 	// Empty: whole sentences to start from. Typing: what usually comes next.
-	const chips = !text ? templates : focused ? suggestQuickAdd(text, memberNames) : [];
+	const chips = !text ? (compact && !focused ? [] : templates) : focused ? suggestQuickAdd(text, memberNames) : [];
 
 	const apply = (next: string) => {
 		setText(next);
