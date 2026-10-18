@@ -218,7 +218,10 @@ export default function Home() {
 		if (id) track("dashboard_member_added");
 		// The first person added to a new group is the one setting it up, so they're
 		// the default payer from the first expense on (the form asks for "Your name").
-		if (id && currentGroup?.members.length === 0 && currentGroup.meId === undefined) setGroupMe(currentGroup.id, id);
+		if (id && currentGroup?.members.length === 0 && currentGroup.meId === undefined) {
+			setGroupMe(currentGroup.id, id);
+			markJoined(id);
+		}
 		return id;
 	};
 
