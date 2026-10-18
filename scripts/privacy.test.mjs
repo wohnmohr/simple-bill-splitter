@@ -22,6 +22,6 @@ test("scrubUrl leaves ordinary pages alone", () => {
 });
 
 test("pages that carry private data in the link are never recorded", () => {
-	for (const p of [`/s/${ID}`, "/g", "/share", "/pay-story", "/secret-santa"]) assert.ok(isPrivatePath(p), p);
-	for (const p of ["/", "/dashboard", "/tools", "/split/dinner", "/shared-costs"]) assert.ok(!isPrivatePath(p), p);
+	for (const p of [`/s/${ID}`, "/g", "/r", "/share", "/pay-story", "/secret-santa"]) assert.ok(isPrivatePath(p), p);
+	for (const p of ["/", "/dashboard", "/tools", "/split/dinner", "/shared-costs", "/roadmap"]) assert.ok(!isPrivatePath(p), p);
 });

@@ -184,11 +184,11 @@
 	}
 
 	.btn-primary {
-		@apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-800 active:bg-brand-900 disabled:cursor-not-allowed disabled:bg-ink/10 disabled:text-ink-muted;
+		@apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-on-brand transition-[color,background-color,transform] duration-150 hover:bg-brand-800 active:scale-[0.98] active:bg-brand-900 disabled:cursor-not-allowed disabled:bg-ink/10 disabled:text-ink-muted;
 	}
 
 	.btn-secondary {
-		@apply inline-flex items-center justify-center gap-2 rounded-xl border border-line-strong bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-paper active:bg-line disabled:cursor-not-allowed disabled:opacity-50;
+		@apply inline-flex items-center justify-center gap-2 rounded-xl border border-line-strong bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-[color,background-color,transform] duration-150 hover:bg-paper active:scale-[0.98] active:bg-line disabled:cursor-not-allowed disabled:opacity-50;
 	}
 
 	.btn-ghost {
@@ -199,8 +199,9 @@
 		@apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-ink/5 hover:text-ink;
 	}
 
+	/* Sentence case: small all-caps labels read as shouting and slow scanning. */
 	.label-text {
-		@apply font-sans text-xs font-medium uppercase tracking-[0.06em] text-ink-muted;
+		@apply font-sans text-[13px] font-semibold text-ink-muted;
 	}
 }
 

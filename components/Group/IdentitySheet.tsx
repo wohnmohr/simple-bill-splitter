@@ -48,71 +48,90 @@ export const IdentitySheet = ({ isOpen, group, onJoin, onClaim, onJustLooking, o
 		: undefined;
 	const notJoined = members.filter((m) => !m.joined);
 	const joined = members.filter((m) => m.joined);
+	// People added by name who haven't joined are most likely who's opening the link:
+	// picking yourself comes first, so nobody is counted twice under a new name.
+	const pickFirst = notJoined.length > 0;
+
+	const joinForm = (
+		<form
+			className="rounded-2xl border border-line bg-paper p-4"
+			aria-label="Join with a new name"
+			onSubmit={(e) => {
+				e.preventDefault();
+				if (trimmed && !clash) onJoin(trimmed, identity.id);
+			}}
+		>
+			<div className="flex items-center gap-3">
+				<MemberAvatar person={{ id: identity.id, name: name || identity.name }} size="lg" />
+				<div className="min-w-0 flex-1">
+					<TextInput
+						aria-label="Your name in this group"
+						value={name}
+						onChange={(e) => setName(e.target.value)}
+						maxLength={40}
+						data-autofocus={!pickFirst || undefined}
+					/>
+				</div>
+				<button type="button" onClick={shuffle} className="icon-btn" aria-label="Suggest another anonymous name">
+					<Dices className="h-5 w-5" />
+				</button>
+			</div>
+			<p className="mt-3 flex items-start gap-2 text-sm text-ink-muted">
+				<Lock className="mt-0.5 h-4 w-4 shrink-0 text-positive" />
+				<span>
+					Only people in this group see this name; it&apos;s end-to-end encrypted. Keep the anonymous one or use any
+					name, and change it any time.
+				</span>
+			</p>
+			{clash ? (
+				<div role="alert" className="mt-4 rounded-xl bg-brand-50 p-3">
+					<p className="text-sm font-medium text-brand-900">
+						“{clash.name}” is already in this group. If that&apos;s you on another device, use it here; otherwise pick
+						another name.
+					</p>
+					<div className="mt-2 flex gap-2">
+						<button type="button" onClick={() => onClaim(clash.id)} className="btn-primary !py-2">
+							That&apos;s me
+						</button>
+						<button type="button" onClick={shuffle} className="btn-ghost">
+							Another name
+						</button>
+					</div>
+				</div>
+			) : (
+				<button type="submit" disabled={!trimmed} className={`${pickFirst ? "btn-secondary" : "btn-primary"} mt-4 w-full`}>
+					Join as {trimmed || "…"}
+				</button>
+			)}
+		</form>
+	);
+
+	const claimList = members.length > 0 && (
+		<div className="space-y-3">
+			<p className="label-text">{pickFirst ? "Which one are you?" : "Already in the group?"}</p>
+			{notJoined.length > 0 && <MemberChips label="Not joined yet" people={notJoined} onClaim={onClaim} />}
+			{joined.length > 0 && <MemberChips label="Joined on a device" people={joined} onClaim={onClaim} />}
+			<p className="text-xs text-ink-muted">
+				Joined on another phone? Pick your name, or open your personal link from Share &amp; sync on that phone, so you
+				don&apos;t join twice.
+			</p>
+		</div>
+	);
 
 	return (
 		<Modal isOpen={isOpen} onClose={onClose} title={`Who are you in ${group.name}?`}>
 			<div className="space-y-5 pb-2">
-				<form
-					className="rounded-2xl border border-line bg-paper p-4"
-					onSubmit={(e) => {
-						e.preventDefault();
-						if (trimmed && !clash) onJoin(trimmed, identity.id);
-					}}
-				>
-					<div className="flex items-center gap-3">
-						<MemberAvatar person={{ id: identity.id, name: name || identity.name }} size="lg" />
-						<div className="min-w-0 flex-1">
-							<TextInput
-								aria-label="Your name in this group"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								maxLength={40}
-								data-autofocus
-							/>
-						</div>
-						<button type="button" onClick={shuffle} className="icon-btn" aria-label="Suggest another anonymous name">
-							<Dices className="h-5 w-5" />
-						</button>
-					</div>
-					<p className="mt-3 flex items-start gap-2 text-sm text-ink-muted">
-						<Lock className="mt-0.5 h-4 w-4 shrink-0 text-positive" />
-						<span>
-							Only people in this group see this name; it&apos;s end-to-end encrypted. Keep the anonymous one or use any
-							name, and change it any time.
-						</span>
-					</p>
-					{clash ? (
-						<div role="alert" className="mt-4 rounded-xl bg-brand-50 p-3">
-							<p className="text-sm font-medium text-brand-900">
-								“{clash.name}” is already in this group. If that&apos;s you on another device, use it here; otherwise pick
-								another name.
-							</p>
-							<div className="mt-2 flex gap-2">
-								<button type="button" onClick={() => onClaim(clash.id)} className="btn-primary !py-2">
-									That&apos;s me
-								</button>
-								<button type="button" onClick={shuffle} className="btn-ghost">
-									Another name
-								</button>
-							</div>
-						</div>
-					) : (
-						<button type="submit" disabled={!trimmed} className="btn-primary mt-4 w-full">
-							Join as {trimmed || "…"}
-						</button>
-					)}
-				</form>
-
-				{members.length > 0 && (
-					<div className="space-y-3">
-						<p className="label-text">Already in the group?</p>
-						{notJoined.length > 0 && <MemberChips label="Not joined yet" people={notJoined} onClaim={onClaim} />}
-						{joined.length > 0 && <MemberChips label="Joined on a device" people={joined} onClaim={onClaim} />}
-						<p className="text-xs text-ink-muted">
-							Joined on another phone? Pick your name, or open your personal link from Share &amp; sync on that phone,
-							so you don&apos;t join twice.
-						</p>
-					</div>
+				{pickFirst ? (
+					<>
+						{claimList}
+						<p className="label-text -mb-3">Not on the list?</p>
+						{joinForm}
+					</>
+				) : (
+					<>
+						{joinForm}
+						{claimList}
+					</>
 				)}
 
 				<button type="button" onClick={onJustLooking} className="btn-ghost w-full">
