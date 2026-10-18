@@ -25,3 +25,9 @@ export async function sendViaWhatsApp(text: string): Promise<WhatsAppResult> {
 		return "failed"; // share cancelled, or clipboard blocked
 	}
 }
+
+/** "Hi Riya, <about>: you owe me ₹400.", the payee's UPI ID if known, then the link to see it and pay. */
+export const oweMessage = (name: string, about: string, owed: string, url: string, upiId?: string) =>
+	[`Hi ${name}, ${about}: you owe me ${owed}.`, upiId ? `UPI: ${upiId}` : "", `See it and pay here: ${url}`]
+		.filter(Boolean)
+		.join("\n");

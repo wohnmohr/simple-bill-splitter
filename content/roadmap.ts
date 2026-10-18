@@ -42,6 +42,7 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "Split your first bill straight away: the group is made around it, with you in it", href: "/dashboard" },
 			{ title: "Alerts when someone adds an expense to a shared group, sent without revealing what changed", href: "/features#sync" },
 			{ title: "Back up your groups, end-to-end encrypted, with a recovery link only you hold", href: "/dashboard" },
 			{ title: "Split by shares (2:1:1)", href: "/features#expenses" },
@@ -53,6 +54,7 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 			{ title: "Close a group when everyone is settled, and start the next one with the same people", href: "/features#groups" },
 			{ title: "Suggestions for expenses you add often, and a warning for likely duplicates", href: "/features#expenses" },
 			{ title: "Monthly expenses for rent, Wi-Fi and subscriptions", href: "/features#expenses" },
+			{ title: "After your first expense, send each friend what they owe with their own private link", href: "/features#sync" },
 			{ title: "Payment reminders that open the group on what you owe", href: "/features#sync" },
 			{ title: "Scan Swiggy, Zomato and Instamart screenshots (beta)", href: "/split-swiggy-zomato-bill" },
 			{ title: "Split a bill item by item", href: "/split-swiggy-zomato-bill" },

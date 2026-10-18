@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "@mantine/hooks";
-import { ChevronLeft, Link2, Plus, UserPlus } from "lucide-react";
+import { Link2, Plus, UserPlus } from "lucide-react";
 import { Tab, Currency, Expense, Group, Settlement, SplitChoice } from "@/types";
 import { DEFAULT_CURRENCY } from "@/constants";
 import { calculateBalances, calculateSettlements, enteredWeights, splitChoice } from "@/utils/calculations";
@@ -41,6 +41,7 @@ import { consumeOpenOnSettleUp } from "@/utils/shareImport";
 import { parseQuickAdd, resolveQuickAdd, type QuickResolved } from "@/utils/quickAdd";
 import { applyQuickAdd } from "@/utils/quickAddSave";
 import { takeQuickAdd } from "@/utils/quickAddHandoff";
+import { firstExpense, type FirstExpenseInput } from "@/utils/firstExpense";
 import { QuickAddBox } from "@/components/QuickAdd/QuickAddBox";
 import { QuickAddPreview } from "@/components/QuickAdd/QuickAddPreview";
 
@@ -213,6 +214,12 @@ export default function Home() {
 		setQuickAddSaves((n) => n + 1);
 	};
 
+	// The first run's form: the group is made around its first expense, named after it.
+	const handleFirstExpense = (input: FirstExpenseInput) => {
+		const ok = createGroup(input.description || "Shared expenses", DEFAULT_CURRENCY, (g) => applyQuickAdd(g, firstExpense(input)));
+		if (ok) track("first_expense_added", { participant_count: input.others.length + 1 });
+	};
+
 	const handleAddMember = (memberName: string, upiId?: string) => {
 		const id = addMember(memberName, upiId);
 		if (id) track("dashboard_member_added");
@@ -371,6 +378,7 @@ export default function Home() {
 					<GroupsSkeleton />
 				) : groups.length === 0 ? (
 					<EmptyGroupState
+						onFirstExpense={handleFirstExpense}
 						onCreateGroup={() => setShowGroupForm(true)}
 						quickAdd={<QuickAddBox key={quickAddSaves} label="Describe a shared expense" onSubmit={(t) => handleQuickAdd(t, true)} />}
 					/>
@@ -385,29 +393,21 @@ export default function Home() {
 					/>
 				) : (
 					<>
-					<button
-						onClick={() => setSelectedGroupId(null)}
-						className="btn-ghost -ml-2.5 mb-2"
-					>
-						<ChevronLeft className="h-4 w-4" />
-						All groups
-					</button>
 					<div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
 					<div className="min-w-0">
-						<GroupSelector
-							groups={groups}
-							selectedGroupId={selectedGroupId}
-							onSelectGroup={setSelectedGroupId}
-							onDeleteGroup={handleDeleteGroup}
-							onManageMembers={() => setShowMembersModal(true)}
-							onShare={() => setShowSync(true)}
-							onTheme={() => setShowTheme(true)}
-							syncStatus={currentGroup ? sync.status[currentGroup.id] : undefined}
-							onChangeMe={() => setIdentityAsk("pick")}
-						/>
-
 						{currentGroup && (
 							<>
+								<GroupSelector
+									group={currentGroup}
+									onBack={() => setSelectedGroupId(null)}
+									onDeleteGroup={handleDeleteGroup}
+									onManageMembers={() => setShowMembersModal(true)}
+									onShare={() => setShowSync(true)}
+									onTheme={() => setShowTheme(true)}
+									syncStatus={sync.status[currentGroup.id]}
+									onChangeMe={() => setIdentityAsk("pick")}
+								/>
+
 								{currentGroup.members.length === 0 && (
 									<div className="surface px-6 py-10 text-center">
 										<p className="font-semibold text-ink">Who&apos;s in this group?</p>
@@ -430,11 +430,14 @@ export default function Home() {
 
 								{currentGroup.members.length > 0 && (
 									<>
-										{!currentGroup.sync &&
-											!currentGroup.closedAt &&
+										{!currentGroup.closedAt &&
 											currentGroup.members.length > 1 &&
 											expenses.some((e) => e.kind !== "payment") && (
-												<InviteNudge groupId={currentGroup.id} onInvite={startInvite} />
+												<InviteNudge
+													group={currentGroup}
+													shareLink={async () => currentGroup.sync ?? sync.enableSync(currentGroup)}
+													onInvite={startInvite}
+												/>
 											)}
 
 										{currentGroup.closedAt && <div className="mb-3">{tripCard}</div>}
@@ -460,6 +463,7 @@ export default function Home() {
 												<QuickAddBox
 													key={quickAddSaves}
 													label="Add an expense by typing it"
+													compact
 													memberNames={people.filter((p) => p.id !== currentGroup?.meId).map((p) => p.name)}
 													onSubmit={(t) => handleQuickAdd(t, false)}
 												/>
