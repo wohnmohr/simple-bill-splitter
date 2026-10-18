@@ -71,6 +71,7 @@ export type AnalyticsEvent =
 	| "group_personal_link_copied"
 	| "invite_nudge_shown"
 	| "invite_nudge_clicked"
+	| "invite_nudge_sent"
 	| "invite_nudge_dismissed"
 	| "install_prompt_shown"
 	| "install_prompt_clicked"

@@ -430,11 +430,14 @@ export default function Home() {
 
 								{currentGroup.members.length > 0 && (
 									<>
-										{!currentGroup.sync &&
-											!currentGroup.closedAt &&
+										{!currentGroup.closedAt &&
 											currentGroup.members.length > 1 &&
 											expenses.some((e) => e.kind !== "payment") && (
-												<InviteNudge groupId={currentGroup.id} onInvite={startInvite} />
+												<InviteNudge
+													group={currentGroup}
+													shareLink={async () => currentGroup.sync ?? sync.enableSync(currentGroup)}
+													onInvite={startInvite}
+												/>
 											)}
 
 										{currentGroup.closedAt && <div className="mb-3">{tripCard}</div>}
