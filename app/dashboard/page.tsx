@@ -41,6 +41,7 @@ import { consumeOpenOnSettleUp } from "@/utils/shareImport";
 import { parseQuickAdd, resolveQuickAdd, type QuickResolved } from "@/utils/quickAdd";
 import { applyQuickAdd } from "@/utils/quickAddSave";
 import { takeQuickAdd } from "@/utils/quickAddHandoff";
+import { firstExpense, type FirstExpenseInput } from "@/utils/firstExpense";
 import { QuickAddBox } from "@/components/QuickAdd/QuickAddBox";
 import { QuickAddPreview } from "@/components/QuickAdd/QuickAddPreview";
 
@@ -213,6 +214,12 @@ export default function Home() {
 		setQuickAddSaves((n) => n + 1);
 	};
 
+	// The first run's form: the group is made around its first expense, named after it.
+	const handleFirstExpense = (input: FirstExpenseInput) => {
+		const ok = createGroup(input.description || "Shared expenses", DEFAULT_CURRENCY, (g) => applyQuickAdd(g, firstExpense(input)));
+		if (ok) track("first_expense_added", { participant_count: input.others.length + 1 });
+	};
+
 	const handleAddMember = (memberName: string, upiId?: string) => {
 		const id = addMember(memberName, upiId);
 		if (id) track("dashboard_member_added");
@@ -371,6 +378,7 @@ export default function Home() {
 					<GroupsSkeleton />
 				) : groups.length === 0 ? (
 					<EmptyGroupState
+						onFirstExpense={handleFirstExpense}
 						onCreateGroup={() => setShowGroupForm(true)}
 						quickAdd={<QuickAddBox key={quickAddSaves} label="Describe a shared expense" onSubmit={(t) => handleQuickAdd(t, true)} />}
 					/>

@@ -7,7 +7,8 @@ import type { QuickResolved } from "@/utils/quickAdd";
 /**
  * Adds a confirmed quick-add preview to a group: the new people who are in an
  * expense become members, and the expenses are saved the way the expense form
- * saves them. If the person typing was new to the group, they become its "me".
+ * saves them. If the person typing was new to the group, they become its "me"
+ * and are marked joined.
  */
 export function applyQuickAdd(group: Group, quick: QuickResolved, now = Date.now()): Group {
 	const used = new Set(quick.expenses.flatMap((e) => [e.paidBy, ...e.participants]));
@@ -17,7 +18,8 @@ export function applyQuickAdd(group: Group, quick: QuickResolved, now = Date.now
 		if (!p.isNew || !used.has(p.key)) continue;
 		const id = newId("person");
 		ids.set(p.key, id);
-		added.push({ id, name: p.name.trim().slice(0, 40) });
+		// The person typing is here on this device, so they count as joined.
+		added.push({ id, name: p.name.trim().slice(0, 40), ...(p.isMe ? { joined: true as const } : {}) });
 	}
 	const id = (key: string) => ids.get(key)!;
 	const byId = (weights: Record<string, number>) => Object.fromEntries(Object.entries(weights).map(([k, v]) => [id(k), v]));
