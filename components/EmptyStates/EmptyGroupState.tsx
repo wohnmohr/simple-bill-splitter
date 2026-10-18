@@ -1,59 +1,108 @@
-import type { ReactNode } from "react";
-import { Plus } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { NumberInput, TextInput } from "@mantine/core";
+import { DEFAULT_CURRENCY } from "@/constants";
+import { formatCurrency } from "@/utils/formatting";
+import { splitNames, type FirstExpenseInput } from "@/utils/firstExpense";
 
 interface EmptyGroupStateProps {
+	/** Saves the first expense; the group is made around it. */
+	onFirstExpense: (expense: FirstExpenseInput) => void;
+	/** An empty group, for setting up a trip before anyone has paid. */
 	onCreateGroup: () => void;
 	/** Start the group by typing an expense. */
 	quickAdd: ReactNode;
 }
 
-const STEPS = [
-	["Create a group", "A trip, a flat, a dinner — anything shared."],
-	["Add who paid what", "Split equally, by percentage or exact amounts."],
-	["Settle in fewest payments", "One-tap UPI links for every transfer."],
-] as const;
+/**
+ * The first run is the first expense: amount, what for, who. The group comes
+ * with it, so nobody has to name and set up a group before splitting anything.
+ */
+export const EmptyGroupState = ({ onFirstExpense, onCreateGroup, quickAdd }: EmptyGroupStateProps) => {
+	const [amount, setAmount] = useState<number | "">("");
+	const [description, setDescription] = useState("");
+	const [myName, setMyName] = useState("");
+	const [othersText, setOthersText] = useState("");
+	const [typing, setTyping] = useState(false);
 
-export const EmptyGroupState = ({ onCreateGroup, quickAdd }: EmptyGroupStateProps) => {
+	const others = splitNames(othersText, myName);
+	const total = amount || 0;
+	const ready = total > 0 && !!myName.trim() && others.length > 0;
+
 	return (
-		<section className="surface p-6 sm:p-8 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:p-12">
-			<div>
-				<h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-semibold text-ink">
-					Split your first bill
-				</h1>
-				<p className="mt-2 max-w-md text-ink-soft">
-					No signup. Everything stays on this device until you choose to share it.
-				</p>
-				<div className="mt-5 max-w-md">
-					{quickAdd}
-					<p className="mt-2 text-sm text-ink-muted">Type it like a message, or create a group step by step.</p>
-				</div>
-			</div>
+		<section className="surface mx-auto max-w-lg p-6 sm:p-8">
+			<h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink">Split your first bill</h1>
+			<p className="mt-2 text-ink-soft">No signup. Nothing leaves this phone until you share it.</p>
 
-			<ol className="mt-6 space-y-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0 lg:self-center lg:rounded-2xl lg:bg-paper lg:p-6">
-				{STEPS.map(([title, body], i) => (
-					<li key={title} className="flex gap-3">
-						<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line-strong text-sm font-semibold tabular-nums text-ink-soft">
-							{i + 1}
-						</span>
-						<span>
-							<span className="block font-semibold text-ink">{title}</span>
-							<span className="block text-sm text-ink-muted">{body}</span>
-						</span>
-					</li>
-				))}
-			</ol>
-
-			<button
-				onClick={onCreateGroup}
-				className="btn-primary mt-7 w-full sm:w-auto lg:self-start lg:justify-self-start !px-6 !py-3 !text-base"
+			<form
+				className="mt-5 flex flex-col gap-4"
+				onSubmit={(e) => {
+					e.preventDefault();
+					if (ready) onFirstExpense({ amount: total, description: description.trim(), myName: myName.trim(), others });
+				}}
 			>
-				<Plus className="h-4 w-4" />
-				Create a group
-			</button>
+				<NumberInput
+					label="Amount"
+					value={amount}
+					onChange={(v) => setAmount(typeof v === "number" ? v : "")}
+					placeholder="0"
+					min={0}
+					decimalScale={2}
+					thousandSeparator=","
+					thousandsGroupStyle="lakh"
+					hideControls
+					inputMode="decimal"
+					size="lg"
+					leftSection={<span className="text-2xl font-semibold text-ink-muted" aria-hidden>{DEFAULT_CURRENCY.symbol}</span>}
+					leftSectionWidth={44}
+					classNames={{ input: "!text-2xl !font-semibold !tabular-nums" }}
+				/>
+				<TextInput
+					label="What for"
+					value={description}
+					onChange={(e) => setDescription(e.target.value)}
+					placeholder="Dinner, Goa trip, rent"
+					maxLength={60}
+				/>
+				<div className="grid grid-cols-2 gap-3">
+					<TextInput
+						label="Paid by (you)"
+						value={myName}
+						onChange={(e) => setMyName(e.target.value)}
+						placeholder="Your name"
+						autoComplete="given-name"
+						maxLength={40}
+					/>
+					<TextInput
+						label="Split with"
+						value={othersText}
+						onChange={(e) => setOthersText(e.target.value)}
+						placeholder="Riya, Kabir"
+						autoCapitalize="words"
+					/>
+				</div>
+				<button type="submit" disabled={!ready} className="btn-primary w-full !py-3 !text-base">
+					{ready
+						? `Split ${formatCurrency(total, DEFAULT_CURRENCY)} · ${formatCurrency(total / (others.length + 1), DEFAULT_CURRENCY)} each`
+						: "Split it"}
+				</button>
+			</form>
 
-			<p className="mt-4 text-sm text-ink-muted lg:col-start-1">
-				Had groups on another phone? Open your recovery link here to bring them back.
-			</p>
+			<div className="mt-6 border-t border-line pt-5">
+				{typing ? (
+					quickAdd
+				) : (
+					<button type="button" onClick={() => setTyping(true)} className="font-medium text-brand-700 hover:underline">
+						Or type it like a message
+					</button>
+				)}
+				<p className="mt-3 text-sm text-ink-muted">
+					Planning ahead?{" "}
+					<button type="button" onClick={onCreateGroup} className="font-medium text-brand-700 hover:underline">
+						Create an empty group
+					</button>
+					. Had groups on another phone? Open your recovery link here.
+				</p>
+			</div>
 		</section>
 	);
 };

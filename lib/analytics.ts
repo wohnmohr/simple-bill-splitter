@@ -18,6 +18,7 @@ export type AnalyticsEvent =
 	| "share_imported_to_app"
 	| "share_import_failed"
 	| "dashboard_group_created"
+	| "first_expense_added"
 	| "group_closed"
 	| "group_reopened"
 	| "group_next_started"

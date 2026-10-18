@@ -42,6 +42,7 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "Split your first bill straight away: the group is made around it, with you in it", href: "/dashboard" },
 			{ title: "Alerts when someone adds an expense to a shared group, sent without revealing what changed", href: "/features#sync" },
 			{ title: "Back up your groups, end-to-end encrypted, with a recovery link only you hold", href: "/dashboard" },
 			{ title: "Split by shares (2:1:1)", href: "/features#expenses" },
