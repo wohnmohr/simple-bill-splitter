@@ -5,8 +5,12 @@ import { SiteNav } from "@/components/Landing/SiteNav";
 import { SiteFooter } from "@/components/Landing/SiteFooter";
 import { PromoVideo } from "@/components/Landing/PromoVideo";
 import { HeroQuickAdd } from "@/components/Landing/HeroQuickAdd";
+import { UpiQr } from "@/components/Settlements/UpiQr";
 import { ALL_TOOL_SLUGS } from "@/content/tools";
 import { SPLIT_TTL_DAYS } from "@/utils/splitCloud";
+
+// Bills get split at the table, on a phone with UPI apps; desktop visitors scan to continue there.
+const PHONE_APP_URL = "https://splitbiller.com/dashboard?utm_source=desktop_qr";
 
 const PROMISES = [
 	{ icon: Scale, title: "Who owes whom, in seconds", body: "Split equally, by percentage or exact amounts, and settle in the fewest payments." },
@@ -116,6 +120,14 @@ export const LandingPage = () => {
 						>
 							Or open the app and add people first <ArrowRight className="h-4 w-4" />
 						</TrackedLink>
+						<div className="mt-8 hidden items-center gap-4 lg:flex">
+							<UpiQr link={PHONE_APP_URL} label="QR code that opens SplitBiller on your phone" className="h-24 w-24" />
+							<p className="text-sm text-ink-muted">
+								<span className="font-medium text-ink">Splitting at the table?</span>
+								<br />
+								Scan to open SplitBiller on your phone, next to your UPI apps.
+							</p>
+						</div>
 					</div>
 					<SettlementPreview />
 				</div>
