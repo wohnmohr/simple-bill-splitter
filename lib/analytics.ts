@@ -16,6 +16,7 @@ export type AnalyticsEvent =
 	| "share_link_opened"
 	| "share_link_decode_failed"
 	| "share_imported_to_app"
+	| "share_identity_chosen"
 	| "share_import_failed"
 	| "dashboard_group_created"
 	| "first_expense_added"
