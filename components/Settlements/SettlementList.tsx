@@ -18,11 +18,10 @@ interface SettlementListProps {
 	currency: Currency;
 	groupName?: string;
 	expenses?: Expense[];
-	/** Hide share and ledger controls (e.g. already on a shared view) */
-	readOnly?: boolean;
 	/** Allow adding/editing UPI IDs from settlement cards */
 	onUpdateMemberUpi?: (personId: string, upiId: string) => void;
-	/** Who is holding this device. undefined = not asked, null = just viewing. */
+	/** Who is holding this device. undefined = not asked, null = just viewing.
+	 * With onSetMe but no onRecordPayment (a shared link), it shows "you pay X" first without the ledger buttons. */
 	meId?: string | null;
 	onSetMe?: (personId: string | null | undefined) => void;
 	onRecordPayment?: (settlement: Settlement) => void;
@@ -45,7 +44,6 @@ export const SettlementList = ({
 	currency,
 	groupName = "Split",
 	expenses = [],
-	readOnly = false,
 	onUpdateMemberUpi,
 	meId: storedMeId,
 	onSetMe,
@@ -61,8 +59,8 @@ export const SettlementList = ({
 	const getPersonName = (personId: string) =>
 		getPerson(personId)?.name || "Unknown";
 
-	const isLedger = !readOnly && !!onRecordPayment;
-	const canShare = !readOnly && expenses.length > 0 && people.length > 0;
+	const canRecord = !!onRecordPayment;
+	const canShare = canRecord && expenses.length > 0 && people.length > 0;
 	const showUpi = currency.code === "INR";
 	const me = meId ? getPerson(meId) : undefined;
 	const paymentCount = expenses.filter((e) => e.kind === "payment").length;
@@ -101,13 +99,13 @@ export const SettlementList = ({
 	};
 
 	// ── Identity ────────────────────────────────────────────────
-	const identityPicker = isLedger && meId === undefined && onSetMe && (
+	const identityPicker = meId === undefined && onSetMe && (
 		<section className="surface p-4 sm:p-5" aria-labelledby="who-are-you">
 			<h2 id="who-are-you" className="font-semibold text-ink">
 				Which one are you?
 			</h2>
 			<p className="mt-0.5 text-sm text-ink-muted">
-				We&apos;ll put what you owe or are owed first. Saved on this device only.
+				We&apos;ll put what you owe or are owed first.{canRecord && " Saved on this device only."}
 			</p>
 			<div className="mt-3 flex flex-wrap gap-2">
 				{people.map((p) => (
@@ -132,7 +130,7 @@ export const SettlementList = ({
 		</section>
 	);
 
-	const viewingAs = isLedger && meId !== undefined && onSetMe && (
+	const viewingAs = meId !== undefined && onSetMe && (
 		<p className="px-1 text-sm text-ink-muted">
 			{me ? (
 				<>
@@ -201,30 +199,6 @@ export const SettlementList = ({
 					</section>
 				)}
 			</div>
-		);
-	}
-
-	// ── Read-only (shared link view) ────────────────────────────
-	if (!isLedger) {
-		return (
-			<ul className="space-y-2.5">
-				{settlements.map((s) => (
-					<li key={`${s.from}-${s.to}`} className="surface p-4">
-						<SettlementLine s={s} currency={currency} name={getPersonName} />
-						{showUpi && (
-							<div className="mt-3 border-t border-line pt-3">
-								<UpiSettlementActions
-									settlement={s}
-									from={getPerson(s.from)}
-									to={getPerson(s.to)}
-									currency={currency}
-									groupName={groupName}
-								/>
-							</div>
-						)}
-					</li>
-				))}
-			</ul>
 		);
 	}
 
@@ -333,7 +307,7 @@ export const SettlementList = ({
 										}}
 									/>
 								)}
-								{!(askConfirm && sameSettlement(pending, s)) && (
+								{canRecord && !(askConfirm && sameSettlement(pending, s)) && (
 									<button
 										type="button"
 										onClick={() => markPaid(s, "hero")}
@@ -343,9 +317,9 @@ export const SettlementList = ({
 										{showUpi && getPerson(s.to)?.upiId ? "Already paid? Mark as paid" : "Mark as paid"}
 									</button>
 								)}
-								{confirmPrompt(s)}
+								{canRecord && confirmPrompt(s)}
 							</div>
-						) : (
+						) : canRecord ? (
 							<div className="mt-4 grid grid-cols-2 gap-2">
 								<button type="button" onClick={() => remind(s)} className="btn-secondary !py-2.5">
 									{remindCopied === s.from ? <Check className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
@@ -360,7 +334,7 @@ export const SettlementList = ({
 									Mark received
 								</button>
 							</div>
-						)}
+						) : null}
 					</section>
 				);
 			})}
@@ -388,25 +362,29 @@ export const SettlementList = ({
 								<div className="min-w-0 flex-1">
 									<SettlementLine s={s} currency={currency} name={getPersonName} compact />
 								</div>
-								<button
-									type="button"
-									onClick={() => markPaid(s, "row")}
-									className="btn-ghost shrink-0 !px-2.5 text-brand-700"
-									aria-label={`Mark ${getPersonName(s.from)}'s payment to ${getPersonName(s.to)} as paid`}
-								>
-									<Check className="h-4 w-4" />
-									Paid
-								</button>
+								{canRecord && (
+									<button
+										type="button"
+										onClick={() => markPaid(s, "row")}
+										className="btn-ghost shrink-0 !px-2.5 text-brand-700"
+										aria-label={`Mark ${getPersonName(s.from)}'s payment to ${getPersonName(s.to)} as paid`}
+									>
+										<Check className="h-4 w-4" />
+										Paid
+									</button>
+								)}
 							</li>
 						))}
 					</ul>
 				</section>
 			)}
 
-			<p className="px-1 text-xs text-ink-muted">
-				Marking a payment paid is a note for the group — SplitBiller never sees
-				or verifies money.
-			</p>
+			{canRecord && (
+				<p className="px-1 text-xs text-ink-muted">
+					Marking a payment paid is a note for the group — SplitBiller never sees
+					or verifies money.
+				</p>
+			)}
 
 			{canShare && (
 				<section className="surface p-4 sm:p-5">

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 
-/** Renders a UPI intent as a QR any phone's UPI app can scan. */
+/** Renders a link (a UPI intent, or a page to open) as a QR any phone can scan. */
 export const UpiQr = ({
 	link,
 	label,

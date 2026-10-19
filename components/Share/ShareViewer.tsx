@@ -33,6 +33,8 @@ export const ShareViewer = () => {
 	const [state, setState] = useState<LoadState>({ status: "loading" });
 	const [importError, setImportError] = useState<string | null>(null);
 	const [importing, setImporting] = useState(false);
+	// Who opened the link, so what they owe comes first. Not saved: the link is the same for everyone.
+	const [meId, setMeId] = useState<string | null | undefined>(undefined);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -160,12 +162,35 @@ export const ShareViewer = () => {
 				</p>
 			</div>
 
+			<section className="space-y-2">
+				<h2 className="label-text px-1">Who pays whom</h2>
+				{settlements.length === 0 ? (
+					<div className="surface p-6 text-center">
+						<Check className="h-10 w-10 mx-auto mb-2 text-positive" />
+						<p className="font-semibold text-ink-soft">All settled up</p>
+					</div>
+				) : (
+					<SettlementList
+						settlements={settlements}
+						people={snapshot.members}
+						currency={snapshot.currency}
+						groupName={snapshot.name}
+						expenses={snapshot.expenses}
+						meId={meId}
+						onSetMe={(id) => {
+							setMeId(id);
+							if (id !== undefined) track("share_identity_chosen", { is_member: id !== null });
+						}}
+					/>
+				)}
+			</section>
+
 			<div className="surface p-4 sm:p-5 space-y-3">
 				<button
 					type="button"
 					onClick={handleOpenInApp}
 					disabled={importing}
-					className="btn-primary w-full !py-3.5 !text-base"
+					className="btn-secondary w-full !py-3"
 				>
 					{importing ? (
 						<>
@@ -187,25 +212,6 @@ export const ShareViewer = () => {
 					uploaded.
 				</p>
 			</div>
-
-			<section className="space-y-2">
-				<h2 className="label-text px-1">Who pays whom</h2>
-				{settlements.length === 0 ? (
-					<div className="surface p-6 text-center">
-						<Check className="h-10 w-10 mx-auto mb-2 text-positive" />
-						<p className="font-semibold text-ink-soft">All settled up</p>
-					</div>
-				) : (
-					<SettlementList
-						settlements={settlements}
-						people={snapshot.members}
-						currency={snapshot.currency}
-						groupName={snapshot.name}
-						expenses={snapshot.expenses}
-						readOnly
-					/>
-				)}
-			</section>
 
 			<section className="space-y-2">
 				<h2 className="label-text px-1">Balances</h2>
