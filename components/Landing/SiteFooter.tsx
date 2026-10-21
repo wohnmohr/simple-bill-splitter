@@ -4,6 +4,9 @@ import { LogoMark } from "@/components/UI/LogoMark";
 const PH_ICON =
 	"https://ph-files.imgix.net/e82f50fe-9e12-48be-b029-948fa71563cd.png?auto=compress,format&codec=mozjpeg&cs=strip&fit=crop&h=32&w=32";
 
+const DEVHUB_BADGE =
+	"https://r2.direasy-multi-tenant.focusapps.app/uploads/616d0b1a-3979-4b8c-94d1-b4f1fedd3ead/1783239702078/53yqmim54zv/featured-on-light.svg";
+
 const LINKS: [string, string][] = [
 	["/dashboard", "Open the app"],
 	["/features", "Features"],
@@ -38,9 +41,16 @@ export const SiteFooter = () => (
 						href="https://devhub.best/projects/splitbiller?utm_source=badge"
 						target="_blank"
 						rel="noopener noreferrer"
-						className="btn-secondary !py-2"
 					>
-						Featured on DevHub
+						<img
+							src={DEVHUB_BADGE}
+							alt="Featured on DevHub"
+							height={44}
+							loading="lazy"
+							decoding="async"
+							referrerPolicy="no-referrer"
+							className="h-11 w-auto"
+						/>
 					</a>
 				</div>
 			</div>
