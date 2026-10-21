@@ -24,15 +24,25 @@ export const SiteFooter = () => (
 					<span className="font-display text-lg font-semibold text-ink">SplitBiller</span>
 				</Link>
 				<p className="mt-3 max-w-xs text-sm text-ink-muted">Split bills in ₹ and settle with UPI. No signup, no app download.</p>
-				<a
-					href="https://www.producthunt.com/products/split-biller?utm_source=badge&utm_medium=embed"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="btn-secondary mt-4 !py-2"
-				>
-					<img src={PH_ICON} alt="" width={16} height={16} loading="lazy" decoding="async" className="h-4 w-4 rounded" />
-					Find us on Product Hunt
-				</a>
+				<div className="mt-4 flex flex-wrap gap-2">
+					<a
+						href="https://www.producthunt.com/products/split-biller?utm_source=badge&utm_medium=embed"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="btn-secondary !py-2"
+					>
+						<img src={PH_ICON} alt="" width={16} height={16} loading="lazy" decoding="async" className="h-4 w-4 rounded" />
+						Find us on Product Hunt
+					</a>
+					<a
+						href="https://devhub.best/projects/splitbiller?utm_source=badge"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="btn-secondary !py-2"
+					>
+						Featured on DevHub
+					</a>
+				</div>
 			</div>
 			<nav aria-label="Footer">
 				<ul className="grid grid-cols-2 gap-x-10 gap-y-1 sm:grid-cols-3 md:grid-cols-1">
