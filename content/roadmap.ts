@@ -42,6 +42,9 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "Add everyone at once: type their names separated by commas", href: "/dashboard" },
+			{ title: "Joining a group opens on what you owe, and every expense shows your share", href: "/features#sync" },
+			{ title: "Mark all payments paid in one tap, with one Undo", href: "/features#settle" },
 			{ title: "Open a shared summary and see what you pay first, with a UPI button", href: "/features#sync" },
 			{ title: "Split your first bill straight away: the group is made around it, with you in it", href: "/dashboard" },
 			{ title: "Alerts when someone adds an expense to a shared group, sent without revealing what changed", href: "/features#sync" },
