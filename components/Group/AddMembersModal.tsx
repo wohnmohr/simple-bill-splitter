@@ -5,12 +5,14 @@ import { Modal } from "@/components/UI/Modal";
 import { MemberAvatar } from "@/components/Group/MemberAvatar";
 import { Group, Person } from "@/types";
 import { isValidUpiId } from "@/utils/upi";
+import { splitNames } from "@/utils/firstExpense";
 
 interface AddMembersModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	group: Group;
-	onAddMember: (name: string, upiId?: string) => void;
+	/** Adds everyone typed, in order ("Riya, Kabir and Meera" is three people). */
+	onAddMembers: (names: string[], upiId?: string) => void;
 	onUpdateMemberUpi?: (personId: string, upiId: string) => void;
 	/** Renames a member for everyone. */
 	onRenameMember: (personId: string, name: string) => void;
@@ -28,7 +30,7 @@ export const AddMembersModal = ({
 	isOpen,
 	onClose,
 	group,
-	onAddMember,
+	onAddMembers,
 	onUpdateMemberUpi,
 	onRenameMember,
 	onSetNickname,
@@ -48,9 +50,14 @@ export const AddMembersModal = ({
 		setEditing(null);
 	};
 
+	const isInr = group.currency.code === "INR";
+	const names = splitNames(memberName);
+	// A UPI ID belongs to one person, so it's asked for only while one name is typed.
+	const askUpi = isInr && names.length <= 1;
+
 	const handleSubmit = () => {
-		if (memberName.trim() && !upiError(memberUpi)) {
-			onAddMember(memberName.trim(), memberUpi.trim() || undefined);
+		if (names.length && !(askUpi && upiError(memberUpi))) {
+			onAddMembers(names, askUpi ? memberUpi.trim() || undefined : undefined);
 			setMemberName("");
 			setMemberUpi("");
 			// Keep the flow fast: ready for the next name.
@@ -65,7 +72,6 @@ export const AddMembersModal = ({
 		onClose();
 	};
 
-	const isInr = group.currency.code === "INR";
 	// Same rule as Settle up: a UPI ID is handle@bank.
 	const upiError = (value: string) =>
 		value.trim() && !isValidUpiId(value)
@@ -88,11 +94,11 @@ export const AddMembersModal = ({
 						aria-label="Name"
 						value={memberName}
 						onChange={(e) => setMemberName(e.target.value)}
-						placeholder={group.members.length === 0 ? "Your name" : "Name"}
+						placeholder={group.members.length === 0 ? "Your name, then everyone else" : "Name, or several: Riya, Kabir"}
 						data-autofocus
-						maxLength={40}
+						maxLength={400}
 					/>
-					{isInr && (
+					{askUpi && (
 						<TextInput
 							aria-label="UPI ID (optional)"
 							value={memberUpi}
@@ -106,11 +112,11 @@ export const AddMembersModal = ({
 					)}
 					<button
 						type="submit"
-						disabled={!memberName.trim() || !!newUpiError}
+						disabled={!names.length || (askUpi && !!newUpiError)}
 						className="btn-primary w-full"
 					>
 						<Plus className="h-4 w-4" />
-						Add member
+						{names.length > 1 ? `Add ${names.length} people` : "Add member"}
 					</button>
 				</form>
 
