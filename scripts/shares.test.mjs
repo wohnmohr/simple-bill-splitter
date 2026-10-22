@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { register } from "node:module";
 register("./fixtures/alias.mjs", import.meta.url);
-const { calculateBalances, enteredWeights, sharesToAmounts, splitChoice, splitFields } = await import("../utils/calculations.ts");
+const { calculateBalances, enteredWeights, expenseShares, sharesToAmounts, splitChoice, splitFields } = await import("../utils/calculations.ts");
 const { applyOp, emptyState, groupAsChanges, materialize } = await import("../utils/groupOps.ts");
 
 const people = [
@@ -29,6 +29,14 @@ test("2:1:1 becomes exact amounts that add up", () => {
 
 test("someone with no share isn't charged", () => {
 	assert.deepEqual(sharesToAmounts({ p1: 2, p2: 0, p3: 1 }, 300), { p1: 200, p3: 100 });
+});
+
+test("each person's part is what their expense row shows as their share", () => {
+	const shares = expenseShares(villa({ p1: 2, p2: 1, p3: 1 }));
+	assert.equal(shares.get("p2"), 1000);
+	assert.equal(shares.get("p1"), 2000);
+	assert.equal(shares.get("p4"), undefined, "someone not in it has no share");
+	assert.equal(expenseShares({ id: "e2", amount: 900, paidBy: "p1", participants: ["p1", "p2", "p3"] }).get("p3"), 300);
 });
 
 test("stored as an exact split, so older versions still add up", () => {
