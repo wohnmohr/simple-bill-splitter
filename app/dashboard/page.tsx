@@ -124,14 +124,17 @@ export default function Home() {
 
 	const nameOf = (id: string) => people.find((p) => p.id === id)?.name || "Unknown";
 
-	const handleRecordPayment = (s: Settlement) => {
-		const id = recordPayment(s.from, s.to, s.amount);
-		if (!id) return;
+	const handleRecordPayments = (list: Settlement[]) => {
+		const ids = list.flatMap((s) => recordPayment(s.from, s.to, s.amount) ?? []);
+		if (!ids.length) return;
+		const [s] = list;
 		setToast({
 			id: Date.now(),
-			message: `${nameOf(s.from)} paid ${nameOf(s.to)} ${formatCurrency(s.amount, currency)}`,
+			message: list.length === 1
+				? `${nameOf(s.from)} paid ${nameOf(s.to)} ${formatCurrency(s.amount, currency)}`
+				: `${list.length} payments marked paid`,
 			actionLabel: "Undo",
-			onAction: () => deleteExpense(id),
+			onAction: () => ids.forEach((id) => deleteExpense(id)),
 		});
 	};
 
@@ -500,7 +503,7 @@ export default function Home() {
 												sharePeople={currentGroup.members}
 												syncLink={currentGroup.sync}
 												onSetMe={(id) => setGroupMe(currentGroup.id, id)}
-												onRecordPayment={handleRecordPayment}
+												onRecordPayment={handleRecordPayments}
 												settledSlot={
 													<>
 													{!currentGroup.closedAt && expenses.some((e) => e.kind !== "payment") && tripCard}
