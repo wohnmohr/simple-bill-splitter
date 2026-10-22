@@ -24,7 +24,8 @@ interface SettlementListProps {
 	 * With onSetMe but no onRecordPayment (a shared link), it shows "you pay X" first without the ledger buttons. */
 	meId?: string | null;
 	onSetMe?: (personId: string | null | undefined) => void;
-	onRecordPayment?: (settlement: Settlement) => void;
+	/** Records these payments as made (one, or "Mark all paid"). */
+	onRecordPayment?: (settlements: Settlement[]) => void;
 	/** Shown under the "settled" finish, e.g. a request for a review. */
 	settledSlot?: React.ReactNode;
 	/** Names for share links when `people` carries this device's private nicknames. */
@@ -94,7 +95,7 @@ export const SettlementList = ({
 	}, [settlements, pending]);
 
 	const markPaid = (s: Settlement, source: string) => {
-		onRecordPayment?.(s);
+		onRecordPayment?.([s]);
 		track("settlement_marked_paid", { source, is_me: s.from === meId || s.to === meId });
 	};
 
@@ -353,9 +354,23 @@ export const SettlementList = ({
 
 			{others.length > 0 && (
 				<section>
-					<h2 className="label-text mb-2 px-1">
-						{me ? "Between others" : `${settlements.length} payments settle the group`}
-					</h2>
+					<div className="mb-2 flex items-baseline justify-between gap-3 px-1">
+						<h2 className="label-text">
+							{me ? "Between others" : `${settlements.length} payments settle the group`}
+						</h2>
+						{canRecord && others.length > 1 && (
+							<button
+								type="button"
+								onClick={() => {
+									onRecordPayment(others);
+									track("settlement_marked_paid", { source: "all", count: others.length });
+								}}
+								className="shrink-0 text-sm font-medium text-brand-700 hover:underline"
+							>
+								Mark all paid
+							</button>
+						)}
+					</div>
 					<ul className="surface divide-y divide-line overflow-hidden">
 						{others.map((s) => (
 							<li key={`${s.from}-${s.to}`} className="flex items-center gap-3 px-4 py-3">

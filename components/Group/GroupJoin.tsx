@@ -75,6 +75,8 @@ export const GroupJoin = () => {
 		const joined: Group = asMe({ ...result.group, sync }, me);
 		saveGroupsToStorage([...loadGroupsFromStorage(), joined]);
 		track("group_joined", { passphrase: Boolean(sync.pass), members: joined.members.length, personal: Boolean(me) });
+		// Someone joining a group with bills in it wants to know what they owe first.
+		if (joined.expenses.some((e) => e.kind !== "payment")) openOnSettleUp();
 		openOnDashboard(router, localId);
 	};
 

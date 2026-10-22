@@ -1,6 +1,6 @@
 import { Expense, ExpenseComment, Person, Currency } from "@/types";
 import { ExpenseCard } from "./ExpenseCard";
-import { expensePayers } from "@/utils/calculations";
+import { expensePayers, expenseShares } from "@/utils/calculations";
 import { joinNames } from "@/utils/formatting";
 
 interface ExpenseListProps {
@@ -8,6 +8,8 @@ interface ExpenseListProps {
 	comments?: ExpenseComment[];
 	people: Person[];
 	currency: Currency;
+	/** Who is viewing: each expense they're in shows their share. */
+	meId?: string | null;
 	onExpenseClick: (expenseId: string) => void;
 	onExpenseEdit: (expense: Expense) => void;
 	onExpenseDelete: (expenseId: string) => void;
@@ -19,6 +21,7 @@ export const ExpenseList = ({
 	comments = [],
 	people,
 	currency,
+	meId,
 	onExpenseClick,
 	onExpenseEdit,
 	onExpenseDelete,
@@ -55,6 +58,7 @@ export const ExpenseList = ({
 					currency={currency}
 					paidByName={joinNames([...expensePayers(expense).keys()].map(getPersonName))}
 					toName={getPersonName(expense.participants[0])}
+					myShare={meId ? expenseShares(expense).get(meId) : undefined}
 					commentCount={commentCounts.get(expense.id)}
 					onClick={() => onExpenseClick(expense.id)}
 					onEdit={(e) => {

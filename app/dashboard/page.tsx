@@ -124,14 +124,17 @@ export default function Home() {
 
 	const nameOf = (id: string) => people.find((p) => p.id === id)?.name || "Unknown";
 
-	const handleRecordPayment = (s: Settlement) => {
-		const id = recordPayment(s.from, s.to, s.amount);
-		if (!id) return;
+	const handleRecordPayments = (list: Settlement[]) => {
+		const ids = list.flatMap((s) => recordPayment(s.from, s.to, s.amount) ?? []);
+		if (!ids.length) return;
+		const [s] = list;
 		setToast({
 			id: Date.now(),
-			message: `${nameOf(s.from)} paid ${nameOf(s.to)} ${formatCurrency(s.amount, currency)}`,
+			message: list.length === 1
+				? `${nameOf(s.from)} paid ${nameOf(s.to)} ${formatCurrency(s.amount, currency)}`
+				: `${list.length} payments marked paid`,
 			actionLabel: "Undo",
-			onAction: () => deleteExpense(id),
+			onAction: () => ids.forEach((id) => deleteExpense(id)),
 		});
 	};
 
@@ -220,16 +223,20 @@ export default function Home() {
 		if (ok) track("first_expense_added", { participant_count: input.others.length + 1 });
 	};
 
-	const handleAddMember = (memberName: string, upiId?: string) => {
-		const id = addMember(memberName, upiId);
-		if (id) track("dashboard_member_added");
+	const handleAddMembers = (names: string[], upiId?: string) => {
+		if (!currentGroup) return;
 		// The first person added to a new group is the one setting it up, so they're
 		// the default payer from the first expense on (the form asks for "Your name").
-		if (id && currentGroup?.members.length === 0 && currentGroup.meId === undefined) {
-			setGroupMe(currentGroup.id, id);
-			markJoined(id);
-		}
-		return id;
+		const firstIsMe = currentGroup.members.length === 0 && currentGroup.meId === undefined;
+		names.forEach((name, i) => {
+			const id = addMember(name, upiId);
+			if (!id) return;
+			track("dashboard_member_added");
+			if (firstIsMe && i === 0) {
+				setGroupMe(currentGroup.id, id);
+				markJoined(id);
+			}
+		});
 	};
 
 	// Who you are in this group. Opening a shared group for the first time asks
@@ -473,6 +480,7 @@ export default function Home() {
 												comments={currentGroup.comments}
 												people={people}
 												currency={currency}
+												meId={currentGroup.meId}
 												onExpenseClick={setViewingExpenseId}
 												onExpenseEdit={handleStartEditExpense}
 												onExpenseDelete={handleDeleteExpense}
@@ -500,7 +508,7 @@ export default function Home() {
 												sharePeople={currentGroup.members}
 												syncLink={currentGroup.sync}
 												onSetMe={(id) => setGroupMe(currentGroup.id, id)}
-												onRecordPayment={handleRecordPayment}
+												onRecordPayment={handleRecordPayments}
 												settledSlot={
 													<>
 													{!currentGroup.closedAt && expenses.some((e) => e.kind !== "payment") && tripCard}
@@ -638,7 +646,7 @@ export default function Home() {
 						isOpen={showMembersModal}
 						onClose={() => setShowMembersModal(false)}
 						group={currentGroup}
-						onAddMember={handleAddMember}
+						onAddMembers={handleAddMembers}
 						onUpdateMemberUpi={updateMemberUpi}
 						onRenameMember={renameMember}
 						onSetNickname={setNickname}
