@@ -477,6 +477,7 @@ export default function Home() {
 												comments={currentGroup.comments}
 												people={people}
 												currency={currency}
+												meId={currentGroup.meId}
 												onExpenseClick={setViewingExpenseId}
 												onExpenseEdit={handleStartEditExpense}
 												onExpenseDelete={handleDeleteExpense}

@@ -20,6 +20,8 @@ interface ExpenseCardProps {
 	paidByName: string;
 	/** For payments: who received the money. */
 	toName?: string;
+	/** The viewer's part of this expense, when they're in it. */
+	myShare?: number;
 	commentCount?: number;
 	onClick: () => void;
 	onEdit: (e: React.MouseEvent) => void;
@@ -31,6 +33,7 @@ export const ExpenseCard = ({
 	currency,
 	paidByName,
 	toName,
+	myShare,
 	commentCount = 0,
 	onClick,
 	onEdit,
@@ -69,7 +72,9 @@ export const ExpenseCard = ({
 	}
 
 	const count = expense.participants.length;
-	const splitLabel = expense.splitMethod === "percentage"
+	const splitLabel = myShare !== undefined
+		? `Your share ${formatCurrency(myShare, currency)}${count > 1 ? ` · ${count} people` : ""}`
+		: expense.splitMethod === "percentage"
 		? `Split by % among ${count}`
 		: splitChoice(expense) === "shares"
 		? `Split by shares among ${count}`
