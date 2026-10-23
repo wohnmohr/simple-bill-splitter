@@ -366,11 +366,10 @@ export const SettlementList = ({
 									<button
 										type="button"
 										onClick={() => markPaid(s, "row")}
-										className="btn-ghost shrink-0 !px-2.5 text-brand-700"
+										className="btn-secondary shrink-0 !px-3 !py-1.5 text-sm"
 										aria-label={`Mark ${getPersonName(s.from)}'s payment to ${getPersonName(s.to)} as paid`}
 									>
-										<Check className="h-4 w-4" />
-										Paid
+										Mark paid
 									</button>
 								)}
 							</li>
