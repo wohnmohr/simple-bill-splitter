@@ -3,10 +3,11 @@ import { ChevronRight, Lock, Plus, Trash2 } from "lucide-react";
 import { Group } from "@/types";
 import { MAX_GROUPS } from "@/constants";
 import { formatCurrency } from "@/utils/formatting";
-import { totalSpent } from "@/utils/calculations";
-import { BalanceHeadline, myBalance } from "@/components/Group/GroupSelector";
+import { myBalance, myTotals, totalSpent } from "@/utils/calculations";
+import { BalanceHeadline } from "@/components/Group/GroupSelector";
 import { InstallCard } from "@/components/Group/InstallCard";
 import { BackupCard } from "@/components/Group/BackupCard";
+import { RemindCard } from "@/components/Group/RemindCard";
 import type { useBackup } from "@/hooks/useBackup";
 
 interface GroupsHomeProps {
@@ -30,6 +31,8 @@ export const GroupsHome = ({
 	backup,
 }: GroupsHomeProps) => {
 	const canCreate = groups.length < MAX_GROUPS;
+	// With one group its own row already says it; the sum earns a line from two.
+	const totals = groups.length > 1 ? myTotals(groups) : [];
 
 	return (
 		<div>
@@ -38,9 +41,25 @@ export const GroupsHome = ({
 					<h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink">
 						Your groups
 					</h1>
-					<p className="mt-1 text-sm text-ink-muted">
-						Saved on this device. Share a group to add expenses together, end-to-end encrypted.
-					</p>
+					{totals.length > 0 ? (
+						<p className="mt-1 text-sm font-medium text-ink-muted">
+							{totals.map(({ currency, owe, getBack }) => (
+								<span key={currency.code} className="block">
+									{owe > 0 && (
+										<>You owe <span className="tabular-nums text-negative">{formatCurrency(owe, currency)}</span></>
+									)}
+									{owe > 0 && getBack > 0 && " · "}
+									{getBack > 0 && (
+										<>You get back <span className="tabular-nums text-positive">{formatCurrency(getBack, currency)}</span></>
+									)}
+								</span>
+							))}
+						</p>
+					) : (
+						<p className="mt-1 text-sm text-ink-muted">
+							Saved on this device. Share a group to add expenses together, end-to-end encrypted.
+						</p>
+					)}
 				</div>
 				{canCreate && (
 					<button onClick={onCreateGroup} className="btn-primary shrink-0">
@@ -51,6 +70,8 @@ export const GroupsHome = ({
 			</div>
 
 			{canCreate && <div className="mb-4">{quickAdd}</div>}
+
+			<RemindCard groups={groups} />
 
 			{/* A list on phones; a grid of cards on wide screens. */}
 			<ul className="surface divide-y divide-line overflow-hidden lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none">

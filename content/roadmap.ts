@@ -42,6 +42,12 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "Add an expense from your home screen, or share a bill screenshot straight into the scanner", href: "/dashboard" },
+			{ title: "A nudge for money still owed in quiet groups, with one tap to remind", href: "/dashboard" },
+			{ title: "What you owe and get back across all your groups, on one line", href: "/dashboard" },
+			{ title: "Your name is remembered on your phone, so new groups start with you", href: "/dashboard" },
+			{ title: "Friends at the table join by scanning a QR code", href: "/features#sync" },
+			{ title: "Rename a group", href: "/dashboard" },
 			{ title: "Add everyone at once: type their names separated by commas", href: "/dashboard" },
 			{ title: "Joining a group opens on what you owe, and every expense shows your share", href: "/features#sync" },
 			{ title: "Mark all payments paid in one tap, with one Undo", href: "/features#settle" },

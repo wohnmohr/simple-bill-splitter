@@ -40,8 +40,10 @@ import { track } from "@/lib/analytics";
 import { consumeOpenOnSettleUp } from "@/utils/shareImport";
 import { parseQuickAdd, resolveQuickAdd, type QuickResolved } from "@/utils/quickAdd";
 import { applyQuickAdd } from "@/utils/quickAddSave";
+import { loadMyName, rememberMyName, withMyName } from "@/utils/myName";
 import { takeQuickAdd } from "@/utils/quickAddHandoff";
 import { firstExpense, type FirstExpenseInput } from "@/utils/firstExpense";
+import { latestGroup, takeLaunch, takeSharedBill } from "@/utils/launch";
 import { QuickAddBox } from "@/components/QuickAdd/QuickAddBox";
 import { QuickAddPreview } from "@/components/QuickAdd/QuickAddPreview";
 
@@ -57,6 +59,12 @@ export default function Home() {
 	/** "Start the next one": a new group with this group's people. */
 	const [nextFrom, setNextFrom] = useState<Group | null>(null);
 	const [showExpenseForm, setShowExpenseForm] = useState(false);
+	/** A screenshot shared into the app, for Add expense to scan. */
+	const [sharedBill, setSharedBill] = useState<File | null>(null);
+	const closeExpenseForm = () => {
+		setShowExpenseForm(false);
+		setSharedBill(null);
+	};
 	const [showMembersModal, setShowMembersModal] = useState(false);
 	const [showSync, setShowSync] = useState(false);
 	const [showTheme, setShowTheme] = useState(false);
@@ -89,6 +97,7 @@ export default function Home() {
 		createGroup,
 		deleteGroup,
 		updateGroupCurrency,
+		renameGroup,
 		setGroupMe,
 		setGroupTheme,
 		setGroupClosed,
@@ -184,14 +193,14 @@ export default function Home() {
 			currency: currency.code,
 			repeats: input.repeatMonthly,
 		});
-		setShowExpenseForm(false);
+		closeExpenseForm();
 	};
 
 	// Quick add reads the sentence on this device; analytics get counts only, never what was typed.
 	const handleQuickAdd = (text: string, newGroup: boolean) => {
 		const group = newGroup ? undefined : currentGroup;
 		const members = group ? shownMembers(group) : [];
-		const quick = resolveQuickAdd(parseQuickAdd(text, members.map((m) => m.name)), members, group?.meId);
+		const quick = withMyName(resolveQuickAdd(parseQuickAdd(text, members.map((m) => m.name)), members, group?.meId), loadMyName());
 		if (!quick.expenses.length) return;
 		track("quick_add_previewed", {
 			expense_count: quick.expenses.length,
@@ -200,6 +209,24 @@ export default function Home() {
 		});
 		setQuickAdd({ quick, newGroup });
 	};
+
+	// Opened from the home-screen shortcut, or by sharing a screenshot to the installed app:
+	// straight to Add expense in the group you used last (or the first-run form if there's none).
+	useEffect(() => {
+		if (!loaded) return;
+		const launch = takeLaunch();
+		const group = launch && latestGroup(groups);
+		if (!group) return;
+		setSelectedGroupId(group.id);
+		setShowExpenseForm(true);
+		if (launch === "shared") void takeSharedBill().then(setSharedBill);
+		track("app_launched_to_add", { shared: launch === "shared" });
+	}, [loaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	// Installed on the home screen: the service worker receives shared screenshots.
+	useEffect(() => {
+		if (window.matchMedia("(display-mode: standalone)").matches) navigator.serviceWorker?.register("/sw.js").catch(() => undefined);
+	}, []);
 
 	// Typed on the home page: preview it as a new group straight away.
 	useEffect(() => {
@@ -210,6 +237,8 @@ export default function Home() {
 	const handleSaveQuickAdd = (quick: QuickResolved, groupName: string, edited: boolean) => {
 		if (!quickAdd) return;
 		const fill = (g: Group) => applyQuickAdd(g, quick);
+		const me = quick.people.find((p) => p.isMe && p.isNew);
+		if (me) rememberMyName(me.name);
 		if (quickAdd.newGroup) createGroup(groupName, DEFAULT_CURRENCY, fill);
 		else if (currentGroup) setGroups((prev) => prev.map((g) => (g.id === currentGroup.id ? fill(g) : g)));
 		track("quick_add_saved", { expense_count: quick.expenses.length, edited, new_group: quickAdd.newGroup });
@@ -220,7 +249,9 @@ export default function Home() {
 	// The first run's form: the group is made around its first expense, named after it.
 	const handleFirstExpense = (input: FirstExpenseInput) => {
 		const ok = createGroup(input.description || "Shared expenses", DEFAULT_CURRENCY, (g) => applyQuickAdd(g, firstExpense(input)));
-		if (ok) track("first_expense_added", { participant_count: input.others.length + 1 });
+		if (!ok) return;
+		rememberMyName(input.myName);
+		track("first_expense_added", { participant_count: input.others.length + 1 });
 	};
 
 	const handleAddMembers = (names: string[], upiId?: string) => {
@@ -233,6 +264,7 @@ export default function Home() {
 			if (!id) return;
 			track("dashboard_member_added");
 			if (firstIsMe && i === 0) {
+				rememberMyName(name);
 				setGroupMe(currentGroup.id, id);
 				markJoined(id);
 			}
@@ -411,6 +443,7 @@ export default function Home() {
 									onManageMembers={() => setShowMembersModal(true)}
 									onShare={() => setShowSync(true)}
 									onTheme={() => setShowTheme(true)}
+									onRename={(name) => renameGroup(currentGroup.id, name)}
 									syncStatus={sync.status[currentGroup.id]}
 									onChangeMe={() => setIdentityAsk("pick")}
 								/>
@@ -656,12 +689,13 @@ export default function Home() {
 
 				<ExpenseFormModal
 					isOpen={showExpenseForm}
-					onClose={() => setShowExpenseForm(false)}
+					onClose={closeExpenseForm}
 					onSubmit={handleAddExpense}
 					people={people}
 					history={expenses}
 					currency={currency}
 					defaultPayerId={defaultPayerId}
+					scanFile={sharedBill}
 				/>
 
 				{quickAdd && (

@@ -3,6 +3,7 @@ import { NumberInput, TextInput } from "@mantine/core";
 import { DEFAULT_CURRENCY } from "@/constants";
 import { formatCurrency } from "@/utils/formatting";
 import { splitNames, type FirstExpenseInput } from "@/utils/firstExpense";
+import { loadMyName } from "@/utils/myName";
 
 interface EmptyGroupStateProps {
 	/** Saves the first expense; the group is made around it. */
@@ -20,7 +21,7 @@ interface EmptyGroupStateProps {
 export const EmptyGroupState = ({ onFirstExpense, onCreateGroup, quickAdd }: EmptyGroupStateProps) => {
 	const [amount, setAmount] = useState<number | "">("");
 	const [description, setDescription] = useState("");
-	const [myName, setMyName] = useState("");
+	const [myName, setMyName] = useState(loadMyName);
 	const [othersText, setOthersText] = useState("");
 	const [typing, setTyping] = useState(false);
 

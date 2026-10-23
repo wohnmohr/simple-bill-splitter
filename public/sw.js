@@ -1,5 +1,7 @@
-// SplitBiller's service worker. It only shows alerts for synced groups the
-// person asked to hear about (utils/groupAlerts.ts); it caches nothing.
+// SplitBiller's service worker. It shows alerts for synced groups the person
+// asked to hear about (utils/groupAlerts.ts), and holds a screenshot shared
+// into the installed app until the app reads it (utils/launch.ts). It caches
+// nothing else.
 //
 // An alert carries just the group's lookup id. The group's name comes from this
 // device's own list, so no name ever travels through a push service.
@@ -49,6 +51,27 @@ self.addEventListener("notificationclick", (event) => {
 			const open = windows.find((w) => new URL(w.url).pathname === "/dashboard");
 			if (open) return open.focus();
 			return self.clients.openWindow(localId ? `/dashboard#open=${encodeURIComponent(localId)}` : "/dashboard");
+		})()
+	);
+});
+
+// Share a bill screenshot into the installed app (manifest share_target): keep
+// the image on this device for the app to scan, then open Add expense.
+self.addEventListener("fetch", (event) => {
+	const url = new URL(event.request.url);
+	if (event.request.method !== "POST" || url.pathname !== "/share-target") return;
+	event.respondWith(
+		(async () => {
+			try {
+				const file = (await event.request.formData()).get("bill");
+				if (file instanceof File) {
+					const cache = await caches.open("splitbiller-shared");
+					await cache.put("/shared-bill", new Response(file, { headers: { "content-type": file.type } }));
+				}
+			} catch {
+				/* nothing usable shared: Add expense still opens */
+			}
+			return Response.redirect("/dashboard?shared", 303);
 		})()
 	);
 });

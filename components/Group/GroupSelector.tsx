@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { Menu } from "@mantine/core";
-import { ChevronLeft, Lock, MoreHorizontal, Palette, Share2, Trash2, UserRound, Users } from "lucide-react";
+import { ChevronLeft, Lock, MoreHorizontal, Palette, Pencil, Share2, Trash2, UserRound, Users } from "lucide-react";
 import { Group } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
-import { calculateBalances, totalSpent } from "@/utils/calculations";
+import { myBalance, totalSpent } from "@/utils/calculations";
 import type { SyncStatus } from "@/utils/groupSync";
 
 interface GroupSelectorProps {
@@ -17,6 +18,8 @@ interface GroupSelectorProps {
 	onShare?: () => void;
 	/** Opens the theme picker. */
 	onTheme?: () => void;
+	/** Renames the group; for a synced group everyone sees the new name. */
+	onRename?: (name: string) => void;
 	syncStatus?: SyncStatus;
 }
 
@@ -26,15 +29,6 @@ const SYNC_LABEL: Record<SyncStatus, string> = {
 	offline: "Shared · offline, will sync",
 	gone: "Link reset or deleted",
 	locked: "Can't open the group",
-};
-
-/** The viewer's net position in a group, or null when we don't know who they are. */
-export const myBalance = (group: Group): number | null => {
-	if (!group.meId) return null;
-	const mine = calculateBalances(group.members, group.expenses).find(
-		(b) => b.personId === group.meId
-	);
-	return mine ? mine.balance : null;
 };
 
 export const BalanceHeadline = ({
@@ -76,8 +70,10 @@ export const GroupSelector = ({
 	onChangeMe,
 	onShare,
 	onTheme,
+	onRename,
 	syncStatus,
 }: GroupSelectorProps) => {
+	const [renaming, setRenaming] = useState(false);
 	const mine = myBalance(selectedGroup);
 	const spent = totalSpent(selectedGroup.expenses);
 	const shareBroken = syncStatus === "gone" || syncStatus === "locked";
@@ -88,9 +84,30 @@ export const GroupSelector = ({
 				<button onClick={onBack} className="icon-btn -ml-2 shrink-0" aria-label="All groups">
 					<ChevronLeft className="h-5 w-5" />
 				</button>
-				<h1 className="min-w-0 flex-1 truncate font-display text-2xl sm:text-3xl font-semibold text-ink">
-					{selectedGroup.name}
-				</h1>
+				{renaming && onRename ? (
+					<input
+						autoFocus
+						defaultValue={selectedGroup.name}
+						maxLength={60}
+						aria-label="Group name"
+						enterKeyHint="done"
+						onFocus={(e) => e.target.select()}
+						onBlur={(e) => {
+							const name = e.target.value.trim();
+							if (name && name !== selectedGroup.name) onRename(name);
+							setRenaming(false);
+						}}
+						onKeyDown={(e) => {
+							if (e.key === "Escape") e.currentTarget.value = selectedGroup.name;
+							if (e.key === "Enter" || e.key === "Escape") e.currentTarget.blur();
+						}}
+						className="min-w-0 flex-1 rounded-lg border border-line-strong bg-paper px-2 py-0.5 font-display text-2xl sm:text-3xl font-semibold text-ink"
+					/>
+				) : (
+					<h1 className="min-w-0 flex-1 truncate font-display text-2xl sm:text-3xl font-semibold text-ink">
+						{selectedGroup.name}
+					</h1>
+				)}
 				<Menu position="bottom-end" shadow="md" radius="md" width={200}>
 					<Menu.Target>
 						<button className="icon-btn -mr-1 shrink-0" aria-label="Group options">
@@ -98,6 +115,11 @@ export const GroupSelector = ({
 						</button>
 					</Menu.Target>
 					<Menu.Dropdown>
+						{onRename && (
+							<Menu.Item leftSection={<Pencil className="h-4 w-4" />} onClick={() => setRenaming(true)}>
+								Rename
+							</Menu.Item>
+						)}
 						{onManageMembers && (
 							<Menu.Item leftSection={<Users className="h-4 w-4" />} onClick={onManageMembers}>
 								Members & UPI IDs

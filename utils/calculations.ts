@@ -1,4 +1,4 @@
-import type { Expense, Person, Balance, Settlement, SplitChoice } from "@/types";
+import type { Expense, Person, Balance, Settlement, SplitChoice, Group, Currency } from "@/types";
 
 const cents = (n: number) => Math.round(n * 100) / 100;
 
@@ -179,3 +179,26 @@ export const groupSummary = (expenses: Expense[], memberCount: number) => {
 /** Money actually spent by the group — recorded payments are transfers, not spending. */
 export const totalSpent = (expenses: Expense[]): number =>
   expenses.reduce((sum, e) => (e.kind === "payment" ? sum : sum + e.amount), 0);
+
+/** The viewer's net position in a group, or null when we don't know who they are. */
+export const myBalance = (group: Group): number | null => {
+  if (!group.meId) return null;
+  const mine = calculateBalances(group.members, group.expenses).find((b) => b.personId === group.meId);
+  return mine ? mine.balance : null;
+};
+
+export type MyTotal = { currency: Currency; owe: number; getBack: number };
+
+/** What the viewer owes and gets back across their open groups, one entry per currency. */
+export const myTotals = (groups: Group[]): MyTotal[] => {
+  const byCode = new Map<string, MyTotal>();
+  for (const group of groups) {
+    const balance = group.closedAt ? null : myBalance(group);
+    if (balance === null || Math.abs(balance) < 0.01) continue;
+    const total = byCode.get(group.currency.code) ?? { currency: group.currency, owe: 0, getBack: 0 };
+    if (balance > 0) total.getBack = cents(total.getBack + balance);
+    else total.owe = cents(total.owe - balance);
+    byCode.set(group.currency.code, total);
+  }
+  return [...byCode.values()];
+};

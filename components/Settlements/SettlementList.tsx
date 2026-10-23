@@ -7,10 +7,9 @@ import { formatCurrency } from "@/utils/formatting";
 import { ArrowRight, Check, CircleCheck, MessageCircle } from "lucide-react";
 import { ShareSettlementActions } from "@/components/Share/ShareSettlementActions";
 import { UpiSettlementActions } from "@/components/Settlements/UpiSettlementActions";
-import { groupUrl } from "@/utils/groupSync";
-import { buildShareSnapshot, encodeShareUrl } from "@/utils/shareCodec";
+import { reminderText } from "@/utils/reminderText";
 import { track, trackError } from "@/lib/analytics";
-import { oweMessage, sendViaWhatsApp } from "@/utils/whatsapp";
+import { sendViaWhatsApp } from "@/utils/whatsapp";
 
 interface SettlementListProps {
 	settlements: Settlement[];
@@ -240,25 +239,11 @@ export const SettlementList = ({
 			</div>
 		) : null;
 
-	/**
-	 * A WhatsApp reminder with a link that lands the debtor on what they owe:
-	 * in a shared group, their personal link (it opens the group as them, on
-	 * settle-up); otherwise the encrypted summary, which they can save as a group.
-	 * (UPI links aren't tappable in WhatsApp, so the pay button lives behind the link.)
-	 */
 	const remind = async (s: Settlement) => {
-		// Shared names, not this device's nicknames: the message goes to them.
-		const debtor = sharePeople.find((p) => p.id === s.from);
-		const creditor = sharePeople.find((p) => p.id === s.to);
 		track("settlement_remind_clicked", { synced: !!syncLink });
 		try {
-			const url = syncLink
-				? groupUrl(syncLink, s.from, true)
-				: await encodeShareUrl(buildShareSnapshot({ name: groupName, currency, members: sharePeople, expenses }));
-			const sent = await sendViaWhatsApp(
-				oweMessage(debtor?.name || "", `a reminder for ${groupName}`, formatCurrency(s.amount, currency), url, showUpi ? creditor?.upiId : undefined)
-			);
-			if (sent === "copied") {
+			const text = await reminderText({ name: groupName, currency, members: sharePeople, expenses, sync: syncLink }, s);
+			if ((await sendViaWhatsApp(text)) === "copied") {
 				setRemindCopied(s.from);
 				setTimeout(() => setRemindCopied(null), 2500);
 			}

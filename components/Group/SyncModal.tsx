@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, ChevronDown, Copy, KeyRound, Loader2, Lock, RefreshCw, Share2, Trash2, Unlink } from "lucide-react";
+import { Check, ChevronDown, Copy, KeyRound, Loader2, Lock, QrCode, RefreshCw, Share2, Trash2, Unlink } from "lucide-react";
 import { Modal } from "@/components/UI/Modal";
 import type { Group } from "@/types";
 import type { SyncStatus } from "@/utils/groupSync";
@@ -10,6 +10,7 @@ import { deriveGroupKeys } from "@/utils/groupVault";
 import { track } from "@/lib/analytics";
 import { sendViaWhatsApp } from "@/utils/whatsapp";
 import { AlertsToggle } from "@/components/Group/AlertsToggle";
+import { UpiQr } from "@/components/Settlements/UpiQr";
 
 export const MIN_PASSPHRASE = 6;
 
@@ -85,6 +86,7 @@ export const SyncModal = ({ isOpen, onClose, group, status, expiresAt, onEnable,
 	const [confirm, setConfirm] = useState<null | "reset" | "delete">(null);
 	const [safetyCode, setSafetyCode] = useState("");
 	const [details, setDetails] = useState(false);
+	const [showQr, setShowQr] = useState(false);
 
 	const sync = group.sync;
 	const url = sync && typeof window !== "undefined" ? groupUrl(sync) : "";
@@ -105,6 +107,7 @@ export const SyncModal = ({ isOpen, onClose, group, status, expiresAt, onEnable,
 			setError("");
 			setPassphrase("");
 			setUsePass(false);
+			setShowQr(false);
 		}
 	}, [isOpen]);
 
@@ -234,6 +237,24 @@ export const SyncModal = ({ isOpen, onClose, group, status, expiresAt, onEnable,
 									More
 								</button>
 							</div>
+							{showQr ? (
+								<div className="mt-3 flex flex-col items-center gap-2 rounded-xl bg-paper p-4 text-center">
+									<UpiQr link={url} label="QR code of the group link" className="h-52 w-52" />
+									<p className="text-sm text-ink-soft">Friends next to you scan this with their phone camera to join.</p>
+								</div>
+							) : (
+								<button
+									type="button"
+									onClick={() => {
+										setShowQr(true);
+										track("group_qr_shown");
+									}}
+									className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
+								>
+									<QrCode className="h-4 w-4" />
+									Show a QR code for people nearby
+								</button>
+							)}
 							{sync.pass && (
 								<p className="mt-2 flex gap-2 text-sm text-ink-soft">
 									<KeyRound className="mt-0.5 h-4 w-4 shrink-0" />

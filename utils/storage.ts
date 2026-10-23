@@ -1,4 +1,4 @@
-import { Group } from "@/types";
+import type { Group } from "@/types";
 import { STORAGE_KEY } from "@/constants";
 
 export const loadGroupsFromStorage = (): Group[] => {
