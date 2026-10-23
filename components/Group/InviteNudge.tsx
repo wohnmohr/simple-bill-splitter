@@ -101,10 +101,10 @@ export const InviteNudge = ({ group, shareLink, onInvite }: InviteNudgeProps) =>
 						return (
 							<li key={s.from} className="flex items-center gap-3 py-2">
 								{person && <MemberAvatar person={person} size="sm" />}
-								<p className="min-w-0 flex-1 truncate text-sm text-ink">
-									<span className="font-medium">{person?.name}</span>{" "}
-									<span className="text-ink-muted">owes you</span>{" "}
-									<span className="font-semibold tabular-nums">{formatCurrency(s.amount, group.currency)}</span>
+								<p className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1 text-sm text-ink">
+									<span className="min-w-0 truncate font-medium">{person?.name}</span>
+									<span className="whitespace-nowrap text-ink-muted">owes you</span>
+									<span className="whitespace-nowrap font-semibold tabular-nums">{formatCurrency(s.amount, group.currency)}</span>
 								</p>
 								<button
 									type="button"
