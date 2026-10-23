@@ -1,6 +1,6 @@
-import { Group } from "@/types";
+import type { Group } from "@/types";
 import { MAX_GROUPS, STORAGE_KEY } from "@/constants";
-import { ShareSnapshot } from "@/types/share";
+import type { ShareSnapshot } from "@/types/share";
 import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
 import { newId } from "@/utils/ids";
 
@@ -16,6 +16,9 @@ export const IMPORT_LIMIT_MESSAGE = `You already have ${MAX_GROUPS} groups saved
  * dashboard open it next. `meId` says which member is on this device, when
  * that's already known. Does not send data to any server.
  */
+/** Set once the "Send everyone their share" card is done with for a group. */
+export const inviteNudgeKey = (groupId: string) => `splitbiller-invite-nudge-${groupId}`;
+
 export function importShareSnapshot(snapshot: ShareSnapshot, meId?: string): ImportResult {
 	if (!snapshot.members.length) {
 		return { ok: false, reason: "empty" };
@@ -39,6 +42,12 @@ export function importShareSnapshot(snapshot: ShareSnapshot, meId?: string): Imp
 	};
 
 	saveGroupsToStorage([...existing, group]);
+	// Someone else made this group and already sent it: "Send everyone their share" is theirs, not yours.
+	try {
+		window.localStorage.setItem(inviteNudgeKey(group.id), "imported");
+	} catch {
+		/* storage unavailable: the card shows and can be closed */
+	}
 
 	if (typeof window !== "undefined") {
 		window.sessionStorage.setItem("splitbiller-select-group", group.id);
