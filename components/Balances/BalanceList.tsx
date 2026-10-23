@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import { Balance, Person, Currency } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
 import { MemberAvatar } from "@/components/Group/MemberAvatar";
@@ -34,28 +35,29 @@ export const BalanceList = ({
 								<span className="min-w-0 truncate font-semibold text-ink">
 									{getPerson(balance.personId).name}
 								</span>
-								<span className="shrink-0 text-right">
-									<span
-										className={`font-semibold tabular-nums ${
-											isOwed ? "text-positive" : owes ? "text-negative" : "text-ink-muted"
-										}`}
-									>
-										{isOwed ? "+" : owes ? "−" : ""}
-										{formatCurrency(Math.abs(balance.balance), currency)}
+								{isOwed || owes ? (
+									<span className="shrink-0 text-right">
+										<span className={`font-semibold tabular-nums ${isOwed ? "text-positive" : "text-negative"}`}>
+											{isOwed ? "+" : "−"}
+											{formatCurrency(Math.abs(balance.balance), currency)}
+										</span>
+										<span className="ml-2 text-sm text-ink-muted">{isOwed ? "gets back" : "owes"}</span>
 									</span>
-									<span className="ml-2 text-sm text-ink-muted">
-										{isOwed ? "gets back" : owes ? "owes" : "settled"}
+								) : (
+									<span className="flex shrink-0 items-center gap-1 text-sm text-ink-muted">
+										<Check className="h-4 w-4 text-positive" strokeWidth={2.5} aria-hidden />
+										Settled
 									</span>
-								</span>
+								)}
 							</div>
-							<div className="mt-2 h-1 rounded-full bg-ink/[0.05]" aria-hidden>
-								<div
-									className={`h-1 rounded-full ${
-										isOwed ? "bg-positive/70" : owes ? "bg-negative/70" : ""
-									}`}
-									style={{ width: isOwed || owes ? width : 0 }}
-								/>
-							</div>
+							{(isOwed || owes) && (
+								<div className="mt-2 h-1 rounded-full bg-ink/[0.05]" aria-hidden>
+									<div
+										className={`h-1 rounded-full ${isOwed ? "bg-positive/70" : "bg-negative/70"}`}
+										style={{ width }}
+									/>
+								</div>
+							)}
 							</div>
 						</li>
 					);
