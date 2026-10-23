@@ -6,6 +6,7 @@ import { MemberAvatar } from "@/components/Group/MemberAvatar";
 import { Group, Person } from "@/types";
 import { isValidUpiId } from "@/utils/upi";
 import { splitNames } from "@/utils/firstExpense";
+import { loadMyName } from "@/utils/myName";
 
 interface AddMembersModalProps {
 	isOpen: boolean;
@@ -41,6 +42,12 @@ export const AddMembersModal = ({
 	const [editing, setEditing] = React.useState<{ id: string; value: string } | null>(null);
 	const nameRef = React.useRef<HTMLInputElement>(null);
 	const shared = !!group.sync;
+	// A new group starts with you: your remembered name is filled in, ready for everyone else's.
+	const empty = group.members.length === 0;
+	React.useEffect(() => {
+		const mine = isOpen && empty ? loadMyName() : "";
+		if (mine) setMemberName(`${mine}, `);
+	}, [isOpen, empty]);
 	/** Whose name the pencil changes for everyone; for anyone else in a shared group it's a private nickname. */
 	const renamesForEveryone = (m: Person) => !shared || m.id === group.meId;
 	const saveEdit = (m: Person) => {

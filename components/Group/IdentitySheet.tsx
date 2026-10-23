@@ -8,6 +8,7 @@ import { MemberAvatar } from "@/components/Group/MemberAvatar";
 import type { Group, Person } from "@/types";
 import { newIdentity, shownMembers } from "@/utils/identity";
 import { newId } from "@/utils/ids";
+import { loadMyName } from "@/utils/myName";
 
 type Props = {
 	isOpen: boolean;
@@ -39,6 +40,10 @@ export const IdentitySheet = ({ isOpen, group, onJoin, onClaim, onJustLooking, o
 	useEffect(() => {
 		if (isOpen) shuffle();
 	}, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	// Anonymous stays the default; the name you use elsewhere is one tap away.
+	const [myName, setMyName] = useState("");
+	useEffect(() => setMyName(loadMyName()), []);
 
 	const members = shownMembers(group);
 	const trimmed = name.trim();
@@ -76,6 +81,11 @@ export const IdentitySheet = ({ isOpen, group, onJoin, onClaim, onJustLooking, o
 					<Dices className="h-5 w-5" />
 				</button>
 			</div>
+			{myName && trimmed !== myName && (
+				<button type="button" onClick={() => setName(myName)} className="mt-2 text-sm font-medium text-brand-700 hover:underline">
+					Use my name, {myName}
+				</button>
+			)}
 			<p className="mt-3 flex items-start gap-2 text-sm text-ink-muted">
 				<Lock className="mt-0.5 h-4 w-4 shrink-0 text-positive" />
 				<span>

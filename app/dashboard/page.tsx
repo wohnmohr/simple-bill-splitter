@@ -40,6 +40,7 @@ import { track } from "@/lib/analytics";
 import { consumeOpenOnSettleUp } from "@/utils/shareImport";
 import { parseQuickAdd, resolveQuickAdd, type QuickResolved } from "@/utils/quickAdd";
 import { applyQuickAdd } from "@/utils/quickAddSave";
+import { loadMyName, rememberMyName, withMyName } from "@/utils/myName";
 import { takeQuickAdd } from "@/utils/quickAddHandoff";
 import { firstExpense, type FirstExpenseInput } from "@/utils/firstExpense";
 import { QuickAddBox } from "@/components/QuickAdd/QuickAddBox";
@@ -191,7 +192,7 @@ export default function Home() {
 	const handleQuickAdd = (text: string, newGroup: boolean) => {
 		const group = newGroup ? undefined : currentGroup;
 		const members = group ? shownMembers(group) : [];
-		const quick = resolveQuickAdd(parseQuickAdd(text, members.map((m) => m.name)), members, group?.meId);
+		const quick = withMyName(resolveQuickAdd(parseQuickAdd(text, members.map((m) => m.name)), members, group?.meId), loadMyName());
 		if (!quick.expenses.length) return;
 		track("quick_add_previewed", {
 			expense_count: quick.expenses.length,
@@ -210,6 +211,8 @@ export default function Home() {
 	const handleSaveQuickAdd = (quick: QuickResolved, groupName: string, edited: boolean) => {
 		if (!quickAdd) return;
 		const fill = (g: Group) => applyQuickAdd(g, quick);
+		const me = quick.people.find((p) => p.isMe && p.isNew);
+		if (me) rememberMyName(me.name);
 		if (quickAdd.newGroup) createGroup(groupName, DEFAULT_CURRENCY, fill);
 		else if (currentGroup) setGroups((prev) => prev.map((g) => (g.id === currentGroup.id ? fill(g) : g)));
 		track("quick_add_saved", { expense_count: quick.expenses.length, edited, new_group: quickAdd.newGroup });
@@ -220,7 +223,9 @@ export default function Home() {
 	// The first run's form: the group is made around its first expense, named after it.
 	const handleFirstExpense = (input: FirstExpenseInput) => {
 		const ok = createGroup(input.description || "Shared expenses", DEFAULT_CURRENCY, (g) => applyQuickAdd(g, firstExpense(input)));
-		if (ok) track("first_expense_added", { participant_count: input.others.length + 1 });
+		if (!ok) return;
+		rememberMyName(input.myName);
+		track("first_expense_added", { participant_count: input.others.length + 1 });
 	};
 
 	const handleAddMembers = (names: string[], upiId?: string) => {
@@ -233,6 +238,7 @@ export default function Home() {
 			if (!id) return;
 			track("dashboard_member_added");
 			if (firstIsMe && i === 0) {
+				rememberMyName(name);
 				setGroupMe(currentGroup.id, id);
 				markJoined(id);
 			}
