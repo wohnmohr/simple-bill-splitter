@@ -31,6 +31,7 @@ import { SettlementList } from "@/components/Settlements/SettlementList";
 import { FloatingActionButton } from "@/components/UI/FloatingActionButton";
 import { EmptyGroupState } from "@/components/EmptyStates/EmptyGroupState";
 import { Toast, ToastState } from "@/components/UI/Toast";
+import { ConfirmDialog, ConfirmState } from "@/components/UI/ConfirmDialog";
 import { Modal } from "@/components/UI/Modal";
 import { FeedbackForm } from "@/components/Feedback/FeedbackForm";
 import { SettledFeedbackCard } from "@/components/Feedback/SettledFeedbackCard";
@@ -75,6 +76,8 @@ export default function Home() {
 	/** Bumped on every save, so the boxes start empty again. */
 	const [quickAddSaves, setQuickAddSaves] = useState(0);
 	const [viewingExpenseId, setViewingExpenseId] = useState<string | null>(null);
+	/** What the delete prompt is asking about. */
+	const [deleting, setDeleting] = useState<{ kind: "group" | "member" | "expense"; id: string } | null>(null);
 	const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 	const [editExpenseData, setEditExpenseData] = useState<{
 		amount: string;
@@ -356,11 +359,12 @@ export default function Home() {
 		if (wasOpen) setSelectedGroupId(null);
 	};
 
+	const entriesWith = (personId: string) =>
+		currentGroup?.expenses.filter((e) => e.paidBy === personId || e.participants.includes(personId)).length ?? 0;
+
 	const handleDeleteMember = (personId: string) => {
 		if (!currentGroup) return;
-		const involved = currentGroup.expenses.filter(
-			(e) => e.paidBy === personId || e.participants.includes(personId)
-		).length;
+		const involved = entriesWith(personId);
 		offerUndo(
 			currentGroup.id,
 			involved > 0
@@ -391,6 +395,38 @@ export default function Home() {
 	};
 
 	const viewingExpense = expenses.find((e) => e.id === viewingExpenseId);
+
+	/** Every delete asks first. Built each render so it acts on the latest data. */
+	const deletePrompt = (): ConfirmState => {
+		if (deleting?.kind === "group") {
+			const group = groups.find((g) => g.id === deleting.id);
+			if (!group) return null;
+			const onConfirm = () => handleDeleteGroup(group.id);
+			return group.sync
+				? { title: `Remove ${group.name} from this device?`, detail: "Everyone else keeps it.", action: "Remove", onConfirm }
+				: { title: `Delete ${group.name}?`, detail: "All its expenses go with it.", action: "Delete", onConfirm };
+		}
+		if (deleting?.kind === "member") {
+			const involved = entriesWith(deleting.id);
+			return {
+				title: `Remove ${nameOf(deleting.id)}?`,
+				detail: involved > 0 ? `${involved} ${involved === 1 ? "entry" : "entries"} they were in will go too.` : undefined,
+				action: "Remove",
+				onConfirm: () => handleDeleteMember(deleting.id),
+			};
+		}
+		const expense = deleting && expenses.find((e) => e.id === deleting.id);
+		if (!expense) return null;
+		return {
+			title: expense.kind === "payment"
+				? `Delete payment from ${nameOf(expense.paidBy)}?`
+				: `Delete ${expense.description || "this expense"}?`,
+			detail: currentGroup?.sync ? "It goes for everyone in the group." : undefined,
+			action: "Delete",
+			onConfirm: () => handleDeleteExpense(expense.id),
+		};
+	};
+	const askDeleteGroup = (id: string) => setDeleting({ kind: "group", id });
 
 	// On wide screens Balances lives in a side panel, so it leaves the tab bar.
 	const isWide = useMediaQuery("(min-width: 1024px)") ?? false;
@@ -425,7 +461,7 @@ export default function Home() {
 					<GroupsHome
 						groups={groups}
 						onSelectGroup={setSelectedGroupId}
-						onDeleteGroup={handleDeleteGroup}
+						onDeleteGroup={askDeleteGroup}
 						onCreateGroup={() => setShowGroupForm(true)}
 						quickAdd={<QuickAddBox key={quickAddSaves} label="Start a group by describing an expense" onSubmit={(t) => handleQuickAdd(t, true)} />}
 						backup={backup}
@@ -439,7 +475,7 @@ export default function Home() {
 								<GroupSelector
 									group={currentGroup}
 									onBack={() => setSelectedGroupId(null)}
-									onDeleteGroup={handleDeleteGroup}
+									onDeleteGroup={askDeleteGroup}
 									onManageMembers={() => setShowMembersModal(true)}
 									onShare={() => setShowSync(true)}
 									onTheme={() => setShowTheme(true)}
@@ -516,7 +552,7 @@ export default function Home() {
 												meId={currentGroup.meId}
 												onExpenseClick={setViewingExpenseId}
 												onExpenseEdit={handleStartEditExpense}
-												onExpenseDelete={handleDeleteExpense}
+												onExpenseDelete={(id) => setDeleting({ kind: "expense", id })}
 											/>
 											</>
 										)}
@@ -591,6 +627,8 @@ export default function Home() {
 					</div>
 					</>
 				)}
+
+				<ConfirmDialog confirm={deletePrompt()} onClose={() => setDeleting(null)} />
 
 				<Toast
 					toast={toast}
@@ -683,7 +721,7 @@ export default function Home() {
 						onUpdateMemberUpi={updateMemberUpi}
 						onRenameMember={renameMember}
 						onSetNickname={setNickname}
-						onDeleteMember={handleDeleteMember}
+						onDeleteMember={(id) => setDeleting({ kind: "member", id })}
 					/>
 				)}
 
@@ -728,12 +766,7 @@ export default function Home() {
 							handleStartEditExpense(viewingExpense);
 						}
 					}}
-					onDelete={() => {
-						if (viewingExpenseId) {
-							handleDeleteExpense(viewingExpenseId);
-							setViewingExpenseId(null);
-						}
-					}}
+					onDelete={() => viewingExpenseId && setDeleting({ kind: "expense", id: viewingExpenseId })}
 				/>
 
 				{editingExpenseId && editExpenseData && (
