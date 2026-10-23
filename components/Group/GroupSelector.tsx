@@ -2,7 +2,7 @@ import { Menu } from "@mantine/core";
 import { ChevronLeft, Lock, MoreHorizontal, Palette, Share2, Trash2, UserRound, Users } from "lucide-react";
 import { Group } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
-import { calculateBalances, totalSpent } from "@/utils/calculations";
+import { myBalance, totalSpent } from "@/utils/calculations";
 import type { SyncStatus } from "@/utils/groupSync";
 
 interface GroupSelectorProps {
@@ -26,15 +26,6 @@ const SYNC_LABEL: Record<SyncStatus, string> = {
 	offline: "Shared · offline, will sync",
 	gone: "Link reset or deleted",
 	locked: "Can't open the group",
-};
-
-/** The viewer's net position in a group, or null when we don't know who they are. */
-export const myBalance = (group: Group): number | null => {
-	if (!group.meId) return null;
-	const mine = calculateBalances(group.members, group.expenses).find(
-		(b) => b.personId === group.meId
-	);
-	return mine ? mine.balance : null;
 };
 
 export const BalanceHeadline = ({
