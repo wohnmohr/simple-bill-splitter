@@ -39,6 +39,7 @@ import { SettledFeedbackCard } from "@/components/Feedback/SettledFeedbackCard";
 import { collectFeedbackContext } from "@/lib/feedbackContext";
 import { formatCurrency } from "@/utils/formatting";
 import { nextPaymentUndo, type PaymentUndo } from "@/utils/paymentUndo";
+import { putBack, undoDeleteExpense, undoRemoveMember } from "@/utils/undo";
 import { track } from "@/lib/analytics";
 import { consumeOpenOnSettleUp } from "@/utils/shareImport";
 import { parseQuickAdd, resolveQuickAdd, type QuickResolved } from "@/utils/quickAdd";
@@ -333,33 +334,31 @@ export default function Home() {
 	};
 
 	/**
-	 * Every delete happens immediately and offers Undo, which puts the whole
-	 * group back exactly as it was (member removal also drops their expenses).
+	 * Every delete happens immediately and offers Undo, which takes back only
+	 * that delete (utils/undo): anything changed since stays.
 	 */
-	const offerUndo = (groupId: string, message: string, afterRestore?: () => void) => {
-		const index = groups.findIndex((g) => g.id === groupId);
-		const snapshot = groups[index];
-		if (!snapshot) return;
+	const offerUndo = (message: string, undo: (groups: Group[]) => Group[], afterUndo?: () => void) => {
 		setToast({
 			id: Date.now(),
 			message,
 			actionLabel: "Undo",
 			onAction: () => {
-				setGroups((prev) => {
-					const rest = prev.filter((g) => g.id !== groupId);
-					rest.splice(Math.min(index, rest.length), 0, snapshot);
-					return rest;
-				});
-				afterRestore?.();
+				setGroups(undo);
+				afterUndo?.();
 			},
 		});
 	};
 
+	/** Undo for a change inside one group, given the group as it was before. */
+	const offerGroupUndo = (message: string, before: Group, undo: (group: Group, before: Group) => Group) =>
+		offerUndo(message, (prev) => prev.map((g) => (g.id === before.id ? undo(g, before) : g)));
+
 	const handleDeleteGroup = (groupId: string) => {
-		const group = groups.find((g) => g.id === groupId);
+		const index = groups.findIndex((g) => g.id === groupId);
+		const group = groups[index];
 		if (!group) return;
 		const wasOpen = selectedGroupId === groupId;
-		offerUndo(groupId, `Deleted ${group.name}`, () => {
+		offerUndo(`Deleted ${group.name}`, (prev) => putBack(prev, group, index), () => {
 			if (wasOpen) setSelectedGroupId(groupId);
 		});
 		deleteGroup(groupId);
@@ -368,18 +367,19 @@ export default function Home() {
 
 	const handleDeleteMember = (personId: string) => {
 		if (!currentGroup) return;
-		offerUndo(currentGroup.id, `Removed ${nameOf(personId)}`);
+		offerGroupUndo(`Removed ${nameOf(personId)}`, currentGroup, (g, before) => undoRemoveMember(g, before, personId));
 		deleteMember(personId);
 	};
 
 	const handleDeleteExpense = (expenseId: string) => {
 		const expense = expenses.find((e) => e.id === expenseId);
 		if (currentGroup && expense) {
-			offerUndo(
-				currentGroup.id,
+			offerGroupUndo(
 				expense.kind === "payment"
 					? `Deleted payment from ${nameOf(expense.paidBy)}`
-					: `Deleted ${expense.description || "expense"}`
+					: `Deleted ${expense.description || "expense"}`,
+				currentGroup,
+				(g, before) => undoDeleteExpense(g, before, expenseId)
 			);
 		}
 		deleteExpense(expenseId);
