@@ -7,6 +7,7 @@ import { totalSpent } from "@/utils/calculations";
 import { BalanceHeadline, myBalance } from "@/components/Group/GroupSelector";
 import { InstallCard } from "@/components/Group/InstallCard";
 import { BackupCard } from "@/components/Group/BackupCard";
+import { RemindCard } from "@/components/Group/RemindCard";
 import type { useBackup } from "@/hooks/useBackup";
 
 interface GroupsHomeProps {
@@ -51,6 +52,8 @@ export const GroupsHome = ({
 			</div>
 
 			{canCreate && <div className="mb-4">{quickAdd}</div>}
+
+			<RemindCard groups={groups} />
 
 			{/* A list on phones; a grid of cards on wide screens. */}
 			<ul className="surface divide-y divide-line overflow-hidden lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none">
