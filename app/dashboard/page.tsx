@@ -523,7 +523,7 @@ export default function Home() {
 											onTabChange={handleTabChange}
 											hideBalances={isWide}
 											counts={{
-												transactions: expenses.length,
+												transactions: expenses.filter((e) => e.kind !== "payment").length,
 												settlements: settlements.length,
 											}}
 										/>

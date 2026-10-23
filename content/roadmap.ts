@@ -42,6 +42,8 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "Clearer balances: settled people say Settled, and payments sit apart from expenses", href: "/dashboard" },
+			{ title: "Deleting anything asks first, and Undo is still there after", href: "/dashboard" },
 			{ title: "Add an expense from your home screen, or share a bill screenshot straight into the scanner", href: "/dashboard" },
 			{ title: "A nudge for money still owed in quiet groups, with one tap to remind", href: "/dashboard" },
 			{ title: "What you owe and get back across all your groups, on one line", href: "/dashboard" },
