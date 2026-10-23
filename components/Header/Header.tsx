@@ -10,15 +10,15 @@ export const Header = ({ onFeedback }: { onFeedback?: () => void }) => {
 				className="flex items-center gap-2 min-w-0 rounded-lg -ml-1 pl-1 pr-2 py-1"
 			>
 				<LogoMark />
-				<span className="font-display text-lg font-semibold text-ink leading-none">
+				<span className="font-display text-lg font-semibold text-ink leading-none whitespace-nowrap">
 					SplitBiller
 				</span>
 			</Link>
 			<div className="flex shrink-0 items-center gap-1">
 				{onFeedback && (
-					<button type="button" onClick={onFeedback} className="btn-ghost">
+					<button type="button" onClick={onFeedback} className="btn-ghost" aria-label="Feedback">
 						<MessageSquare className="h-4 w-4" />
-						Feedback
+						<span className="hidden sm:inline">Feedback</span>
 					</button>
 				)}
 				<Link href="/features" className="btn-ghost" aria-label="Features">

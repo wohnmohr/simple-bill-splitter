@@ -31,7 +31,7 @@ export const BalanceList = ({
 						<li key={balance.personId} className="flex items-center gap-3 px-4 py-3.5">
 							<MemberAvatar person={getPerson(balance.personId)} size="sm" />
 							<div className="min-w-0 flex-1">
-							<div className="flex items-baseline justify-between gap-3">
+							<div className="flex flex-wrap items-baseline justify-between gap-x-3">
 								<span className="min-w-0 truncate font-semibold text-ink">
 									{getPerson(balance.personId).name}
 								</span>
