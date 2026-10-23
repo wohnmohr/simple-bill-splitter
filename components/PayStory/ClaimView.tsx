@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Share2 } from "lucide-react";
 import { UpiQr, useCanOpenUpiApps } from "@/components/Settlements/UpiQr";
+import { UpiLimitHint } from "@/components/Settlements/UpiLimitHint";
 import { track } from "@/lib/analytics";
 import { personKey, tally } from "@/utils/billClaims";
 import { billToGroup } from "@/utils/billGroup";
@@ -304,6 +305,7 @@ export const ClaimView = ({ id, req, append, expiresAt }: Props) => {
 										<p className="text-sm text-ink-soft">Scan with any UPI app to pay {inr(share)} to {req.name}.</p>
 									</div>
 								)}
+								{canOpenApps && upi && <UpiLimitHint upiId={req.upiId} amount={share} />}
 								<button type="button" onClick={() => saved && markPaid(saved.name, share, "payer")} className="btn-primary w-full !justify-center !py-3">
 									I’ve paid {inr(share)} ✓
 								</button>

@@ -18,8 +18,17 @@ export function buildUpiLink(opts: {
 	if (opts.tn) {
 		params.set("tn", opts.tn.slice(0, 50));
 	}
-	return `upi://pay?${params.toString()}`;
+	// UPI apps read "+" literally, so spaces go out as %20 ("+" itself is already %2B).
+	return `upi://pay?${params.toString().replace(/\+/g, "%20")}`;
 }
+
+/**
+ * UPI apps often refuse pay links to a personal UPI ID above ₹2,000 (unsigned
+ * links are treated as risky) and blame a "bank limit". Paying the same UPI ID
+ * from inside the app still works, so above this amount we offer that way too.
+ */
+export const UPI_LINK_LIMIT = 2000;
+export const overUpiLinkLimit = (amount: number): boolean => amount > UPI_LINK_LIMIT;
 
 /** A UPI VPA is handle@provider, e.g. priya@okaxis or 98xxxxxx10@ybl. */
 export const isValidUpiId = (value: string): boolean =>

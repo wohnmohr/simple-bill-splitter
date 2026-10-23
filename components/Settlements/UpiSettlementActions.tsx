@@ -7,6 +7,7 @@ import { formatCurrency } from "@/utils/formatting";
 import { buildUpiLink, isValidUpiId } from "@/utils/upi";
 import { track } from "@/lib/analytics";
 import { UpiQr, useCanOpenUpiApps } from "@/components/Settlements/UpiQr";
+import { UpiLimitHint } from "@/components/Settlements/UpiLimitHint";
 
 interface UpiSettlementActionsProps {
 	settlement: Settlement;
@@ -177,6 +178,7 @@ export const UpiSettlementActions = ({
 					Pay {formatCurrency(settlement.amount, currency)} with UPI
 				</a>
 			)}
+			{link && canOpenApps && <UpiLimitHint upiId={upiId} amount={settlement.amount} />}
 		</div>
 	);
 };
