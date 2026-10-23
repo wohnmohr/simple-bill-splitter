@@ -7,6 +7,7 @@ import { calculateSettlements } from "@/utils/calculations";
 import { formatCurrency } from "@/utils/formatting";
 import { CURRENCIES } from "@/constants";
 import { buildUpiLink } from "@/utils/upi";
+import { UpiLimitHint } from "@/components/Settlements/UpiLimitHint";
 import {
 	CalculatorResult,
 	fieldClass,
@@ -108,6 +109,7 @@ export const UpiCalculator = () => {
 									<ExternalLink className="h-3.5 w-3.5" />
 								</a>
 							) : null}
+							{link && to.upiId && <UpiLimitHint upiId={to.upiId} amount={s.amount} className="text-xs text-gray-500" />}
 						</div>
 					);
 				})}

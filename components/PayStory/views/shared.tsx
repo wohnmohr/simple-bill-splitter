@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { UpiQr, useCanOpenUpiApps } from "@/components/Settlements/UpiQr";
 import { track } from "@/lib/analytics";
 import { buildUpiLink } from "@/utils/upi";
+import { UpiLimitHint } from "@/components/Settlements/UpiLimitHint";
 import { encodeRequest, isMarked, sharePerPerson, totalPaid, type PayRequest, type SplitTemplate } from "@/utils/payStory";
 import { isOrganiser } from "@/utils/splitOrganiser";
 
@@ -148,22 +149,25 @@ export const PayButton = ({ p, className = "", style, children }: { p: PayState;
  */
 export const MarkPaid = ({ p, className = "", btnClass = "", btnStyle }: { p: PayState; className?: string; btnClass?: string; btnStyle?: React.CSSProperties }) =>
 	p.paying || p.canOpenApps === false || p.organiser ? (
-		<div className={`flex items-end gap-3 ${className}`}>
-			<label className="min-w-0 flex-1 text-left">
-				<span aria-live="polite" className={`block text-xs ${p.taken ? "font-semibold" : "opacity-70"}`}>
-					{p.taken ? `${p.who.trim()} is already marked paid` : p.organiser ? "Got paid? Add who paid you" : "Paid? Add your name"}
-				</span>
-				<input
-					value={p.who}
-					maxLength={30}
-					onChange={(e) => p.setWho(e.target.value)}
-					placeholder={p.organiser ? "Their first name" : "Your first name"}
-					className="inline-edit w-full py-1 text-base"
-				/>
-			</label>
-			<button type="button" onClick={p.record} disabled={!p.who.trim() || !(p.amt >= 1) || p.taken} className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-40 ${btnClass}`} style={btnStyle}>
-				{p.organiser ? "Received ✓" : "I’ve paid ✓"}
-			</button>
+		<div className={className}>
+			{p.paying && p.canOpenApps && <UpiLimitHint upiId={p.req.upiId} amount={p.amt} className="mb-2 text-left text-xs opacity-70" />}
+			<div className="flex items-end gap-3">
+				<label className="min-w-0 flex-1 text-left">
+					<span aria-live="polite" className={`block text-xs ${p.taken ? "font-semibold" : "opacity-70"}`}>
+						{p.taken ? `${p.who.trim()} is already marked paid` : p.organiser ? "Got paid? Add who paid you" : "Paid? Add your name"}
+					</span>
+					<input
+						value={p.who}
+						maxLength={30}
+						onChange={(e) => p.setWho(e.target.value)}
+						placeholder={p.organiser ? "Their first name" : "Your first name"}
+						className="inline-edit w-full py-1 text-base"
+					/>
+				</label>
+				<button type="button" onClick={p.record} disabled={!p.who.trim() || !(p.amt >= 1) || p.taken} className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-40 ${btnClass}`} style={btnStyle}>
+					{p.organiser ? "Received ✓" : "I’ve paid ✓"}
+				</button>
+			</div>
 		</div>
 	) : null;
 

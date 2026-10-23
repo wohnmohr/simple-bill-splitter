@@ -73,7 +73,7 @@ export const InviteNudge = ({ group, shareLink, onInvite }: InviteNudgeProps) =>
 			const link = await shareLink();
 			const name = group.members.find((m) => m.id === personId)?.name ?? "";
 			const owes = formatCurrency(amount, group.currency);
-			const upi = group.currency.code === "INR" ? me?.upiId : undefined;
+			const upi = group.currency.code === "INR" && me?.upiId ? { id: me.upiId, amount } : undefined;
 			const result = await sendViaWhatsApp(oweMessage(name, `I added ${group.name} on SplitBiller`, owes, groupUrl(link, personId, true), upi));
 			if (result !== "failed") setSent((prev) => ({ ...prev, [personId]: result === "copied" ? "copied" : "sent" }));
 		} catch (err) {

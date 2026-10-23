@@ -1,3 +1,5 @@
+import { overUpiLinkLimit, UPI_LIMIT_TIP } from "@/utils/upi";
+
 /**
  * Sends `text` to WhatsApp without it touching a web server.
  *
@@ -26,8 +28,16 @@ export async function sendViaWhatsApp(text: string): Promise<WhatsAppResult> {
 	}
 }
 
-/** "Hi Riya, <about>: you owe me ₹400.", the payee's UPI ID if known, then the link to see it and pay. */
-export const oweMessage = (name: string, about: string, owed: string, url: string, upiId?: string) =>
-	[`Hi ${name}, ${about}: you owe me ${owed}.`, upiId ? `UPI: ${upiId}` : "", `See it and pay here: ${url}`]
+/**
+ * "Hi Riya, <about>: you owe me ₹400.", the payee's UPI ID if known (with the
+ * pay-in-app tip above ₹2,000), then the link to see it and pay.
+ */
+export const oweMessage = (name: string, about: string, owed: string, url: string, upi?: { id: string; amount: number }) =>
+	[
+		`Hi ${name}, ${about}: you owe me ${owed}.`,
+		upi ? `UPI: ${upi.id}` : "",
+		upi && overUpiLinkLimit(upi.amount) ? UPI_LIMIT_TIP : "",
+		`See it and pay here: ${url}`,
+	]
 		.filter(Boolean)
 		.join("\n");
