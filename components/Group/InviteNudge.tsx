@@ -30,7 +30,10 @@ interface InviteNudgeProps {
  */
 export const InviteNudge = ({ group, shareLink, onInvite }: InviteNudgeProps) => {
 	const [dismissed, setDismissed] = useState(true);
-	/** Who has been sent their share on this visit: "sent", or "copied" on a computer. */
+	/**
+	 * Who you tapped Send for on this visit: "sent", or "copied" on a computer.
+	 * We can't tell if WhatsApp actually sent it, so the row offers to send again.
+	 */
 	const [sent, setSent] = useState<Record<string, "sent" | "copied">>({});
 
 	const owed = group.meId ? calculateSettlements(group.members, group.expenses).filter((s) => s.to === group.meId) : [];
@@ -109,7 +112,7 @@ export const InviteNudge = ({ group, shareLink, onInvite }: InviteNudgeProps) =>
 									className={done ? "btn-ghost shrink-0 !py-1.5" : "btn-primary shrink-0 !py-1.5"}
 								>
 									{done ? <Check className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
-									{done === "copied" ? "Copied" : done ? "Sent" : "Send"}
+									{done === "copied" ? "Copy again" : done ? "Send again" : "Send"}
 								</button>
 							</li>
 						);
