@@ -210,7 +210,7 @@ export const AddMembersModal = ({
 											>
 												Bring back
 											</button>
-										) : (
+										) : isMe ? null : (
 											<button
 												type="button"
 												onClick={() => onDeleteMember(member.id)}
