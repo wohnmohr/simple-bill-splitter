@@ -1,7 +1,7 @@
 import { Person } from "@/types";
 import { Group } from "@/types";
 import { newId } from "@/utils/ids";
-import { expensePayers } from "@/utils/calculations";
+import { bringBack, removeMember } from "@/utils/members";
 
 export const useGroupMembers = (
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>,
@@ -60,15 +60,10 @@ export const useGroupMembers = (
     });
   };
 
-  const deleteMember = (personId: string): void => {
-    updateCurrent((g) => ({
-      ...g,
-      members: g.members.filter((p) => p.id !== personId),
-      expenses: g.expenses.filter(
-        (e) => !expensePayers(e).has(personId) && !e.participants.includes(personId)
-      ),
-    }));
-  };
+  /** Removes a member. Their past entries stay; see utils/members. */
+  const deleteMember = (personId: string): void => updateCurrent((g) => removeMember(g, personId));
+
+  const bringBackMember = (personId: string): void => updateCurrent((g) => bringBack(g, personId));
 
   return {
     addMember,
@@ -77,5 +72,6 @@ export const useGroupMembers = (
     markJoined,
     setNickname,
     deleteMember,
+    bringBackMember,
   };
 };
