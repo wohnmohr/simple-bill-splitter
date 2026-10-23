@@ -89,6 +89,7 @@ export default function Home() {
 		createGroup,
 		deleteGroup,
 		updateGroupCurrency,
+		renameGroup,
 		setGroupMe,
 		setGroupTheme,
 		setGroupClosed,
@@ -411,6 +412,7 @@ export default function Home() {
 									onManageMembers={() => setShowMembersModal(true)}
 									onShare={() => setShowSync(true)}
 									onTheme={() => setShowTheme(true)}
+									onRename={(name) => renameGroup(currentGroup.id, name)}
 									syncStatus={sync.status[currentGroup.id]}
 									onChangeMe={() => setIdentityAsk("pick")}
 								/>

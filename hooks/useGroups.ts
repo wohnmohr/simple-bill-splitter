@@ -102,6 +102,11 @@ export const useGroups = () => {
     setGroups(updatedGroups);
   };
 
+  /** Renames a group; for a synced group everyone sees the new name. */
+  const renameGroup = (groupId: string, name: string): void => {
+    setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, name } : g)));
+  };
+
   /** Sets a group's theme; for a synced group everyone sees it. */
   const setGroupTheme = (groupId: string, theme: string | undefined): void => {
     setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, theme } : g)));
@@ -127,6 +132,7 @@ export const useGroups = () => {
     createGroup,
     deleteGroup,
     updateGroupCurrency,
+    renameGroup,
     setGroupMe,
     setGroupTheme,
     setGroupClosed,
