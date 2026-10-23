@@ -30,6 +30,9 @@ export function buildUpiLink(opts: {
 export const UPI_LINK_LIMIT = 2000;
 export const overUpiLinkLimit = (amount: number): boolean => amount > UPI_LINK_LIMIT;
 
+/** The same advice for messages, where there's no button to copy with. */
+export const UPI_LIMIT_TIP = "Over ₹2,000, UPI apps can block pay links. If yours does, pay the UPI ID from inside the app.";
+
 /** A UPI VPA is handle@provider, e.g. priya@okaxis or 98xxxxxx10@ybl. */
 export const isValidUpiId = (value: string): boolean =>
 	/^[\w.\-]{2,}@[a-zA-Z]{2,}$/.test(value.trim());
