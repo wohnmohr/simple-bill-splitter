@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Settlement, Person, Currency, Expense, GroupSyncLink } from "@/types";
 import { MemberAvatar } from "@/components/Group/MemberAvatar";
 import { formatCurrency } from "@/utils/formatting";
@@ -93,7 +93,11 @@ export const SettlementList = ({
 		}
 	}, [settlements, pending]);
 
+	// A marked row disappears and the next one slides under the finger, so a quick second tap is ignored.
+	const lastMarkAt = useRef(0);
 	const markPaid = (s: Settlement, source: string) => {
+		if (Date.now() - lastMarkAt.current < 500) return;
+		lastMarkAt.current = Date.now();
 		onRecordPayment?.([s]);
 		track("settlement_marked_paid", { source, is_me: s.from === meId || s.to === meId });
 	};
@@ -341,7 +345,7 @@ export const SettlementList = ({
 				<section>
 					<div className="mb-2 flex items-baseline justify-between gap-3 px-1">
 						<h2 className="label-text">
-							{me ? "Other people's payments" : `${settlements.length} payments settle the group`}
+							{me ? "Other people's payments" : settlements.length === 1 ? "1 payment settles the group" : `${settlements.length} payments settle the group`}
 						</h2>
 						{canRecord && others.length > 1 && (
 							<button
