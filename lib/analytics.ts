@@ -71,6 +71,7 @@ export type AnalyticsEvent =
 	| "group_theme_changed"
 	| "group_identity_chosen"
 	| "group_personal_link_copied"
+	| "group_qr_shown"
 	| "invite_nudge_shown"
 	| "invite_nudge_clicked"
 	| "invite_nudge_sent"
