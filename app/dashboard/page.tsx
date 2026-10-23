@@ -42,6 +42,7 @@ import { parseQuickAdd, resolveQuickAdd, type QuickResolved } from "@/utils/quic
 import { applyQuickAdd } from "@/utils/quickAddSave";
 import { takeQuickAdd } from "@/utils/quickAddHandoff";
 import { firstExpense, type FirstExpenseInput } from "@/utils/firstExpense";
+import { latestGroup, takeLaunch, takeSharedBill } from "@/utils/launch";
 import { QuickAddBox } from "@/components/QuickAdd/QuickAddBox";
 import { QuickAddPreview } from "@/components/QuickAdd/QuickAddPreview";
 
@@ -57,6 +58,12 @@ export default function Home() {
 	/** "Start the next one": a new group with this group's people. */
 	const [nextFrom, setNextFrom] = useState<Group | null>(null);
 	const [showExpenseForm, setShowExpenseForm] = useState(false);
+	/** A screenshot shared into the app, for Add expense to scan. */
+	const [sharedBill, setSharedBill] = useState<File | null>(null);
+	const closeExpenseForm = () => {
+		setShowExpenseForm(false);
+		setSharedBill(null);
+	};
 	const [showMembersModal, setShowMembersModal] = useState(false);
 	const [showSync, setShowSync] = useState(false);
 	const [showTheme, setShowTheme] = useState(false);
@@ -184,7 +191,7 @@ export default function Home() {
 			currency: currency.code,
 			repeats: input.repeatMonthly,
 		});
-		setShowExpenseForm(false);
+		closeExpenseForm();
 	};
 
 	// Quick add reads the sentence on this device; analytics get counts only, never what was typed.
@@ -200,6 +207,24 @@ export default function Home() {
 		});
 		setQuickAdd({ quick, newGroup });
 	};
+
+	// Opened from the home-screen shortcut, or by sharing a screenshot to the installed app:
+	// straight to Add expense in the group you used last (or the first-run form if there's none).
+	useEffect(() => {
+		if (!loaded) return;
+		const launch = takeLaunch();
+		const group = launch && latestGroup(groups);
+		if (!group) return;
+		setSelectedGroupId(group.id);
+		setShowExpenseForm(true);
+		if (launch === "shared") void takeSharedBill().then(setSharedBill);
+		track("app_launched_to_add", { shared: launch === "shared" });
+	}, [loaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	// Installed on the home screen: the service worker receives shared screenshots.
+	useEffect(() => {
+		if (window.matchMedia("(display-mode: standalone)").matches) navigator.serviceWorker?.register("/sw.js").catch(() => undefined);
+	}, []);
 
 	// Typed on the home page: preview it as a new group straight away.
 	useEffect(() => {
@@ -656,12 +681,13 @@ export default function Home() {
 
 				<ExpenseFormModal
 					isOpen={showExpenseForm}
-					onClose={() => setShowExpenseForm(false)}
+					onClose={closeExpenseForm}
 					onSubmit={handleAddExpense}
 					people={people}
 					history={expenses}
 					currency={currency}
 					defaultPayerId={defaultPayerId}
+					scanFile={sharedBill}
 				/>
 
 				{quickAdd && (
