@@ -77,6 +77,7 @@ export type AnalyticsEvent =
 	| "invite_nudge_sent"
 	| "invite_nudge_dismissed"
 	| "install_prompt_shown"
+	| "app_launched_to_add"
 	| "install_prompt_clicked"
 	| "install_prompt_dismissed"
 	| "app_installed";

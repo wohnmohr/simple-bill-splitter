@@ -36,6 +36,8 @@ interface ExpenseFormModalProps {
 	initialWeights?: Record<string, number>;
 	initialDate?: number;
 	initialRepeat?: boolean;
+	/** A screenshot shared into the app: scanned as soon as the form opens. */
+	scanFile?: File | null;
 	title?: string;
 }
 
@@ -63,6 +65,7 @@ export const ExpenseFormModal = ({
 	initialWeights = {},
 	initialDate,
 	initialRepeat = false,
+	scanFile,
 	title = "Add Expense",
 }: ExpenseFormModalProps) => {
 	const [amount, setAmount] = React.useState(initialAmount);
@@ -186,6 +189,12 @@ export const ExpenseFormModal = ({
 		}
 		prevIsOpenRef.current = isOpen;
 	}, [isOpen, people]);
+
+	// After the reset above, so the scanned order isn't cleared.
+	React.useEffect(() => {
+		if (!isOpen || !scanFile || people.length < 2) return;
+		void scan(scanFile).then((parsed) => parsed && setOrder(draftFromOrder(parsed)));
+	}, [isOpen, scanFile]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const amountNum = parseFloat(amount);
 	const hasAmount = amountNum > 0;
