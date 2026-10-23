@@ -15,6 +15,9 @@ let nextId = 0;
 let loaded = false; // the engine is up in this page: no download or start-up next time
 let fromCache = false; // this scan's engine files came from the browser's cache
 
+/** The file isn't an image the browser can open (corrupt, or a format it can't decode). */
+export class UnreadableImageError extends Error {}
+
 /** How far along a scan is (0–1), and what it's doing, in words. */
 export type ScanProgress = { share: number; step: string };
 
@@ -77,21 +80,36 @@ async function prepare(file: Blob): Promise<Rgba> {
 export async function readImageText(file: Blob, progress?: (p: ScanProgress) => void): Promise<string> {
 	fromCache = false;
 	progress?.(describe({ stage: "prepare", done: 0, total: 1 }));
-	const image = await prepare(file);
+	const image = await prepare(file).catch((err) => {
+		throw new UnreadableImageError("Couldn't decode the image", { cause: err });
+	});
 	worker ??= new Worker(new URL("./ocr.worker.ts", import.meta.url), { type: "module" });
 	const id = ++nextId;
 	const w = worker;
 	return new Promise((resolve, reject) => {
+		const stopListening = () => {
+			w.removeEventListener("message", onMessage);
+			w.removeEventListener("error", onError);
+		};
 		const onMessage = ({ data }: MessageEvent<OcrReply>) => {
 			if (data.id !== id) return;
 			if ("progress" in data) return progress?.(describe(data.progress));
-			w.removeEventListener("message", onMessage);
+			stopListening();
 			if ("text" in data) {
 				loaded = true;
 				resolve(data.text);
 			} else reject(new Error(data.error));
 		};
+		// The worker couldn't load or crashed: fail this scan, and start a fresh worker next time.
+		const onError = () => {
+			stopListening();
+			w.terminate();
+			if (worker === w) worker = null;
+			loaded = false;
+			reject(new Error("The OCR worker failed"));
+		};
 		w.addEventListener("message", onMessage);
+		w.addEventListener("error", onError);
 		w.postMessage({ id, image } satisfies OcrRequest, [image.data.buffer]);
 	});
 }

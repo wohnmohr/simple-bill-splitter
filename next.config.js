@@ -37,6 +37,12 @@ const nextConfig = {
 				],
 			})),
 			{
+				// Built scripts, including the bootstrap the OCR worker starts from: inside an
+				// isolated page, a worker script must carry the same embedder policy.
+				source: "/_next/static/chunks/:path*",
+				headers: [{ key: "Cross-Origin-Embedder-Policy", value: "credentialless" }],
+			},
+			{
 				// The on-device OCR engine and models (copied in at build): large, and their
 				// names change when they do (see scripts/copy-ocr-assets.mjs).
 				source: "/ocr/:path*",
