@@ -29,6 +29,8 @@ const loadReminded = (): Record<string, number> => {
 export const RemindCard = ({ groups }: { groups: Group[] }) => {
 	// Read after mount: the time and this device's storage aren't known on the server.
 	const [reminded, setReminded] = useState<Record<string, number> | null>(null);
+	// Rows tapped on this visit stay, offering to remind again: we can't tell if WhatsApp actually sent it.
+	const [tapped, setTapped] = useState<string[]>([]);
 	const [copied, setCopied] = useState<string | null>(null);
 	useEffect(() => setReminded(loadReminded()), []);
 
@@ -43,31 +45,25 @@ export const RemindCard = ({ groups }: { groups: Group[] }) => {
 				setCopied("Reminder copied. Paste it in your chat.");
 				setTimeout(() => setCopied(null), 3000);
 			}
-			const next = { ...reminded, [key]: Date.now() };
-			setReminded(next);
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+			setTapped((prev) => (prev.includes(key) ? prev : [...prev, key]));
+			localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...loadReminded(), [key]: Date.now() }));
 		} catch (err) {
 			trackError(err, { source: "home_remind" });
 		}
 	};
 
-	const status = copied && (
-		<p role="status" className="mt-2 flex items-center gap-1.5 text-sm text-positive">
-			<Check className="h-4 w-4" />
-			{copied}
-		</p>
-	);
-	// The last reminder sent empties the list; its "copied" note still needs a place.
-	if (!due.length) return status ? <div className="mb-4">{status}</div> : null;
+	if (!due.length) return null;
 
 	return (
 		<section className="surface mb-4 p-4" aria-labelledby="remind-card-title">
 			<h2 id="remind-card-title" className="font-semibold text-ink">Still waiting on</h2>
 			<ul className="mt-2 divide-y divide-line">
 				{due.map((d) => {
+					const key = reminderKey(d.group.id, d.settlement.from);
 					const name = shownMembers(d.group).find((m) => m.id === d.settlement.from)?.name ?? "Someone";
+					const again = tapped.includes(key);
 					return (
-						<li key={reminderKey(d.group.id, d.settlement.from)} className="flex items-center gap-3 py-2.5">
+						<li key={key} className="flex items-center gap-3 py-2.5">
 							<div className="min-w-0 flex-1">
 								<p className="truncate text-ink">
 									{name} owes you{" "}
@@ -79,15 +75,20 @@ export const RemindCard = ({ groups }: { groups: Group[] }) => {
 									{d.group.name} · quiet for {d.days} days
 								</p>
 							</div>
-							<button type="button" onClick={() => remind(d)} className="btn-secondary shrink-0 !py-2">
-								<MessageCircle className="h-4 w-4" />
-								Remind
+							<button type="button" onClick={() => remind(d)} className={`${again ? "btn-ghost" : "btn-secondary"} shrink-0 !py-2`}>
+								{again ? <Check className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
+								{again ? "Remind again" : "Remind"}
 							</button>
 						</li>
 					);
 				})}
 			</ul>
-			{status}
+			{copied && (
+				<p role="status" className="mt-2 flex items-center gap-1.5 text-sm text-positive">
+					<Check className="h-4 w-4" />
+					{copied}
+				</p>
+			)}
 		</section>
 	);
 };
