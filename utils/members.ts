@@ -2,7 +2,9 @@
  * Removing people without losing what happened. Expenses are the group's
  * record, so someone who paid for or shared anything stays on those entries
  * (and in balances) after they're removed: they're only marked as left, which
- * keeps them out of new expenses. Someone on no entry is removed outright.
+ * keeps them out of new expenses. Someone on no entry is removed outright,
+ * except in a shared group: another phone may be adding an entry for them
+ * right now, so there they're always only marked as left.
  *
  * Pure functions with only type imports, so they run in the browser and in node tests.
  */
@@ -20,7 +22,7 @@ export const currentMembers = (people: Person[]) => people.filter((p) => !p.left
 
 /** Removes a member, keeping anyone on past entries as left so no entry is lost. */
 export function removeMember(group: Group, personId: string): Group {
-	const members = entriesWith(group.expenses, personId)
+	const members = group.sync || entriesWith(group.expenses, personId)
 		? group.members.map((m) => (m.id === personId ? { ...m, left: true as const } : m))
 		: group.members.filter((m) => m.id !== personId);
 	return { ...group, members };

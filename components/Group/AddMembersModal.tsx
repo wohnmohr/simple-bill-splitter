@@ -7,7 +7,7 @@ import { Group, Person } from "@/types";
 import { isValidUpiId } from "@/utils/upi";
 import { splitNames } from "@/utils/firstExpense";
 import { loadMyName } from "@/utils/myName";
-import { currentMembers } from "@/utils/members";
+import { currentMembers, entriesWith } from "@/utils/members";
 
 interface AddMembersModalProps {
 	isOpen: boolean;
@@ -185,7 +185,9 @@ export const AddMembersModal = ({
 													)}
 												</span>
 												{member.left && (
-													<span className="block truncate text-xs text-ink-muted">Left. Still on past expenses.</span>
+													<span className="block truncate text-xs text-ink-muted">
+														{entriesWith(group.expenses, member.id) ? "Left. Still on past expenses." : "Left."}
+													</span>
 												)}
 												{nickname && (
 													<span className="block truncate text-xs text-ink-muted">Others see “{member.name}”</span>
