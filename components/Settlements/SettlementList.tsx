@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Settlement, Person, Currency, Expense, GroupSyncLink } from "@/types";
 import { MemberAvatar } from "@/components/Group/MemberAvatar";
 import { formatCurrency } from "@/utils/formatting";
-import { ArrowRight, Check, CircleCheck, MessageCircle } from "lucide-react";
+import { Check, CircleCheck, MessageCircle } from "lucide-react";
 import { ShareSettlementActions } from "@/components/Share/ShareSettlementActions";
 import { UpiSettlementActions } from "@/components/Settlements/UpiSettlementActions";
 import { reminderText } from "@/utils/reminderText";
@@ -341,7 +341,7 @@ export const SettlementList = ({
 				<section>
 					<div className="mb-2 flex items-baseline justify-between gap-3 px-1">
 						<h2 className="label-text">
-							{me ? "Between others" : `${settlements.length} payments settle the group`}
+							{me ? "Other people's payments" : `${settlements.length} payments settle the group`}
 						</h2>
 						{canRecord && others.length > 1 && (
 							<button
@@ -360,17 +360,16 @@ export const SettlementList = ({
 						{others.map((s) => (
 							<li key={`${s.from}-${s.to}`} className="flex items-center gap-3 px-4 py-3">
 								<div className="min-w-0 flex-1">
-									<SettlementLine s={s} currency={currency} name={getPersonName} compact />
+									<SettlementLine s={s} currency={currency} name={getPersonName} />
 								</div>
 								{canRecord && (
 									<button
 										type="button"
 										onClick={() => markPaid(s, "row")}
-										className="btn-ghost shrink-0 !px-2.5 text-brand-700"
+										className="btn-secondary shrink-0 !px-3 !py-1.5 text-sm"
 										aria-label={`Mark ${getPersonName(s.from)}'s payment to ${getPersonName(s.to)} as paid`}
 									>
-										<Check className="h-4 w-4" />
-										Paid
+										Mark paid
 									</button>
 								)}
 							</li>
@@ -411,25 +410,17 @@ const SettlementLine = ({
 	s,
 	currency,
 	name,
-	compact = false,
 }: {
 	s: Settlement;
 	currency: Currency;
 	name: (id: string) => string;
-	compact?: boolean;
 }) => (
 	<div className="flex items-center justify-between gap-3">
-		<div className="flex min-w-0 flex-1 items-center gap-2 text-ink">
-			<span className="truncate font-semibold">{name(s.from)}</span>
-			<ArrowRight className="h-4 w-4 shrink-0 text-ink-muted" aria-hidden />
-			<span className="sr-only">pays</span>
-			<span className="truncate font-semibold">{name(s.to)}</span>
-		</div>
-		<p
-			className={`shrink-0 font-semibold tabular-nums text-ink ${
-				compact ? "" : "text-lg"
-			}`}
-		>
+		<p className="min-w-0 flex-1 truncate text-ink-muted">
+			<span className="font-semibold text-ink">{name(s.from)}</span> pays{" "}
+			<span className="font-semibold text-ink">{name(s.to)}</span>
+		</p>
+		<p className="shrink-0 font-semibold tabular-nums text-ink">
 			{formatCurrency(s.amount, currency)}
 		</p>
 	</div>
