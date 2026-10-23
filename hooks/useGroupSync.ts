@@ -19,6 +19,8 @@ export function useGroupSync(
 ) {
 	const engines = useRef(new Map<string, GroupSync>());
 	const [status, setStatus] = useState<Record<string, SyncStatus>>({});
+	// Groups pulled at least once this visit: until then this device's copy may be out of date.
+	const [pulled, setPulled] = useState<ReadonlySet<string>>(() => new Set());
 	const selected = useRef(selectedGroupId);
 	selected.current = selectedGroupId;
 
@@ -47,7 +49,10 @@ export function useGroupSync(
 			const created = new GroupSync(
 				g,
 				() => reconcile(g.id),
-				(s) => setStatus((prev) => ({ ...prev, [g.id]: s }))
+				(s) => {
+					setStatus((prev) => ({ ...prev, [g.id]: s }));
+					if (s === "synced") setPulled((prev) => (prev.has(g.id) ? prev : new Set(prev).add(g.id)));
+				}
 			);
 			engines.current.set(g.id, created);
 			setStatus((prev) => ({ ...prev, [g.id]: created.status }));
@@ -156,5 +161,5 @@ export function useGroupSync(
 	const syncNow = useCallback((groupId: string) => engines.current.get(groupId)?.sync(groupId, true), []);
 	const expiresAt = (groupId: string) => engines.current.get(groupId)?.expiresAt;
 
-	return { status, enableSync, keepLocalCopy, deleteSyncedGroup, resetLink, forgetGroup, syncNow, expiresAt };
+	return { status, pulled, enableSync, keepLocalCopy, deleteSyncedGroup, resetLink, forgetGroup, syncNow, expiresAt };
 }

@@ -7,7 +7,7 @@ import { useGroupSync } from "@/hooks/useGroupSync";
 import { useBackup } from "@/hooks/useBackup";
 import { disableAlerts } from "@/utils/groupAlerts";
 import { newId } from "@/utils/ids";
-import { addDueRepeats } from "@/utils/recurring";
+import { addDueRepeatsToGroups } from "@/utils/recurring";
 
 export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -37,7 +37,7 @@ export const useGroups = () => {
     }
   }, [groups, loaded]);
 
-  // Monthly expenses that have come due: on load, on every change, and when the app comes back to the front.
+  // Monthly expenses that have come due: on load (a synced group once pulled), on every change, and when the app comes back to the front.
   const [awake, setAwake] = useState(0);
   useEffect(() => {
     const onShow = () => document.visibilityState === "visible" && setAwake((n) => n + 1);
@@ -46,18 +46,9 @@ export const useGroups = () => {
   }, []);
   useEffect(() => {
     if (!loaded) return;
-    const now = Date.now();
-    let due = false;
-    const next = groups.map((g) => {
-      // A closed group is finished: its monthly expenses stop.
-      if (g.closedAt) return g;
-      const expenses = addDueRepeats(g.expenses, now);
-      if (expenses === g.expenses) return g;
-      due = true;
-      return { ...g, expenses };
-    });
-    if (due) setGroups(next);
-  }, [groups, awake, loaded]);
+    const next = addDueRepeatsToGroups(groups, sync.pulled);
+    if (next !== groups) setGroups(next);
+  }, [groups, awake, loaded, sync.pulled]);
 
   /** Creates and opens a group; `fill` adds its first members and expenses (quick add). */
   const createGroup = (
