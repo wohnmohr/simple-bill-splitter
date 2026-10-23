@@ -99,6 +99,16 @@ export const ExpenseCard = ({
 				</span>
 				<span className="flex items-center gap-3 text-sm text-ink-muted">
 					<span className="flex min-w-0 flex-1 items-center gap-1.5">
+						{/* Comments lead the line: a question on a bill is what people open it for. */}
+						{commentCount > 0 && (
+							<span
+								className="flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold tabular-nums text-brand-700"
+								aria-label={`${commentCount} comments`}
+							>
+								<MessageCircle className="h-3.5 w-3.5" aria-hidden />
+								{commentCount}
+							</span>
+						)}
 						{expense.repeat && (
 							<Repeat className="h-3.5 w-3.5 shrink-0 text-brand-700" aria-label="Monthly" />
 						)}
@@ -106,12 +116,6 @@ export const ExpenseCard = ({
 							{paidByName} paid
 							{expense.createdAt && <> · {shortDate(expense.createdAt)}</>}
 						</span>
-						{commentCount > 0 && (
-							<span className="flex shrink-0 items-center gap-0.5 tabular-nums" aria-label={`${commentCount} comments`}>
-								<MessageCircle className="h-3.5 w-3.5" aria-hidden />
-								{commentCount}
-							</span>
-						)}
 					</span>
 					{share && <span className="shrink-0 whitespace-nowrap tabular-nums text-ink-soft">{share}</span>}
 				</span>
