@@ -89,6 +89,7 @@ function toPerson(id: string, v: unknown): Person | null {
 	const upiId = str(p.upiId, 80).trim();
 	if (upiId) person.upiId = upiId;
 	if (p.joined === true) person.joined = true;
+	if (p.left === true) person.left = true;
 	return person;
 }
 

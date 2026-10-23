@@ -21,6 +21,7 @@ import { IdentitySheet } from "@/components/Group/IdentitySheet";
 import { InviteNudge } from "@/components/Group/InviteNudge";
 import { TripCard } from "@/components/Group/TripCard";
 import { shownMembers } from "@/utils/identity";
+import { currentMembers, entriesWith, isOnEntry } from "@/utils/members";
 import { applyTheme } from "@/utils/themes";
 import { TabNavigation } from "@/components/Tabs/TabNavigation";
 import { ExpenseList } from "@/components/Expense/ExpenseList";
@@ -116,7 +117,7 @@ export default function Home() {
 	useEffect(() => applyTheme(openTheme), [openTheme]);
 	useEffect(() => () => applyTheme(undefined), []);
 
-	const { addMember, updateMemberUpi, renameMember, markJoined, setNickname, deleteMember } = useGroupMembers(setGroups, currentGroup);
+	const { addMember, updateMemberUpi, renameMember, markJoined, setNickname, deleteMember, bringBackMember } = useGroupMembers(setGroups, currentGroup);
 
 	const { addExpense, updateExpense, deleteExpense, recordPayment, addComment } = useExpenses(
 		groups,
@@ -126,6 +127,8 @@ export default function Home() {
 
 	// Display names: this device's private nicknames in place of shared names.
 	const people = currentGroup ? shownMembers(currentGroup) : [];
+	// Who new expenses can include: people who left stay on past entries only.
+	const current = currentMembers(people);
 	const expenses = currentGroup?.expenses || [];
 	const balances = calculateBalances(people, expenses);
 	const settlements = calculateSettlements(people, expenses);
@@ -155,7 +158,7 @@ export default function Home() {
 	};
 
 	// New expenses default to the viewer, else whoever paid most recently.
-	const lastPayer = [...expenses].reverse().find((e) => e.kind !== "payment")?.paidBy;
+	const lastPayer = [...expenses].reverse().find((e) => e.kind !== "payment" && current.some((p) => p.id === e.paidBy))?.paidBy;
 	const defaultPayerId = currentGroup?.meId || lastPayer;
 
 	const handleCreateGroup = (name: string, currency: Currency) => {
@@ -163,7 +166,7 @@ export default function Home() {
 		const from = nextFrom;
 		const ok = createGroup(name, currency, from ? (g) => ({
 			...g,
-			members: from.members.map(({ id, name, upiId }) => ({ id, name, ...(upiId ? { upiId } : {}) })),
+			members: currentMembers(from.members).map(({ id, name, upiId }) => ({ id, name, ...(upiId ? { upiId } : {}) })),
 			...(from.meId ? { meId: from.meId } : {}),
 			...(from.theme ? { theme: from.theme } : {}),
 		}) : undefined);
@@ -206,7 +209,7 @@ export default function Home() {
 	// Quick add reads the sentence on this device; analytics get counts only, never what was typed.
 	const handleQuickAdd = (text: string, newGroup: boolean) => {
 		const group = newGroup ? undefined : currentGroup;
-		const members = group ? shownMembers(group) : [];
+		const members = group ? currentMembers(shownMembers(group)) : [];
 		const quick = withMyName(resolveQuickAdd(parseQuickAdd(text, members.map((m) => m.name)), members, group?.meId), loadMyName());
 		if (!quick.expenses.length) return;
 		track("quick_add_previewed", {
@@ -363,18 +366,9 @@ export default function Home() {
 		if (wasOpen) setSelectedGroupId(null);
 	};
 
-	const entriesWith = (personId: string) =>
-		currentGroup?.expenses.filter((e) => e.paidBy === personId || e.participants.includes(personId)).length ?? 0;
-
 	const handleDeleteMember = (personId: string) => {
 		if (!currentGroup) return;
-		const involved = entriesWith(personId);
-		offerUndo(
-			currentGroup.id,
-			involved > 0
-				? `Removed ${nameOf(personId)} and ${involved} ${involved === 1 ? "entry" : "entries"} they were in`
-				: `Removed ${nameOf(personId)}`
-		);
+		offerUndo(currentGroup.id, `Removed ${nameOf(personId)}`);
 		deleteMember(personId);
 	};
 
@@ -399,6 +393,9 @@ export default function Home() {
 	};
 
 	const viewingExpense = expenses.find((e) => e.id === viewingExpenseId);
+	// Editing keeps whoever is already on the entry, even if they've left since.
+	const editingExpense = expenses.find((e) => e.id === editingExpenseId);
+	const editPeople = people.filter((p) => !p.left || (editingExpense && isOnEntry(editingExpense, p.id)));
 
 	/** Every delete asks first. Built each render so it acts on the latest data. */
 	const deletePrompt = (): ConfirmState => {
@@ -411,10 +408,12 @@ export default function Home() {
 				: { title: `Delete ${group.name}?`, detail: "All its expenses go with it.", action: "Delete", onConfirm };
 		}
 		if (deleting?.kind === "member") {
-			const involved = entriesWith(deleting.id);
+			const involved = entriesWith(expenses, deleting.id);
 			return {
 				title: `Remove ${nameOf(deleting.id)}?`,
-				detail: involved > 0 ? `${involved} ${involved === 1 ? "entry" : "entries"} they were in will go too.` : undefined,
+				detail: involved > 0
+					? `They stay on the ${involved === 1 ? "entry" : `${involved} entries`} they were in and in balances, but won't be on new expenses.`
+					: undefined,
 				action: "Remove",
 				onConfirm: () => handleDeleteMember(deleting.id),
 			};
@@ -544,7 +543,7 @@ export default function Home() {
 													key={quickAddSaves}
 													label="Add an expense by typing it"
 													compact
-													memberNames={people.filter((p) => p.id !== currentGroup?.meId).map((p) => p.name)}
+													memberNames={current.filter((p) => p.id !== currentGroup?.meId).map((p) => p.name)}
 													onSubmit={(t) => handleQuickAdd(t, false)}
 												/>
 											</div>}
@@ -726,6 +725,7 @@ export default function Home() {
 						onRenameMember={renameMember}
 						onSetNickname={setNickname}
 						onDeleteMember={(id) => setDeleting({ kind: "member", id })}
+						onBringBackMember={bringBackMember}
 					/>
 				)}
 
@@ -733,7 +733,7 @@ export default function Home() {
 					isOpen={showExpenseForm}
 					onClose={closeExpenseForm}
 					onSubmit={handleAddExpense}
-					people={people}
+					people={current}
 					history={expenses}
 					currency={currency}
 					defaultPayerId={defaultPayerId}
@@ -778,7 +778,7 @@ export default function Home() {
 						isOpen={!!editingExpenseId}
 						onClose={handleCancelEditExpense}
 						onSubmit={handleSaveEditExpense}
-						people={people}
+						people={editPeople}
 						initialAmount={editExpenseData.amount}
 						initialPaidBy={editExpenseData.paidBy}
 						initialPayers={editExpenseData.payers}

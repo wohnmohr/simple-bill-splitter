@@ -7,6 +7,7 @@ import { Group, Person } from "@/types";
 import { isValidUpiId } from "@/utils/upi";
 import { splitNames } from "@/utils/firstExpense";
 import { loadMyName } from "@/utils/myName";
+import { currentMembers } from "@/utils/members";
 
 interface AddMembersModalProps {
 	isOpen: boolean;
@@ -20,6 +21,8 @@ interface AddMembersModalProps {
 	/** Sets the nickname only this device shows (empty clears it). */
 	onSetNickname: (personId: string, nickname: string) => void;
 	onDeleteMember: (personId: string) => void;
+	/** Puts someone who left back on new expenses. */
+	onBringBackMember: (personId: string) => void;
 }
 
 /**
@@ -36,6 +39,7 @@ export const AddMembersModal = ({
 	onRenameMember,
 	onSetNickname,
 	onDeleteMember,
+	onBringBackMember,
 }: AddMembersModalProps) => {
 	const [memberName, setMemberName] = React.useState("");
 	const [memberUpi, setMemberUpi] = React.useState("");
@@ -131,7 +135,7 @@ export const AddMembersModal = ({
 					<p className="label-text mb-2">
 						{group.members.length === 0
 							? "No one yet"
-							: `${group.members.length} in ${group.name}`}
+							: `${currentMembers(group.members).length} in ${group.name}`}
 					</p>
 					{group.members.length === 0 ? (
 						<p className="text-sm text-ink-muted">
@@ -180,6 +184,9 @@ export const AddMembersModal = ({
 														<span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-800">You</span>
 													)}
 												</span>
+												{member.left && (
+													<span className="block truncate text-xs text-ink-muted">Left. Still on past expenses.</span>
+												)}
 												{nickname && (
 													<span className="block truncate text-xs text-ink-muted">Others see “{member.name}”</span>
 												)}
@@ -195,14 +202,24 @@ export const AddMembersModal = ({
 												<Pencil className="h-4 w-4" />
 											</button>
 										)}
-										<button
-											type="button"
-											onClick={() => onDeleteMember(member.id)}
-											className="icon-btn !h-8 !w-8 hover:!text-negative"
-											aria-label={`Remove ${member.name}`}
-										>
-											<Trash2 className="h-4 w-4" />
-										</button>
+										{member.left ? (
+											<button
+												type="button"
+												onClick={() => onBringBackMember(member.id)}
+												className="shrink-0 text-sm font-semibold text-brand-700 hover:underline"
+											>
+												Bring back
+											</button>
+										) : (
+											<button
+												type="button"
+												onClick={() => onDeleteMember(member.id)}
+												className="icon-btn !h-8 !w-8 hover:!text-negative"
+												aria-label={`Remove ${member.name}`}
+											>
+												<Trash2 className="h-4 w-4" />
+											</button>
+										)}
 									</div>
 									{isEditing && (
 										<p className="text-xs text-ink-muted">
