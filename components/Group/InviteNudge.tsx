@@ -10,8 +10,8 @@ import { groupUrl } from "@/utils/groupSync";
 import { shownMembers } from "@/utils/identity";
 import { oweMessage, sendViaWhatsApp } from "@/utils/whatsapp";
 import { track, trackError } from "@/lib/analytics";
+import { inviteNudgeKey } from "@/utils/shareImport";
 
-const storageKey = (groupId: string) => `splitbiller-invite-nudge-${groupId}`;
 
 interface InviteNudgeProps {
 	group: Group;
@@ -41,7 +41,7 @@ export const InviteNudge = ({ group, shareLink, onInvite }: InviteNudgeProps) =>
 	useEffect(() => {
 		let seen = false;
 		try {
-			seen = localStorage.getItem(storageKey(group.id)) !== null;
+			seen = localStorage.getItem(inviteNudgeKey(group.id)) !== null;
 		} catch {
 			/* storage unavailable: show it */
 		}
@@ -57,7 +57,7 @@ export const InviteNudge = ({ group, shareLink, onInvite }: InviteNudgeProps) =>
 		setDismissed(true);
 		track("invite_nudge_dismissed");
 		try {
-			localStorage.setItem(storageKey(group.id), "dismissed");
+			localStorage.setItem(inviteNudgeKey(group.id), "dismissed");
 		} catch {
 			/* storage unavailable: it will just show again next time */
 		}
