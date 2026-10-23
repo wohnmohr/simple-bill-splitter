@@ -42,9 +42,9 @@ export const splitWeights = (expense: Expense): Record<string, number> | undefin
       ? expense.amounts
       : undefined;
 
-/** Who paid for an expense, and how much each. */
+/** Who paid for an expense, and how much each, to the cent, adding up to exactly the amount. */
 export const expensePayers = (expense: Expense): Map<string, number> =>
-  new Map(expense.payers ? Object.entries(expense.payers) : [[expense.paidBy, expense.amount]]);
+  new Map(Object.entries(sharesToAmounts(expense.payers ?? { [expense.paidBy]: 1 }, expense.amount)));
 
 /**
  * Stores who paid from what each person put in: one payer is just `paidBy`;
@@ -58,21 +58,19 @@ export const payerFields = (paid: Record<string, number>): Pick<Expense, "paidBy
 /**
  * What each participant owes for an expense. Percentages and exact amounts
  * are both weights, scaled so the shares always add up to the amount; with
- * no usable weights the expense is split equally.
+ * no usable weights the expense is split equally. Shares are whole cents,
+ * so balances always add up to zero.
  */
 export const expenseShares = (expense: Expense): Map<string, number> => {
   const weights = splitWeights(expense);
   const total = weights
     ? expense.participants.reduce((sum, id) => sum + (weights[id] || 0), 0)
     : 0;
-  return new Map(
-    expense.participants.map((id) => [
-      id,
-      total > 0
-        ? (expense.amount * (weights![id] || 0)) / total
-        : expense.amount / expense.participants.length,
-    ])
+  const amounts = sharesToAmounts(
+    Object.fromEntries(expense.participants.map((id) => [id, total > 0 ? weights![id] || 0 : 1])),
+    expense.amount
   );
+  return new Map(expense.participants.map((id) => [id, amounts[id] ?? 0]));
 };
 
 export const calculateBalances = (
@@ -115,11 +113,12 @@ export const calculateSettlements = (
     .filter((b) => b.balance < 0)
     .sort((a, b) => a.balance - b.balance);
 
+  // Settled in whole cents so no float leftover is dropped or invented.
   const creditorBalances = new Map(
-    creditors.map((c) => [c.personId, c.balance])
+    creditors.map((c) => [c.personId, Math.round(c.balance * 100)])
   );
   const debtorBalances = new Map(
-    debtors.map((d) => [d.personId, Math.abs(d.balance)])
+    debtors.map((d) => [d.personId, Math.round(-d.balance * 100)])
   );
 
   while (creditorBalances.size > 0 && debtorBalances.size > 0) {
@@ -138,19 +137,19 @@ export const calculateSettlements = (
     settlements.push({
       from: debtorId,
       to: creditorId,
-      amount: Math.round(settlementAmount * 100) / 100,
+      amount: settlementAmount / 100,
     });
 
     const newCreditorBalance = creditorAmount - settlementAmount;
     const newDebtorBalance = debtorAmount - settlementAmount;
 
-    if (newCreditorBalance < 0.01) {
+    if (newCreditorBalance === 0) {
       creditorBalances.delete(creditorId);
     } else {
       creditorBalances.set(creditorId, newCreditorBalance);
     }
 
-    if (newDebtorBalance < 0.01) {
+    if (newDebtorBalance === 0) {
       debtorBalances.delete(debtorId);
     } else {
       debtorBalances.set(debtorId, newDebtorBalance);
