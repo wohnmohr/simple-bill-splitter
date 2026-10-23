@@ -9,6 +9,7 @@ import { formatCurrency } from "@/utils/formatting";
 import { calculateSettlements } from "@/utils/calculations";
 import { track, trackError } from "@/lib/analytics";
 import { sendViaWhatsApp } from "@/utils/whatsapp";
+import { overUpiLinkLimit, UPI_LIMIT_TIP } from "@/utils/upi";
 
 interface ShareSettlementActionsProps {
 	name: string;
@@ -61,6 +62,10 @@ export const ShareSettlementActions = ({
 			"Settlement summary",
 			"",
 			...lines,
+			...(currency.code === "INR" &&
+			settlements.some((s) => overUpiLinkLimit(s.amount) && people.find((p) => p.id === s.to)?.upiId)
+				? ["", UPI_LIMIT_TIP]
+				: []),
 			"",
 			syncLink
 				? "Pay your share and add expenses in the group (end-to-end encrypted):"

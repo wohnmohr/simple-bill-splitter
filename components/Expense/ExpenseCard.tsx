@@ -1,6 +1,5 @@
 import { Expense, Currency } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
-import { splitChoice } from "@/utils/calculations";
 import { Check, MessageCircle, Pencil, Repeat, Trash2 } from "lucide-react";
 
 /**
@@ -71,59 +70,54 @@ export const ExpenseCard = ({
 		);
 	}
 
+	// Line two's right side: what the viewer pays, else the even split. Never wraps or truncates.
 	const count = expense.participants.length;
-	const splitLabel = myShare !== undefined
-		? `Your share ${formatCurrency(myShare, currency)}${count > 1 ? ` · ${count} people` : ""}`
-		: expense.splitMethod === "percentage"
-		? `Split by % among ${count}`
-		: splitChoice(expense) === "shares"
-		? `Split by shares among ${count}`
-		: expense.splitMethod === "exact"
-		? `Split by amount among ${count}`
-		: count === 1
-		? "1 person"
-		: `${formatCurrency(expense.amount / count, currency)} each · ${count} people`;
+	const share = myShare !== undefined
+		? <><span className="text-ink-muted">Your share</span> {formatCurrency(myShare, currency)}</>
+		: expense.splitMethod === "equally" && count > 1
+		? `${formatCurrency(expense.amount / count, currency)} each`
+		: null;
 
 	return (
 		<li className="group flex items-center transition-colors hover:bg-paper">
 			<button
 				type="button"
 				onClick={onClick}
-				className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 text-left"
+				className="min-w-0 flex-1 space-y-0.5 px-4 py-3.5 text-left"
 			>
-				<span className="min-w-0 flex-1">
+				<span className="flex items-baseline gap-3">
 					<span
-						className={`block truncate font-semibold ${
+						className={`min-w-0 flex-1 truncate font-semibold ${
 							expense.description ? "text-ink" : "text-ink-muted"
 						}`}
 					>
 						{expense.description || "Untitled expense"}
 					</span>
-					<span className="mt-0.5 block truncate text-sm text-ink-muted">
-						{expense.repeat && (
-							<>
-								<Repeat className="mr-1 inline h-3.5 w-3.5 align-[-2px] text-brand-700" aria-hidden />
-								<span className="text-brand-700">Monthly</span> ·{" "}
-							</>
-						)}
-						<span className="text-ink-soft">{paidByName}</span> paid · {splitLabel}
-						{commentCount > 0 && (
-							<>
-								{" "}·{" "}
-								<MessageCircle className="inline h-3.5 w-3.5 align-[-2px]" aria-label="Comments" /> {commentCount}
-							</>
-						)}
-					</span>
-				</span>
-				<span className="shrink-0 text-right">
-					<span className="block font-semibold tabular-nums text-ink">
+					<span className="shrink-0 whitespace-nowrap font-semibold tabular-nums text-ink">
 						{formatCurrency(expense.amount, currency)}
 					</span>
-					{expense.createdAt && (
-						<span className="mt-0.5 block text-xs text-ink-muted">
-							{shortDate(expense.createdAt)}
+				</span>
+				<span className="flex items-center gap-3 text-sm text-ink-muted">
+					<span className="flex min-w-0 flex-1 items-center gap-1.5">
+						{/* Comments lead the line: a question on a bill is what people open it for. */}
+						{commentCount > 0 && (
+							<span
+								className="flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold tabular-nums text-brand-700"
+								aria-label={`${commentCount} comments`}
+							>
+								<MessageCircle className="h-3.5 w-3.5" aria-hidden />
+								{commentCount}
+							</span>
+						)}
+						{expense.repeat && (
+							<Repeat className="h-3.5 w-3.5 shrink-0 text-brand-700" aria-label="Monthly" />
+						)}
+						<span className="truncate">
+							{paidByName} paid
+							{expense.createdAt && <> · {shortDate(expense.createdAt)}</>}
 						</span>
-					)}
+					</span>
+					{share && <span className="shrink-0 whitespace-nowrap tabular-nums text-ink-soft">{share}</span>}
 				</span>
 			</button>
 			<div className={`${ROW_ACTIONS} group-hover:w-20 group-focus-within:w-20`}>

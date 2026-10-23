@@ -19,6 +19,6 @@ export async function reminderText(group: Remindable, s: Settlement): Promise<st
 	const url = group.sync
 		? groupUrl(group.sync, s.from, true)
 		: await encodeShareUrl(buildShareSnapshot({ name: group.name, currency: group.currency, members: group.members, expenses: group.expenses }));
-	const upiId = group.currency.code === "INR" ? creditor?.upiId : undefined;
-	return oweMessage(debtor?.name || "", `a reminder for ${group.name}`, formatCurrency(s.amount, group.currency), url, upiId);
+	const upi = group.currency.code === "INR" && creditor?.upiId ? { id: creditor.upiId, amount: s.amount } : undefined;
+	return oweMessage(debtor?.name || "", `a reminder for ${group.name}`, formatCurrency(s.amount, group.currency), url, upi);
 }

@@ -5,6 +5,8 @@ export type Person = {
   upiId?: string;
   /** Someone has joined as this member from a device (shared, so others can tell who's here). */
   joined?: true;
+  /** Removed from the group, but kept on the entries they were in (and in balances). Not offered for new expenses. */
+  left?: true;
 };
 
 export type SplitMethod = "equally" | "percentage" | "exact";
