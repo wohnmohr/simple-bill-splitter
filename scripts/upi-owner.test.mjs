@@ -103,10 +103,9 @@ test("another device changing someone's UPI ID is pointed out for two weeks", ()
 	assert.equal(upiChanges(after, { ...after, upiChangedAt: seen }, 1000 + 15 * DAY), undefined, "then forgotten");
 });
 
-test("adding a first UPI ID isn't a change, but removing one first doesn't hide the next", () => {
-	assert.equal(upiChanges(withUpi(), withUpi("asha@okicici"), 1000), undefined);
+test("a first UPI ID from another device is pointed out too, but a new member's isn't", () => {
+	assert.deepEqual(upiChanges(withUpi(), withUpi("mal@okaxis"), 1000), { p3: 1000 });
 	assert.equal(upiChanges(withUpi("asha@okicici"), withUpi("asha@okicici"), 1000), undefined);
-	const removed = { ...withUpi(), upiChangedAt: upiChanges(withUpi("asha@okicici"), withUpi(), 1000) };
-	const readded = { ...withUpi("mal@okaxis"), upiChangedAt: removed.upiChangedAt };
-	assert.equal(upiChangedLately({ ...readded, upiChangedAt: upiChanges(removed, readded, 2000) }, "p3", 2000), true);
+	const joined = { ...group, members: [...group.members, { id: "p9", name: "Dev", upiId: "dev@okaxis" }] };
+	assert.equal(upiChanges(group, joined, 1000), undefined);
 });

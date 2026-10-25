@@ -150,7 +150,7 @@ export const UpiSettlementActions = ({
 				)}
 			</div>
 			{upiChanged && (
-				<p className="text-sm font-medium text-amber-700">UPI ID changed recently. Check the name your UPI app shows.</p>
+				<p className="text-sm font-medium text-amber-700">New UPI ID. Check the name your UPI app shows before you pay.</p>
 			)}
 			<span className="sr-only" aria-live="polite">
 				{copied ? "UPI ID copied" : ""}

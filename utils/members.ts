@@ -71,7 +71,7 @@ export const withHosted = (group: Group): Group =>
 const UPI_CHANGE_SHOWN_MS = 14 * 24 * 60 * 60 * 1000;
 
 /**
- * When another device changed (or removed) someone's UPI ID, the time this
+ * When another device added, changed or removed someone's UPI ID, the time this
  * device saw it, so Settle up can say so before anyone pays the new one.
  * `before` is this device's copy, `after` the same group with the other
  * devices' changes merged in.
@@ -79,8 +79,9 @@ const UPI_CHANGE_SHOWN_MS = 14 * 24 * 60 * 60 * 1000;
 export function upiChanges(before: Group, after: Group, now = Date.now()): Group["upiChangedAt"] {
 	const seen = { ...after.upiChangedAt };
 	for (const m of after.members) {
-		const old = before.members.find((b) => b.id === m.id)?.upiId;
-		if (old && old !== m.upiId) seen[m.id] = now;
+		const was = before.members.find((b) => b.id === m.id);
+		// A first UPI ID counts too: an empty one is the easiest to slip yours into.
+		if (was && (was.upiId ?? "") !== (m.upiId ?? "")) seen[m.id] = now;
 	}
 	for (const [id, at] of Object.entries(seen)) if (!(now - at < UPI_CHANGE_SHOWN_MS)) delete seen[id];
 	return Object.keys(seen).length ? seen : undefined;
