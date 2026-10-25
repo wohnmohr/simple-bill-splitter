@@ -1,17 +1,28 @@
 import { NEW_ME, type QuickResolved } from "@/utils/quickAdd";
+import { cleanText } from "@/utils/text";
 
-/** The names typed into "Who else?": split on commas or "and", blanks and repeats (and you) dropped. */
-export function splitNames(text: string, myName = ""): string[] {
-	const seen = new Set([myName.trim().toLowerCase()]);
+/** How a name is compared with the names already in a group: "asha" and "Asha " are the same. */
+export const nameKey = (name: string) => cleanText(name, 40).toLowerCase();
+
+/**
+ * The names typed into "Who else?": split on commas, "and" or new lines, with
+ * blanks, repeats and anyone in `taken` (you, or the group) dropped.
+ */
+export function splitNames(text: string, taken: string[] = []): string[] {
+	const seen = new Set(taken.map(nameKey));
 	const names: string[] = [];
-	for (const part of text.split(/,|\band\b|&/i)) {
-		const name = part.trim().replace(/\s+/g, " ");
-		if (!name || seen.has(name.toLowerCase())) continue;
-		seen.add(name.toLowerCase());
-		names.push(name.slice(0, 40));
+	for (const part of text.split(/,|\band\b|&|\n/i)) {
+		const name = cleanText(part, 40);
+		if (!name || seen.has(nameKey(name))) continue;
+		seen.add(nameKey(name));
+		names.push(name);
 	}
 	return names;
 }
+
+/** A pasted list (one name per line, as copied from a chat or contacts) as one line: "Farah, Gopal, Hari". */
+export const pastedNames = (text: string): string | null =>
+	/\n/.test(text.trim()) ? text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean).join(", ") : null;
 
 /** What the first-run form asks: you paid, split equally with the others. */
 export type FirstExpenseInput = { amount: number; description: string; myName: string; others: string[] };

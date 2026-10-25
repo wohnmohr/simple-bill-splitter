@@ -5,6 +5,7 @@ import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
 import type { Currency } from "@/types";
 import { formatCurrency, fromDateInput, toDateInput } from "@/utils/formatting";
+import { MAX_AMOUNT } from "@/utils/groupOps";
 import type { QuickField, QuickPerson, QuickResolved, QuickResolvedExpense } from "@/utils/quickAdd";
 
 interface QuickAddPreviewProps {
@@ -21,6 +22,7 @@ const near = (a: number, b: number) => Math.abs(a - b) < 0.01;
 /** What still has to be fixed before an expense can be saved, or null. */
 const problem = (e: QuickResolvedExpense): string | null => {
 	if (!(e.amount > 0)) return "Add the amount.";
+	if (e.amount > MAX_AMOUNT) return "That amount is too big.";
 	if (!e.participants.length) return "Pick who it's split between.";
 	if (!e.weights) return null;
 	const sum = e.participants.reduce((s, k) => s + (e.weights![k] || 0), 0);

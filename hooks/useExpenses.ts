@@ -3,6 +3,7 @@ import { MAX_COMMENT } from "@/utils/groupOps";
 import { newId, paymentId } from "@/utils/ids";
 import { firstRepeat } from "@/utils/recurring";
 import { payerFields, splitFields } from "@/utils/calculations";
+import { cleanText } from "@/utils/text";
 
 /** What the expense form produces; the hook stores it as an expense. */
 export type ExpenseInput = {
@@ -25,7 +26,7 @@ const expenseFields = (input: ExpenseInput) => ({
   ...payerFields(input.paid),
   // Split only among the people ticked: the payer may have paid for others.
   participants: Array.from(input.participants),
-  description: input.description,
+  description: input.description ? cleanText(input.description, 100) || undefined : undefined,
   ...splitFields(input.splitMethod, input.weights, input.amount),
 });
 

@@ -1,4 +1,5 @@
 import type { Group, Person } from "@/types";
+import { cleanText } from "@/utils/text";
 
 /**
  * Anonymous identities for group members. Someone joining a shared group gets
@@ -50,11 +51,24 @@ export function memberHue(id: string): number {
 
 /**
  * The members as this device shows them: with its private nicknames in place
- * of shared names. Use for display only; anything shared (sync, share links)
- * must use the group's own members.
+ * of shared names, and a number after a name someone else already has ("Dev",
+ * "Dev (2)"), so two people never look alike. That happens when two phones
+ * join under the same name at once. Use for display only; anything shared
+ * (sync, share links) must use the group's own members.
  */
 export function shownMembers(group: Pick<Group, "members" | "nicknames">): Person[] {
-	const nick = group.nicknames;
-	if (!nick) return group.members;
-	return group.members.map((m) => (nick[m.id] ? { ...m, name: nick[m.id] } : m));
+	const seen = new Map<string, number>();
+	let changed = false;
+	const shown = group.members.map((m) => {
+		// Cleaned here too, for names saved before names were cleaned on the way in.
+		const name = cleanText(group.nicknames?.[m.id] || m.name, 60) || "Someone";
+		const key = name.trim().toLowerCase();
+		const n = (seen.get(key) ?? 0) + 1;
+		seen.set(key, n);
+		const label = n > 1 ? `${name} (${n})` : name;
+		if (label === m.name) return m;
+		changed = true;
+		return { ...m, name: label };
+	});
+	return changed ? shown : group.members;
 }

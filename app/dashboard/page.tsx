@@ -6,7 +6,7 @@ import { useMediaQuery } from "@mantine/hooks";
 import { Link2, Plus, UserPlus } from "lucide-react";
 import { Tab, Currency, Expense, Group, Settlement, SplitChoice } from "@/types";
 import { CURRENCIES, DEFAULT_CURRENCY, MAX_GROUPS } from "@/constants";
-import { calculateBalances, calculateSettlements, enteredWeights, splitChoice } from "@/utils/calculations";
+import { calculateBalances, calculateSettlements, enteredWeights, minorUnits, splitChoice } from "@/utils/calculations";
 import { useGroups } from "@/hooks/useGroups";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
 import { useBackClose } from "@/hooks/useBackClose";
@@ -137,9 +137,9 @@ export default function Home() {
 	// Who new expenses can include: people who left stay on past entries only.
 	const current = currentMembers(people);
 	const expenses = currentGroup?.expenses || [];
-	const balances = calculateBalances(people, expenses);
-	const settlements = calculateSettlements(people, expenses);
 	const currency = currentGroup?.currency || DEFAULT_CURRENCY;
+	const balances = calculateBalances(people, expenses, minorUnits(currency));
+	const settlements = calculateSettlements(people, expenses, minorUnits(currency));
 
 	const [toast, setToast] = useState<ToastState>(null);
 	const [showFeedback, setShowFeedback] = useState(false);
@@ -445,8 +445,8 @@ export default function Home() {
 	// On wide screens Balances lives in a side panel, so it leaves the tab bar.
 	const isWide = useMediaQuery("(min-width: 1024px)") ?? false;
 	const inGroup = !!currentGroup && currentGroup.members.length > 0;
-	// A closed group is a record: no new expenses until it's reopened.
-	const canAdd = inGroup && !currentGroup.closedAt;
+	// A closed group is a record: no new expenses until it's reopened. Nor when everyone has left: there's nobody to add one for.
+	const canAdd = inGroup && current.length > 0 && !currentGroup.closedAt;
 	const shownTab: Tab = isWide && activeTab === "balances" ? "transactions" : activeTab;
 
 	return (
@@ -674,7 +674,7 @@ export default function Home() {
 					}}
 					onCreate={handleCreateGroup}
 					groupCount={groups.length}
-					note={nextFrom ? `With the same people: ${new Intl.ListFormat("en-IN").format(nextFrom.members.map((m) => m.name))}.` : undefined}
+					note={nextFrom ? `With the same people: ${new Intl.ListFormat("en-IN").format(currentMembers(shownMembers(nextFrom)).map((m) => m.name))}.` : undefined}
 				/>
 
 				{currentGroup && (

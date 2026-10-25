@@ -14,7 +14,7 @@ import {
 import { ShareSnapshot } from "@/types/share";
 import { decodeShareUrl } from "@/utils/shareCodec";
 import { IMPORT_LIMIT_MESSAGE, importShareSnapshot } from "@/utils/shareImport";
-import { calculateBalances, calculateSettlements, expensePayers, totalSpent } from "@/utils/calculations";
+import { calculateBalances, calculateSettlements, expensePayers, minorUnits, totalSpent } from "@/utils/calculations";
 import { formatCurrency, joinNames } from "@/utils/formatting";
 import { BalanceList } from "@/components/Balances/BalanceList";
 import { SettlementList } from "@/components/Settlements/SettlementList";
@@ -140,8 +140,9 @@ export const ShareViewer = () => {
 	}
 
 	const { snapshot } = state;
-	const balances = calculateBalances(snapshot.members, snapshot.expenses);
-	const settlements = calculateSettlements(snapshot.members, snapshot.expenses);
+	const unit = minorUnits(snapshot.currency);
+	const balances = calculateBalances(snapshot.members, snapshot.expenses, unit);
+	const settlements = calculateSettlements(snapshot.members, snapshot.expenses, unit);
 	const total = totalSpent(snapshot.expenses);
 	const billCount = snapshot.expenses.filter((e) => e.kind !== "payment").length;
 
