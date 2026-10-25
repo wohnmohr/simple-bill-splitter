@@ -245,6 +245,7 @@ export function materialize(state: SyncState, local: Pick<Group, "id" | "meId" |
 		...(comments.length ? { comments } : {}),
 		currency: toCurrency(state.g.currency?.v),
 		...(isThemeId(state.g.theme?.v) ? { theme: state.g.theme.v as string } : {}),
+		...(typeof state.g.host?.v === "string" && ids.has(state.g.host.v) ? { hostId: state.g.host.v } : {}),
 		...(Number.isSafeInteger(state.g.closed?.v) && (state.g.closed.v as number) > 0 ? { closedAt: state.g.closed.v as number } : {}),
 		...(local.meId !== undefined ? { meId: local.meId } : {}),
 		...(local.sync ? { sync: local.sync } : {}),
@@ -292,6 +293,7 @@ export function diffGroup(before: Group, after: Group): Change[] {
 	if (before.currency.code !== after.currency.code) out.push({ k: "g", e: "currency", v: { code: after.currency.code } });
 	if ((before.theme ?? null) !== (after.theme ?? null)) out.push({ k: "g", e: "theme", v: after.theme ?? null });
 	if ((before.closedAt ?? null) !== (after.closedAt ?? null)) out.push({ k: "g", e: "closed", v: after.closedAt ?? null });
+	if (!before.hostId && after.hostId) out.push({ k: "g", e: "host", v: after.hostId });
 	diffTable("m", before.members, after.members, out);
 	diffTable("e", before.expenses, after.expenses, out);
 	diffTable("c", before.comments ?? [], after.comments ?? [], out);
@@ -299,7 +301,7 @@ export function diffGroup(before: Group, after: Group): Change[] {
 }
 
 /** Every entity of a group as changes, for the first upload. */
-export const groupAsChanges = (g: Group): Change[] => diffGroup({ ...g, name: "", currency: { code: "", symbol: "", name: "" }, theme: undefined, closedAt: undefined, members: [], expenses: [], comments: [] }, g);
+export const groupAsChanges = (g: Group): Change[] => diffGroup({ ...g, name: "", currency: { code: "", symbol: "", name: "" }, theme: undefined, closedAt: undefined, hostId: undefined, members: [], expenses: [], comments: [] }, g);
 
 /** The parts of a group that are shared with everyone (device-only fields stripped). */
 export const sharedView = (g: Group) => canon([g.name, g.currency.code, g.theme ?? null, g.closedAt ?? null, g.members, g.expenses, g.comments ?? []]);

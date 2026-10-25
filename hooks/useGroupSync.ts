@@ -112,8 +112,11 @@ export function useGroupSync(
 	/** Encrypts and uploads a local group, then keeps it in sync. */
 	const enableSync = useCallback(
 		async (group: Group, passphrase?: string) => {
-			const link = await startSync(group, passphrase);
-			setGroups((prev) => prev.map((g) => (g.id === group.id ? { ...g, sync: link } : g)));
+			// Whoever shares the group is its host.
+			const { hostId: _old, ...rest } = group;
+			const shared: Group = group.meId ? { ...rest, hostId: group.meId } : rest;
+			const link = await startSync(shared, passphrase);
+			setGroups((prev) => prev.map((g) => (g.id === group.id ? { ...g, hostId: shared.hostId, sync: link } : g)));
 			return link;
 		},
 		[setGroups]

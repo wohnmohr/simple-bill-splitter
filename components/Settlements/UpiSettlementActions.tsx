@@ -67,7 +67,7 @@ export const UpiSettlementActions = ({
 	if (!upiId && !onSaveUpi) {
 		return (
 			<p className="text-sm text-ink-muted">
-				No UPI ID for {to.name} — pay them directly.
+				No UPI ID for {to.name} yet. Ask them to add it, or pay them directly.
 			</p>
 		);
 	}

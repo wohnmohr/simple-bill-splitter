@@ -22,7 +22,7 @@ import { IdentitySheet } from "@/components/Group/IdentitySheet";
 import { InviteNudge } from "@/components/Group/InviteNudge";
 import { TripCard } from "@/components/Group/TripCard";
 import { shownMembers } from "@/utils/identity";
-import { currentMembers, entriesWith, isOnEntry } from "@/utils/members";
+import { canSetUpi, currentMembers, entriesWith, isOnEntry } from "@/utils/members";
 import { applyTheme } from "@/utils/themes";
 import { TabNavigation } from "@/components/Tabs/TabNavigation";
 import { ExpenseList } from "@/components/Expense/ExpenseList";
@@ -587,6 +587,7 @@ export default function Home() {
 												groupName={currentGroup.name}
 												expenses={expenses}
 												onUpdateMemberUpi={updateMemberUpi}
+												canSetUpi={(id) => canSetUpi(currentGroup, id)}
 												meId={currentGroup.meId}
 												sharePeople={currentGroup.members}
 												syncLink={currentGroup.sync}
