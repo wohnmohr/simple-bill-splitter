@@ -1,5 +1,5 @@
 import { reply } from "@/lib/splitStore";
-import { MAX_OPS_PER_PULL, checkAuth, groupRoute } from "@/lib/groupStore";
+import { MAX_OPS_PER_PULL, checkAuth, fitPull, groupRoute } from "@/lib/groupStore";
 
 export const runtime = "nodejs";
 
@@ -7,6 +7,7 @@ export const runtime = "nodejs";
  * Returns what a device is missing: everything after `after`. If that reaches
  * back past the latest snapshot, the snapshot comes first. One round trip
  * either way; a device that is up to date reads one row and two empty ranges.
+ * A big backlog comes in pages (`more`), so no response outgrows the host's limit.
  */
 export const POST = groupRoute({ key: "g-pull", perMinute: 120, maxBody: 1024 }, async ({ db, body, id, token }) => {
 	// -1 (or missing) = "I have nothing yet": always behind the first snapshot, which is numbered 0.
@@ -29,8 +30,8 @@ export const POST = groupRoute({ key: "g-pull", perMinute: 120, maxBody: 1024 },
 	const { head, snapshotSeq, expiresAt } = group;
 	if (after >= head && after >= snapshotSeq) return reply({ unchanged: true, seq: head, snapshotSeq, expiresAt });
 
-	const rows = ops.rows.map((r) => ({ seq: Number(r.seq), blob: String(r.blob) }));
 	const snapshot = snap.rows[0]?.snapshot ? { seq: Number(snap.rows[0].snapshot_seq), blob: String(snap.rows[0].snapshot) } : undefined;
+	const rows = fitPull(ops.rows.map((r) => ({ seq: Number(r.seq), blob: String(r.blob) })), snapshot?.blob.length ?? 0);
 	const reached = rows.length ? rows[rows.length - 1].seq : (snapshot?.seq ?? after);
 	return reply({ seq: reached, head, snapshotSeq, more: reached < head, expiresAt, ...(snapshot ? { snapshot } : {}), ops: rows });
 });

@@ -152,7 +152,17 @@ export function hashIp(req: Request): string {
 		req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
 		"unknown";
 	const salt = process.env.FEEDBACK_IP_SALT || "splitbiller-dev-salt";
-	return createHash("sha256").update(`${salt}:${ip}`).digest("hex").slice(0, 32);
+	return createHash("sha256").update(`${salt}:${ipPrefix(ip)}`).digest("hex").slice(0, 32);
+}
+
+/** An IPv6 address's /64: one home or phone gets a whole /64, so counting full addresses would let it dodge every quota. */
+export function ipPrefix(ip: string): string {
+	if (!ip.includes(":") || ip.includes(".")) return ip; // IPv4, or IPv4 mapped into IPv6
+	const [head, tail] = ip.split("::");
+	const left = head ? head.split(":") : [];
+	const right = tail ? tail.split(":") : [];
+	const groups = [...left, ...Array(Math.max(0, 8 - left.length - right.length)).fill("0"), ...right];
+	return `${groups.slice(0, 4).map((g) => parseInt(g, 16).toString(16)).join(":")}::/64`;
 }
 
 export type RateTable = "feedback" | "splits" | "split_payments";
