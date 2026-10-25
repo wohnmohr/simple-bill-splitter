@@ -10,8 +10,8 @@ import { cleanToken, hashToken, overLimit, reply, sameOrigin, tokenMatches } fro
  * changes per group, and groups that delete themselves when left alone.
  *
  * Privacy: rows carry no IP, name or creation time. Quotas count by a salted
- * IP hash in api_quota, never next to a group id, and those counters are
- * purged after two days.
+ * IP hash in api_quota, never next to a group id; the wrong-key counter is
+ * per group and carries no IP. All counters are purged after two days.
  */
 
 /** Groups untouched this long are deleted. Every change pushes it back. */
@@ -29,6 +29,13 @@ export const GROUP_ID_RE = /^[A-Za-z0-9_-]{22}$/;
 const NEW_GROUPS_PER_IP_PER_DAY = 30;
 const NEW_GROUPS_PER_DAY = Number(process.env.GROUPS_PER_DAY_MAX) || 5000;
 const PUSHES_PER_IP_PER_DAY = 3000;
+/**
+ * Different wrong tokens a group accepts per day before it stops answering
+ * any, right or wrong, until tomorrow. With a leaked link, each passphrase
+ * guess is one wrong token, so guessing online stays hopeless; a device
+ * stuck on one old token counts once, however often it retries.
+ */
+const WRONG_TOKENS_PER_DAY = 30;
 
 export const cleanGroupBlob = (v: unknown, kind: "ops" | "snapshot") =>
 	typeof v === "string" && v.length >= 40 && v.length <= (kind === "ops" ? MAX_OPS_BLOB : MAX_SNAPSHOT_BLOB) && BLOB_RE.test(v) ? v : null;
@@ -47,6 +54,18 @@ async function readJson(req: Request, max: number): Promise<Record<string, unkno
 }
 
 const today = () => Math.floor(Date.now() / 86_400_000);
+
+/** api_quota rows `g:bad:<id>:<day>:<token hash>`, one per different wrong token. */
+const wrongPrefix = (id: string) => `g:bad:${id}:${today()}:`;
+/** Counts today's wrong tokens for a group; `;` sorts right after `:`, so this is a range scan of the prefix. */
+const WRONG_COUNT = "(SELECT COUNT(*) FROM api_quota WHERE bucket > ? AND bucket < ?)";
+const wrongRange = (id: string) => [wrongPrefix(id), wrongPrefix(id).slice(0, -1) + ";"];
+
+/** Reads a live group with what checkAuth needs. */
+export const selectGroup = (id: string) => ({
+	sql: `SELECT auth_hash, head_seq, snapshot_seq, expires_at, ${WRONG_COUNT} AS wrong FROM groups WHERE id = ? AND expires_at > ?`,
+	args: [...wrongRange(id), id, Date.now()],
+});
 
 /** Adds one to a quota counter and returns the new count. */
 const bump = (bucket: string, now: number) => ({
@@ -100,12 +119,13 @@ export async function appendOps(db: Client, g: { ip: string; id: string; token: 
 	const bucket = `g:push:${g.ip}:${today()}`;
 	const [group, quota, inserted, head] = await db.batch(
 		[
-			{ sql: "SELECT auth_hash, head_seq, snapshot_seq FROM groups WHERE id = ? AND expires_at > ?", args: [g.id, now] },
+			selectGroup(g.id),
 			bump(bucket, now),
 			{
 				sql: `INSERT INTO group_ops (group_id, seq, blob) SELECT id, head_seq + 1, ? FROM groups
-				      WHERE id = ? AND expires_at > ? AND auth_hash = ? AND head_seq - snapshot_seq < ? AND (SELECT n FROM api_quota WHERE bucket = ?) <= ?`,
-				args: [g.blob, g.id, now, hashToken(g.token), MAX_UNCOMPACTED, bucket, PUSHES_PER_IP_PER_DAY],
+				      WHERE id = ? AND expires_at > ? AND auth_hash = ? AND head_seq - snapshot_seq < ? AND (SELECT n FROM api_quota WHERE bucket = ?) <= ?
+				      AND ${WRONG_COUNT} < ?`,
+				args: [g.blob, g.id, now, hashToken(g.token), MAX_UNCOMPACTED, bucket, PUSHES_PER_IP_PER_DAY, ...wrongRange(g.id), WRONG_TOKENS_PER_DAY],
 			},
 			// Parallel pushes queue behind each other, so none is lost or numbered twice,
 			// and a reader never sees the head ahead of the rows.
@@ -114,7 +134,7 @@ export async function appendOps(db: Client, g: { ip: string; id: string; token: 
 		"write"
 	);
 	if (inserted.rowsAffected && head.rows[0]) return reply({ ok: true, seq: Number(head.rows[0].head_seq) }, 201);
-	const auth = checkAuth(group.rows[0], g.token);
+	const auth = await checkAuth(db, g.id, group.rows[0], g.token);
 	if (!auth.ok) return auth.error;
 	if (auth.head - auth.snapshotSeq >= MAX_UNCOMPACTED) return reply({ error: "Compact first", compact: true }, 409);
 	if (Number(quota.rows[0]?.n ?? 0) > PUSHES_PER_IP_PER_DAY) return reply({ error: "Too many changes today. Try again tomorrow." }, 429, { "Retry-After": "86400" });
@@ -162,22 +182,30 @@ export function groupRoute(opts: { maxBody: number; perMinute: number; key: stri
 	};
 }
 
-/** Loads a live group and checks the token. 404: no such group (or deleted). 403: wrong token, e.g. a wrong passphrase. */
+/**
+ * 404: no such group (or deleted). 429: too many wrong tokens today.
+ * 403: wrong token, e.g. a wrong passphrase.
+ */
 type Authorized = { ok: true; head: number; snapshotSeq: number; expiresAt: number } | { ok: false; error: Response };
 
-/** Checks a group row (auth_hash, head_seq, snapshot_seq[, expires_at]) against the caller's token. */
-export function checkAuth(row: Record<string, unknown> | undefined, token: string): Authorized {
+/** Checks a row from selectGroup against the caller's token, and counts a wrong one. */
+export async function checkAuth(db: Client, id: string, row: Record<string, unknown> | undefined, token: string): Promise<Authorized> {
 	if (!row) return { ok: false, error: reply({ error: "Not found" }, 404) };
-	if (!tokenMatches(token, String(row.auth_hash))) return { ok: false, error: reply({ error: "Wrong key" }, 403) };
+	if (Number(row.wrong) >= WRONG_TOKENS_PER_DAY) return { ok: false, error: reply({ error: "Too many wrong tries. Try again tomorrow." }, 429, { "Retry-After": "3600" }) };
+	if (!tokenMatches(token, String(row.auth_hash))) {
+		await db.execute({
+			sql: "INSERT INTO api_quota (bucket, at, n) VALUES (?, ?, 1) ON CONFLICT (bucket) DO NOTHING",
+			args: [wrongPrefix(id) + hashToken(token).slice(0, 16), Date.now()],
+		});
+		return { ok: false, error: reply({ error: "Wrong key" }, 403) };
+	}
 	return { ok: true, head: Number(row.head_seq), snapshotSeq: Number(row.snapshot_seq), expiresAt: Number(row.expires_at) };
 }
 
+/** Loads a live group and checks the token. */
 export async function authorize(db: Client, id: string, token: string): Promise<Authorized> {
-	const res = await db.execute({
-		sql: "SELECT auth_hash, head_seq, snapshot_seq, expires_at FROM groups WHERE id = ? AND expires_at > ?",
-		args: [id, Date.now()],
-	});
-	return checkAuth(res.rows[0], token);
+	const res = await db.execute(selectGroup(id));
+	return checkAuth(db, id, res.rows[0], token);
 }
 
 export { MAX_OPS_PER_PULL, MAX_OPS_BLOB, MAX_SNAPSHOT_BLOB };

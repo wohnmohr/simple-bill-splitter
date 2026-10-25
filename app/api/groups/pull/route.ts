@@ -1,5 +1,5 @@
 import { reply } from "@/lib/splitStore";
-import { MAX_OPS_PER_PULL, checkAuth, groupRoute } from "@/lib/groupStore";
+import { MAX_OPS_PER_PULL, checkAuth, groupRoute, selectGroup } from "@/lib/groupStore";
 
 export const runtime = "nodejs";
 
@@ -14,7 +14,7 @@ export const POST = groupRoute({ key: "g-pull", perMinute: 120, maxBody: 1024 },
 	// Read in one transaction, so the head, the snapshot and the changes after it line up.
 	const [row, snap, ops] = await db.batch(
 		[
-			{ sql: "SELECT auth_hash, head_seq, snapshot_seq, expires_at FROM groups WHERE id = ? AND expires_at > ?", args: [id, Date.now()] },
+			selectGroup(id),
 			{ sql: "SELECT snapshot, snapshot_seq FROM groups WHERE id = ? AND snapshot_seq > ?", args: [id, after] },
 			{
 				sql: "SELECT seq, blob FROM group_ops WHERE group_id = ? AND seq > MAX(?, (SELECT snapshot_seq FROM groups WHERE id = ?)) ORDER BY seq LIMIT ?",
@@ -24,7 +24,7 @@ export const POST = groupRoute({ key: "g-pull", perMinute: 120, maxBody: 1024 },
 		"read"
 	);
 	// Nothing read above leaves the server unless the token matches.
-	const group = checkAuth(row.rows[0], token);
+	const group = await checkAuth(db, id, row.rows[0], token);
 	if (!group.ok) return group.error;
 	const { head, snapshotSeq, expiresAt } = group;
 	if (after >= head && after >= snapshotSeq) return reply({ unchanged: true, seq: head, snapshotSeq, expiresAt });
