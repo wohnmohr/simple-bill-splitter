@@ -52,6 +52,15 @@ export function storeBackup(s: BackupState | null) {
 	}
 }
 
+/**
+ * After a restore, this device keeps backing up to the same link only if it
+ * had no groups and no backup of its own: a new phone. Otherwise a recovery
+ * link someone else sent would quietly collect this phone's groups and keys.
+ */
+export function adoptRestoredLink(link: GroupSyncLink, groupsBefore: Group[]) {
+	if (!groupsBefore.length && !loadBackup()) storeBackup({ link });
+}
+
 export const recoveryUrl = (link: GroupSyncLink) => `${window.location.origin}/r#${linkFragment(link.secret, Boolean(link.pass))}`;
 
 /** A fingerprint of the groups, to skip uploads when nothing changed. */
