@@ -20,9 +20,10 @@ import {
 	groupAsChanges,
 	joinPending,
 	materialize,
-	maxClock,
 	mergeState,
+	nextClock,
 	pushBatch,
+	repairClocks,
 	sharedView,
 } from "@/utils/groupOps";
 import { quietTag } from "@/utils/groupAlerts";
@@ -57,7 +58,7 @@ function load(groupId: string): Saved | null {
 		const s = JSON.parse(localStorage.getItem(storeKey(groupId)) || "null");
 		if (!s || typeof s.seq !== "number" || !s.state) return null;
 		// Saved before comments existed: give it their table.
-		s.state = { ...emptyState(), ...s.state };
+		s.state = repairClocks({ ...emptyState(), ...s.state });
 		return s;
 	} catch {
 		return null;
@@ -255,8 +256,7 @@ export class GroupSync {
 		const changes = diffGroup(this.shown, group);
 		this.shown = group;
 		if (!changes.length) return;
-		const clock = Math.max(maxClock(this.saved.state), ...this.saved.pending.map((o) => o.t));
-		this.saved.pending.push(...stamp(changes, clock));
+		this.saved.pending.push(...stamp(changes, nextClock(this.saved.state, this.saved.pending)));
 		this.saved.shown = group;
 		save(group.id, this.saved);
 		void this.sync(group.id);

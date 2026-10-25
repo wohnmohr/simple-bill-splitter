@@ -1,13 +1,14 @@
 /**
- * Pages that carry private data: in the URL fragment (split, group and backup
- * keys, shared groups), or on screen in attributes replay can't mask (the app's
- * aria-labels and UPI pay links name people, amounts and UPI IDs). Never recorded.
+ * The only pages session replay may record: marketing pages that show no one's
+ * data. Every other page can carry private data, in the URL fragment (split,
+ * group and backup keys, shared groups) or on screen in attributes and QR codes
+ * replay can't mask (names, amounts and UPI IDs), so it is never recorded.
  */
-const PRIVATE_PATH = /^\/(s|g|r|dashboard|pay-story|share|secret-santa)(\/|$)/;
-export const isPrivatePath = (path: string) => PRIVATE_PATH.test(path);
+const RECORDED_PATH = /^\/(features|tools|about|roadmap|contact|split)?\/?$/;
+export const isRecordedPath = (path: string) => RECORDED_PATH.test(path);
 
 /** A cloud split's id. With the #key it opens the split, so it never leaves the browser. */
-const SPLIT_PATH = /\/s\/[A-Za-z0-9_-]{22}(?=[/?]|$)/;
+const SPLIT_PATH = /\/s\/[A-Za-z0-9_-]{22}[^/?#\s]*/g;
 
 /**
  * A URL or path safe to send to analytics and feedback: no #fragment, and a

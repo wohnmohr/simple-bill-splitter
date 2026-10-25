@@ -44,12 +44,21 @@ const isOp = (o: unknown): o is Op => {
 	return (
 		!!op &&
 		typeof op.i === "string" && ID_RE.test(op.i) &&
-		Number.isSafeInteger(op.t) && op.t > 0 &&
+		Number.isInteger(op.t) && op.t > 0 &&
 		KINDS.includes(op.k) &&
 		typeof op.e === "string" && ID_RE.test(op.e) &&
 		(op.f === undefined || (Array.isArray(op.f) && op.f.length <= 32 && op.f.every((x) => typeof x === "string" && FIELD_RE.test(x))))
 	);
 };
+
+/** Clocks are wall-clock milliseconds. One further ahead than this came from a broken or hostile device. */
+const MAX_SKEW = 7 * 24 * 60 * 60 * 1000;
+const clockLimit = () => Date.now() + MAX_SKEW;
+/**
+ * Such an op sorts below every real one instead, so it can't win every later edit or push new clocks past
+ * safe integers (which other devices would drop). Its new entity, if any, still arrives.
+ */
+const sane = (op: Op): Op => (op.t > clockLimit() ? { ...op, t: 1 } : op);
 
 /** Expense fields that must agree with each other (splits add up to the amount), so they merge as one. */
 const SPLIT = new Set(["amount", "paidBy", "payers", "participants", "splitMethod", "percentages", "amounts", "shares"]);
@@ -84,7 +93,7 @@ export function applyOp(state: SyncState, op: Op): void {
 /** Applies untrusted operations, skipping malformed ones. */
 export function applyOps(state: SyncState, ops: unknown): void {
 	if (!Array.isArray(ops)) return;
-	for (const op of ops) if (isOp(op)) applyOp(state, op);
+	for (const op of ops) if (isOp(op)) applyOp(state, sane(op));
 }
 
 /** Merges a snapshot (another state) into `state`. */
@@ -98,11 +107,11 @@ export function mergeState(state: SyncState, other: unknown): void {
 			if (!cell || typeof cell !== "object") continue;
 			const op = { i: cell.i, t: cell.t, k, e, v: cell.v };
 			if (!isOp(op)) continue;
-			applyOp(state, op);
+			applyOp(state, sane(op));
 			if (Number.isSafeInteger(cell.c) && cell.c > 0 && cell.c < state[k][e].c) state[k][e].c = cell.c;
 			for (const [field, x] of entries(cell.f)) {
 				const edit = { i: x?.i, t: x?.t, k, e, v: x?.v, f: [field] };
-				if (isOp(edit)) applyOp(state, edit);
+				if (isOp(edit)) applyOp(state, sane(edit));
 			}
 		}
 	}
@@ -119,6 +128,17 @@ export const cloneState = (s: SyncState): SyncState => JSON.parse(JSON.stringify
 /** Highest clock seen, so new operations always sort after everything this device knows. */
 export const maxClock = (s: SyncState) =>
 	Math.max(0, ...KINDS.flatMap((k) => Object.values(s[k]).flatMap((c) => [c.t, ...Object.values(c.f ?? {}).map((x) => x.t)])));
+
+/** The clock new operations start after: the highest seen, but never one from too far ahead. */
+export const nextClock = (s: SyncState, pending: Op[]) => Math.min(Math.max(maxClock(s), ...pending.map((o) => o.t)), clockLimit());
+
+/** `s` with clocks from too far ahead (saved before they were checked) sorted last, as every device now does. */
+export function repairClocks(s: SyncState): SyncState {
+	if (maxClock(s) <= clockLimit()) return s;
+	const fixed = emptyState();
+	mergeState(fixed, s);
+	return fixed;
+}
 
 /** Most ops in one push, however small. */
 const MAX_OPS_PER_PUSH = 200;

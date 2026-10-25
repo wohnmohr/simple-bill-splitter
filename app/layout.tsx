@@ -4,6 +4,7 @@ import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { VercelAnalytics } from "@/components/providers/VercelAnalytics";
 import { FeedbackNudge } from "@/components/Feedback/FeedbackNudge";
 import { InstallPromptCapture } from "@/components/providers/InstallPromptCapture";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -21,9 +22,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-	metadataBase: new URL(
-		process.env.NEXT_PUBLIC_SITE_URL || "https://splitbiller.com"
-	),
+	metadataBase: new URL(SITE_URL),
 	title: "SplitBiller — Split Bills in ₹ | No Login, UPI Ready",
 	description:
 		"Split group expenses in rupees instantly. Calculate who owes whom, share a private settlement link, and pay via UPI — no signup, no app download.",
