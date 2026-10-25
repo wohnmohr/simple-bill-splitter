@@ -181,6 +181,29 @@ export function fitPull<T extends { blob: string }>(rows: T[], snapshotChars: nu
 	return fit;
 }
 
+/** auth_hash of a deleted group: no token hashes to it. */
+const DELETED = "deleted";
+
+/**
+ * Deletes a group's ciphertext for everyone (also how a link is reset), but
+ * keeps the id as an empty row until it expires. So someone who still has the
+ * old link, like a person removed by a reset, can't make the group again under
+ * that id, and a device that missed the reset is told the group is gone.
+ */
+export async function deleteGroup(db: Client, id: string): Promise<void> {
+	await db.batch(
+		[
+			{ sql: "DELETE FROM group_ops WHERE group_id = ?", args: [id] },
+			{ sql: "DELETE FROM group_push WHERE group_id = ?", args: [id] },
+			{
+				sql: "UPDATE groups SET auth_hash = ?, snapshot = '', head_seq = 0, snapshot_seq = 0, expires_at = ? WHERE id = ?",
+				args: [DELETED, Date.now() + GROUP_TTL_MS, id],
+			},
+		],
+		"write"
+	);
+}
+
 /** Deletes groups nobody has changed for GROUP_TTL_MS, with their changes and alert sign-ups, and stale quota counters. */
 export async function purgeExpiredGroups(db: Client): Promise<void> {
 	const now = Date.now();
@@ -230,7 +253,7 @@ type Authorized = { ok: true; head: number; snapshotSeq: number; expiresAt: numb
 
 /** Checks a row from selectGroup against the caller's token, and counts a wrong one. */
 export async function checkAuth(db: Client, id: string, row: Record<string, unknown> | undefined, token: string): Promise<Authorized> {
-	if (!row) return { ok: false, error: reply({ error: "Not found" }, 404) };
+	if (!row || row.auth_hash === DELETED) return { ok: false, error: reply({ error: "Not found" }, 404) };
 	if (Number(row.wrong) >= WRONG_TOKENS_PER_DAY) return { ok: false, error: reply({ error: "Too many wrong tries. Try again tomorrow." }, 429, { "Retry-After": "3600" }) };
 	if (!tokenMatches(token, String(row.auth_hash))) {
 		await db.execute({
