@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { register } from "node:module";
 
 register("./fixtures/alias.mjs", import.meta.url);
-const { mergeRestored, readBackup, saveBackup, startBackup, REFRESH_MS } = await import("../utils/groupBackup.ts");
+const { adoptRestoredLink, loadBackup, mergeRestored, readBackup, saveBackup, startBackup, REFRESH_MS } = await import("../utils/groupBackup.ts");
 const { deriveGroupKeys, newGroupSecret, openGroup, sealGroup } = await import("../utils/groupVault.ts");
 
 const inr = { code: "INR", symbol: "₹", name: "Indian Rupee" };
@@ -25,6 +25,21 @@ test("restoring stops at the group limit", () => {
 	assert.equal(added, 1);
 	assert.equal(missed, 1);
 	assert.equal(groups.length, 2);
+});
+
+test("only a phone with no groups of its own keeps backing up to a restored link", () => {
+	const store = new Map();
+	globalThis.localStorage = { setItem: (k, v) => store.set(k, String(v)), getItem: (k) => store.get(k) ?? null, removeItem: (k) => store.delete(k) };
+	try {
+		adoptRestoredLink({ secret: "THEIRS" }, [group("mine")]);
+		assert.equal(loadBackup(), null, "a link someone sent must not collect this phone's groups");
+		adoptRestoredLink({ secret: "NEW-PHONE" }, []);
+		assert.equal(loadBackup().link.secret, "NEW-PHONE");
+		adoptRestoredLink({ secret: "OTHER" }, []);
+		assert.equal(loadBackup().link.secret, "NEW-PHONE", "an existing backup stays");
+	} finally {
+		delete globalThis.localStorage;
+	}
 });
 
 test("a backup can't be opened as a group, or a group as a backup", async () => {

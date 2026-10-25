@@ -8,7 +8,7 @@ import type { Group, GroupSyncLink } from "@/types";
 import { MAX_GROUPS } from "@/constants";
 import { track } from "@/lib/analytics";
 import { HttpError } from "@/utils/groupApi";
-import { loadBackup, mergeRestored, readBackup, storeBackup } from "@/utils/groupBackup";
+import { adoptRestoredLink, mergeRestored, readBackup } from "@/utils/groupBackup";
 import { type GroupLink, parseGroupFragment, stretchPassphrase } from "@/utils/groupVault";
 import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
 
@@ -75,7 +75,8 @@ export const BackupRestore = () => {
 	};
 
 	const restore = (found: Extract<State, { step: "found" }>) => {
-		const { groups, added, missed } = mergeRestored(loadGroupsFromStorage(), found.groups, MAX_GROUPS);
+		const local = loadGroupsFromStorage();
+		const { groups, added, missed } = mergeRestored(local, found.groups, MAX_GROUPS);
 		// All or nothing: a backup that quietly lost a group would look complete.
 		if (missed) {
 			track("backup_restore_failed", { reason: "limit" });
@@ -86,8 +87,7 @@ export const BackupRestore = () => {
 			});
 		}
 		saveGroupsToStorage(groups);
-		// This device keeps backing up to the same link, unless it already has a backup of its own.
-		if (!loadBackup()) storeBackup({ link: found.link });
+		adoptRestoredLink(found.link, local);
 		track("backup_restored", { groups: added });
 		router.replace("/dashboard");
 	};
