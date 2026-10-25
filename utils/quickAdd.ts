@@ -43,7 +43,8 @@ export type QuickExpense = {
 	unsure: QuickField[];
 };
 
-export type QuickDraft = { groupName?: string; expenses: QuickExpense[] };
+/** `currency`: the one currency the text wrote ("$50", "₹2400", "500 rupees"), as a code; absent when none or several. */
+export type QuickDraft = { groupName?: string; currency?: string; expenses: QuickExpense[] };
 
 // ---------------------------------------------------------------------------
 // Words
@@ -64,7 +65,15 @@ const SUBJECT_PRONOUNS = words("he she they");
 const HAD_VERBS = words("had ate went shared");
 const STRONG_LIST = words("between among amongst with");
 const DIVIDE_WORDS = words("split divide divided shared");
-const MONEY_WORDS = words("₹ $ € £ rs inr rupees rupee bucks");
+/** Currency symbols and words, and the currency each one means. */
+const CURRENCY_WORDS: Record<string, string> = {
+	"₹": "INR", rs: "INR", inr: "INR", rupee: "INR", rupees: "INR",
+	$: "USD", usd: "USD", dollar: "USD", dollars: "USD",
+	"€": "EUR", eur: "EUR", euro: "EUR", euros: "EUR",
+	"£": "GBP", gbp: "GBP",
+	"¥": "JPY", jpy: "JPY", yen: "JPY",
+};
+const MONEY_WORDS = new Set([...Object.keys(CURRENCY_WORDS), "bucks"]);
 const MULTIPLIERS: Record<string, number> = {
 	k: 1e3, thousand: 1e3, l: 1e5, lakh: 1e5, lakhs: 1e5, lac: 1e5, lacs: 1e5, cr: 1e7, crore: 1e7, crores: 1e7,
 };
@@ -88,8 +97,11 @@ function wordsToNumber(run: string) {
 	let total = 0;
 	let current = 0;
 	for (const w of run.toLowerCase().split(/[\s-]+/)) {
-		if (UNITS.includes(w)) current += UNITS.indexOf(w);
-		else if (TENS.includes(w)) current += (TENS.indexOf(w) + 2) * 10;
+		const tens = UNITS.indexOf(w) >= 10 ? UNITS.indexOf(w) : TENS.includes(w) ? (TENS.indexOf(w) + 2) * 10 : 0;
+		// "nineteen ninety nine" is said as hundreds: 19 then 99 makes 1999.
+		if (tens && current % 100 >= 10) current = current * 100 + tens;
+		else if (UNITS.includes(w)) current += UNITS.indexOf(w);
+		else if (TENS.includes(w)) current += tens;
 		else if (w === "hundred") current = (current || 1) * 100;
 		else if (SCALES[w]) (total += (current || 1) * SCALES[w]), (current = 0);
 	}
@@ -204,7 +216,8 @@ type Tok = {
 	ratio?: number[];
 };
 
-const TOKEN = /₹|\$|€|£|%|\d[\d,]*(?:\.\d+)?|\p{L}+(?:['’]\p{L}+)?|[/:&-]/giu;
+// Words include combining marks (\p{M}), the vowel signs of Hindi, Tamil and other Indic scripts: "चाय" is one word.
+const TOKEN = /₹|\$|€|£|¥|%|\d[\d,]*(?:\.\d+)?|\p{L}[\p{L}\p{M}]*(?:['’]\p{L}[\p{L}\p{M}]*)?|[/:&-]/giu;
 
 const isNumber = (t?: Tok) => !!t && /^\d/.test(t.text);
 const parseNumber = (s: string) => Number(s.replace(/,/g, ""));
@@ -213,8 +226,13 @@ const tokenize = (text: string): Tok[] =>
 	(text.match(TOKEN) ?? []).map((text) => ({ text, low: text.toLowerCase().replace("’", "'"), used: false }));
 
 /** Before splitting: spellings that would otherwise be cut in the wrong place. */
+/** Hindi, Bengali, Tamil and other Indian (and Arabic) digits, as 0-9. Those blocks start at x0 (Arabic) or x6. */
+const INDIC_DIGIT = /[\u0660-\u0669\u06f0-\u06f9\u0966-\u096f\u09e6-\u09ef\u0a66-\u0a6f\u0ae6-\u0aef\u0b66-\u0b6f\u0be6-\u0bef\u0c66-\u0c6f\u0ce6-\u0cef\u0d66-\u0d6f]/g;
+const asciiDigit = (d: string) => String((d.charCodeAt(0) % 16) - (d.charCodeAt(0) < 0x900 ? 0 : 6));
+
 const normalize = (text: string) =>
 	text
+		.replace(INDIC_DIGIT, asciiDigit)
 		.replace(/\brs\.\s*/gi, "rs ")
 		.replace(/\/-/g, " ")
 		.replace(/\bb\/w\b/gi, "between")
@@ -244,12 +262,16 @@ const isDay = (t?: Tok) => !!t && /^\d{1,2}$/.test(t.text) && +t.text >= 1 && +t
 
 /** Local noon of a day, so time zones never move the date. */
 const noon = (y: number, m: number, d: number) => new Date(y, m, d, 12).getTime();
+/** Noon of a real calendar day; "31/02" is no day at all, so it never rolls into March. */
+const calendarDay = (y: number, m: number, d: number) => (new Date(y, m, d, 12).getDate() === d ? noon(y, m, d) : undefined);
 
 /** Finds a date in the piece and uses up its words. Dates are always in the past. */
 function readDate(toks: Tok[], now: number): number | undefined {
 	const today = new Date(now);
 	const [y, m, d] = [today.getFullYear(), today.getMonth(), today.getDate()];
 	const daysAgo = (n: number) => noon(y, m, d - n);
+	// A day still to come means the `earlier` one (last month or last year), if there is one.
+	const past = (date?: number, earlier?: number) => (date === undefined ? undefined : date <= now ? date : earlier);
 	for (let i = 0; i < toks.length; i++) {
 		const t = toks[i];
 		const next = toks[i + 1];
@@ -273,14 +295,28 @@ function readDate(toks: Tok[], now: number): number | undefined {
 			t.role = "date";
 			return daysAgo(+t.text);
 		}
+		// "on 2025-10-05": the year first, as phones and spreadsheets write it.
+		const iso = /^(19|20)\d\d$/.test(t.text) && next?.text === "-" && isDay(toks[i + 2]) && +toks[i + 2].text <= 12 && toks[i + 3]?.text === "-" && isDay(toks[i + 4]);
+		if (iso) {
+			done(toks[i - 1]?.low === "on" ? toks[i - 1] : undefined, t, next, toks[i + 2], toks[i + 3], toks[i + 4]);
+			[t, toks[i + 2], toks[i + 4]].forEach((u) => (u.role = "date"));
+			return past(calendarDay(+t.text, +toks[i + 2].text - 1, +toks[i + 4].text));
+		}
 		if (!isDay(t)) continue;
-		// "on 5/10", or "15/10" first: day first, as written in India.
-		const slashMonth = next?.text === "/" && isDay(toks[i + 2]) && +toks[i + 2].text <= 12 ? +toks[i + 2].text - 1 : -1;
-		if (slashMonth >= 0 && (i === 0 || toks[i - 1]?.low === "on")) {
+		// "on 5/10", or "15/10" first: day first, as written in India. "12/25" can only be month first.
+		const second = next?.text === "/" && isDay(toks[i + 2]) ? +toks[i + 2].text : 0;
+		const [sDay, sMonth] = second <= 12 ? [+t.text, second] : +t.text <= 12 ? [second, +t.text] : [0, 0];
+		if (second && sMonth && (i === 0 || toks[i - 1]?.low === "on")) {
 			done(toks[i - 1], t, next, toks[i + 2]);
 			t.role = toks[i + 2].role = "date";
-			const date = noon(y, slashMonth, +t.text);
-			return date <= now ? date : noon(y - 1, slashMonth, +t.text);
+			// "25/12/2025": a year after it, too.
+			const year = toks[i + 3]?.text === "/" && /^(\d\d|\d{4})$/.test(toks[i + 4]?.text ?? "") ? toks[i + 4] : undefined;
+			if (year) {
+				done(toks[i + 3], year);
+				year.role = "date";
+				return past(calendarDay(year.text.length === 2 ? 2000 + +year.text : +year.text, sMonth - 1, sDay));
+			}
+			return past(calendarDay(y, sMonth - 1, sDay), calendarDay(y - 1, sMonth - 1, sDay));
 		}
 		// A day of the month needs "th" or a month next to it, so "5 people" stays a count.
 		const ordinal = ORDINALS.has(next?.low ?? "") ? next : undefined;
@@ -290,16 +326,20 @@ function readDate(toks: Tok[], now: number): number | undefined {
 		done(t, ordinal, month >= 0 ? (isMonth(after) ? after : toks[i - 1]) : undefined);
 		if (["on", "the"].includes(toks[i - 1]?.low ?? "")) done(toks[i - 1], toks[i - 2]?.low === "on" ? toks[i - 2] : undefined);
 		t.role = "date";
-		const date = noon(y, month >= 0 ? month : m, +t.text);
 		// Not yet this month (or this year): it was last month (or last year).
-		return date <= now ? date : month >= 0 ? noon(y - 1, month, +t.text) : noon(y, m - 1, +t.text);
+		const day = +t.text;
+		return past(calendarDay(y, month >= 0 ? month : m, day), month >= 0 ? calendarDay(y - 1, month, day) : calendarDay(y, m - 1, day));
 	}
 	return undefined;
 }
 
-/** Marks every number as money, a percentage, a head count or a ratio, and uses up the words around it. */
-function classifyNumbers(toks: Tok[]) {
-	const hasMoney = () => toks.some((u) => u.role === "money");
+/**
+ * Marks every number as money, a percentage, a head count or a ratio, and uses
+ * up the words around it. `moneyBefore`: an earlier piece gave the amount
+ * ("Dinner 2400 split between me and Asha 50 50").
+ */
+function classifyNumbers(toks: Tok[], moneyBefore = false) {
+	const hasMoney = () => moneyBefore || toks.some((u) => u.role === "money");
 	for (let i = 0; i < toks.length; i++) {
 		const t = toks[i];
 		if (!isNumber(t) || t.role) continue;
@@ -315,7 +355,7 @@ function classifyNumbers(toks: Tok[]) {
 				parts.push(toks[j + 1]);
 				j += 2;
 			}
-			if (parts.every((p) => parseNumber(p.text) <= 100)) {
+			if (parts.every((p) => parseNumber(p.text) <= 100) && parts.some((p) => parseNumber(p.text) > 0)) {
 				t.ratio = parts.map((p) => parseNumber(p.text));
 				parts.forEach((p) => Object.assign(p, { role: "ratio", used: true }));
 				continue;
@@ -431,7 +471,7 @@ function readPiece(text: string, names: Names, listOpen: boolean, now: number, i
 	const toks = tokenize(text);
 	const bit: Bit = { lists: [], shares: [], description: "" };
 	bit.date = readDate(toks, now);
-	classifyNumbers(toks);
+	classifyNumbers(toks, inExpense);
 	const use = (t: Tok) => (t.used = true);
 	/** Who a share written before its owner belongs to: "60% Asha", "1200 kriti's", "3000 mine". */
 	const nameAfter = (t: Tok, pct: boolean) =>
@@ -753,7 +793,7 @@ function pieces(text: string, names: Names, now: number): string[] {
 	// "for Vedika, Sparsh and me": a list after "for" carries on over the pieces that are only names.
 	for (let i = 0; i < out.length - 1; i++) {
 		const next = readPiece(out[i + 1].text, known(), true, now);
-		if (/\bfor\s+\p{L}+$/u.test(out[i].text) && next.namesOnly && !next.payer) {
+		if (/\bfor\s+\p{L}[\p{L}\p{M}]*$/u.test(out[i].text) && next.namesOnly && !next.payer) {
 			out[i].text += " and " + out[i + 1].text;
 			out.splice(i-- + 1, 1);
 		}
@@ -892,7 +932,10 @@ export function parseQuickAdd(input: string, memberNames: string[] = [], now = D
 	const anyMonthly = expenses.some((e) => e.monthly);
 	const drafts = expenses.map((e) => finish(e, anyMonthly));
 	if (groupName) drafts.forEach((d) => (d.description ||= groupName!));
-	return { groupName, expenses: drafts };
+	// "€50 and taxi £20": two currencies, so neither amount can be taken as the group's.
+	const currencies = new Set(tokenize(text).flatMap((t) => CURRENCY_WORDS[t.low] ?? []));
+	if (currencies.size > 1) drafts.forEach((d) => d.unsure.includes("amount") || d.unsure.push("amount"));
+	return { groupName, ...(currencies.size === 1 ? { currency: [...currencies][0] } : {}), expenses: drafts };
 }
 
 /** Turns what was gathered for one expense into a QuickExpense, noting what was assumed. */
@@ -975,7 +1018,7 @@ export type QuickResolvedExpense = {
 	unsure: QuickField[];
 };
 
-export type QuickResolved = { groupName?: string; people: QuickPerson[]; expenses: QuickResolvedExpense[] };
+export type QuickResolved = { groupName?: string; currency?: string; people: QuickPerson[]; expenses: QuickResolvedExpense[] };
 
 /** Key of the person typing when the group doesn't know who that is yet. */
 export const NEW_ME = "new:me";
@@ -985,9 +1028,12 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 /**
  * Matches names to the group's members (whole name, or a unique first name),
  * adds anyone new, and fills in what the text implied: "everyone", "3 ways",
- * and the shares nobody stated. `members` is empty for a new group.
+ * and the shares nobody stated. `members` is empty for a new group, which
+ * takes the currency the text wrote; in a group with another `currency`
+ * ("₹2400" in a dollar group) the amounts are flagged instead.
  */
-export function resolveQuickAdd(draft: QuickDraft, members: Person[], meId?: string | null): QuickResolved {
+export function resolveQuickAdd(draft: QuickDraft, members: Person[], meId?: string | null, currency?: string): QuickResolved {
+	const otherCurrency = !!draft.currency && !!currency && draft.currency !== currency;
 	const people: QuickPerson[] = members.map((m) => ({ key: m.id, name: m.name, isNew: false, isMe: m.id === meId, unsure: false }));
 	const keyOf = (name: string): string => {
 		if (name === ME) {
@@ -1003,7 +1049,9 @@ export function resolveQuickAdd(draft: QuickDraft, members: Person[], meId?: str
 			})();
 		if (match) return match.key;
 		const key = `new:${low}`;
-		people.push({ key, name, isNew: true, isMe: false, unsure: false });
+		// "Asha" when the group has Asha Rao and Asha Iyer: new, but quite likely one of them.
+		const lookalike = people.some((p) => !p.isNew && p.name.toLowerCase().split(/\s+/)[0] === low);
+		people.push({ key, name, isNew: true, isMe: false, unsure: lookalike });
 		return key;
 	};
 
@@ -1018,6 +1066,7 @@ export function resolveQuickAdd(draft: QuickDraft, members: Person[], meId?: str
 
 	const expenses = draft.expenses.map((e): QuickResolvedExpense => {
 		const unsure = new Set(e.unsure);
+		if (otherCurrency) unsure.add("amount");
 		let participants: string[];
 		if (Array.isArray(e.participants)) participants = e.participants.map(keyOf);
 		else if (e.participants === "everyone") participants = people.map((p) => p.key);
@@ -1045,8 +1094,8 @@ export function resolveQuickAdd(draft: QuickDraft, members: Person[], meId?: str
 			const rest = participants.filter((k) => !(k in given));
 			const left = total - Object.values(given).reduce((s, v) => s + v, 0);
 			weights = { ...given };
-			// Whatever nobody stated is shared equally by the others.
-			rest.forEach((k) => (weights![k] = round2(left / rest.length)));
+			// Whatever nobody stated is shared equally by the others, the last taking the rounding so it adds up.
+			rest.forEach((k, i) => (weights![k] = round2(i < rest.length - 1 ? left / rest.length : left - round2(left / rest.length) * i)));
 			if (Math.abs(left) > 0.01 && !rest.length) unsure.add("split");
 			if (left < -0.01) unsure.add("split");
 		}
@@ -1064,5 +1113,5 @@ export function resolveQuickAdd(draft: QuickDraft, members: Person[], meId?: str
 		};
 	});
 
-	return { groupName: draft.groupName, people, expenses };
+	return { groupName: draft.groupName, ...(members.length || !draft.currency ? {} : { currency: draft.currency }), people, expenses };
 }
