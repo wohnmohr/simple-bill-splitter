@@ -6,7 +6,7 @@ import { useMediaQuery } from "@mantine/hooks";
 import { Link2, Plus, UserPlus } from "lucide-react";
 import { Tab, Currency, Expense, Group, Settlement, SplitChoice } from "@/types";
 import { DEFAULT_CURRENCY } from "@/constants";
-import { calculateBalances, calculateSettlements, enteredWeights, splitChoice } from "@/utils/calculations";
+import { calculateBalances, calculateSettlements, enteredWeights, minorUnits, splitChoice } from "@/utils/calculations";
 import { useGroups } from "@/hooks/useGroups";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
 import { useBackClose } from "@/hooks/useBackClose";
@@ -134,9 +134,9 @@ export default function Home() {
 	// Who new expenses can include: people who left stay on past entries only.
 	const current = currentMembers(people);
 	const expenses = currentGroup?.expenses || [];
-	const balances = calculateBalances(people, expenses);
-	const settlements = calculateSettlements(people, expenses);
 	const currency = currentGroup?.currency || DEFAULT_CURRENCY;
+	const balances = calculateBalances(people, expenses, minorUnits(currency));
+	const settlements = calculateSettlements(people, expenses, minorUnits(currency));
 
 	const [toast, setToast] = useState<ToastState>(null);
 	const [showFeedback, setShowFeedback] = useState(false);

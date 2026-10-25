@@ -140,8 +140,13 @@ export function pushBatch(pending: Op[]): Op[] {
 
 // ── Untrusted values → app types ──────────────────────────────
 
+/** The biggest amount one entry can hold (₹9,99,99,99,999.99), on every device. */
+export const MAX_AMOUNT = 9_999_999_999.99;
+
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
-const money = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v > 0 && v < 1e10 ? Math.round(v * 100) / 100 : 0);
+const money = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v > 0 && v <= MAX_AMOUNT ? Math.round(v * 100) / 100 : 0);
+/** Whole paise, so sums compare exactly. */
+const paise = (n: number) => Math.round(n * 100);
 
 function toPerson(id: string, v: unknown): Person | null {
 	const p = v as Partial<Person>;
@@ -177,7 +182,7 @@ function toExpense(id: string, v: unknown, members: Set<string>): Expense | null
 		if (payers.some(([p]) => !members.has(p))) return null;
 		// Kept only when every part is a real amount and they add up to what was spent.
 		const parts = payers.map(([p, n]) => [p, money(n)] as const);
-		if (parts.every(([, n]) => n > 0) && Math.abs(parts.reduce((s, [, n]) => s + n, 0) - amount) < 0.01) {
+		if (parts.every(([, n]) => n > 0) && parts.reduce((s, [, n]) => s + paise(n), 0) === paise(amount)) {
 			expense.payers = Object.fromEntries(parts);
 		}
 	}

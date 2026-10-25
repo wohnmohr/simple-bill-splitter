@@ -113,3 +113,17 @@ test("the same split survives a reload, another device and an edit", () => {
 		assert.equal(centsOf(edited.amounts), Math.round(amount * 100));
 	}
 });
+
+test("several payers sync only when they add up to the paisa, whatever the amount", () => {
+	const paid = (amount, payers) => synced({ id: "e1", amount, paidBy: "p1", payers, participants: ["p1", "p2"], splitMethod: "equally" }).payers;
+	assert.deepEqual(paid(10, { p1: 5, p2: 5 }), { p1: 5, p2: 5 });
+	assert.equal(paid(10, { p1: 5, p2: 4.99 }), undefined);
+	assert.equal(paid(100, { p1: 50, p2: 49.99 }), undefined);
+	assert.deepEqual(paid(0.3, { p1: 0.1, p2: 0.2 }), { p1: 0.1, p2: 0.2 });
+});
+
+test("the biggest amount the form takes still syncs", async () => {
+	const { MAX_AMOUNT } = await import("../utils/groupOps.ts");
+	const big = { id: "e1", amount: MAX_AMOUNT, paidBy: "p1", participants: ["p1", "p2"], splitMethod: "equally" };
+	assert.equal(synced(big)?.amount, MAX_AMOUNT);
+});

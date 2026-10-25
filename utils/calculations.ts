@@ -1,15 +1,25 @@
 import type { Expense, Person, Balance, Settlement, SplitChoice, Group, Currency } from "@/types";
 
-const cents = (n: number) => Math.round(n * 100) / 100;
+/**
+ * Smallest units in one unit of a currency: 100 paise in a rupee, but yen have
+ * no smaller coin. Money is shared out and settled in these whole units.
+ */
+export const minorUnits = (currency?: Pick<Currency, "code">) => (currency?.code === "JPY" ? 1 : 100);
 
-/** Shares (2:1:1) as amounts that add up to exactly `amount`; the rounding remainder goes to the last person. */
-export const sharesToAmounts = (shares: Record<string, number>, amount: number): Record<string, number> => {
+/** Rounds to whole minor units (cents by default). */
+export const roundMoney = (n: number, unit = 100) => Math.round(n * unit) / unit;
+
+/**
+ * Shares (2:1:1) as amounts that add up to exactly `amount`, in whole minor
+ * units (`unit` per main unit); the rounding remainder goes to the last person.
+ */
+export const sharesToAmounts = (shares: Record<string, number>, amount: number, unit = 100): Record<string, number> => {
   const ids = Object.keys(shares).filter((id) => shares[id] > 0);
   const total = ids.reduce((sum, id) => sum + shares[id], 0);
   const amounts: Record<string, number> = {};
   let left = amount;
   ids.forEach((id, i) => {
-    amounts[id] = i === ids.length - 1 ? cents(left) : cents((amount * shares[id]) / total);
+    amounts[id] = roundMoney(i === ids.length - 1 ? left : (amount * shares[id]) / total, unit);
     left -= amounts[id];
   });
   return amounts;
@@ -42,9 +52,9 @@ export const splitWeights = (expense: Expense): Record<string, number> | undefin
       ? expense.amounts
       : undefined;
 
-/** Who paid for an expense, and how much each, to the cent, adding up to exactly the amount. */
-export const expensePayers = (expense: Expense): Map<string, number> =>
-  new Map(Object.entries(sharesToAmounts(expense.payers ?? { [expense.paidBy]: 1 }, expense.amount)));
+/** Who paid for an expense, and how much each, in whole minor units, adding up to exactly the amount. */
+export const expensePayers = (expense: Expense, unit = 100): Map<string, number> =>
+  new Map(Object.entries(sharesToAmounts(expense.payers ?? { [expense.paidBy]: 1 }, expense.amount, unit)));
 
 /**
  * Stores who paid from what each person put in: one payer is just `paidBy`;
@@ -58,24 +68,26 @@ export const payerFields = (paid: Record<string, number>): Pick<Expense, "paidBy
 /**
  * What each participant owes for an expense. Percentages and exact amounts
  * are both weights, scaled so the shares always add up to the amount; with
- * no usable weights the expense is split equally. Shares are whole cents,
+ * no usable weights the expense is split equally. Shares are whole minor units,
  * so balances always add up to zero.
  */
-export const expenseShares = (expense: Expense): Map<string, number> => {
+export const expenseShares = (expense: Expense, unit = 100): Map<string, number> => {
   const weights = splitWeights(expense);
   const total = weights
     ? expense.participants.reduce((sum, id) => sum + (weights[id] || 0), 0)
     : 0;
   const amounts = sharesToAmounts(
     Object.fromEntries(expense.participants.map((id) => [id, total > 0 ? weights![id] || 0 : 1])),
-    expense.amount
+    expense.amount,
+    unit
   );
   return new Map(expense.participants.map((id) => [id, amounts[id] ?? 0]));
 };
 
 export const calculateBalances = (
   people: Person[],
-  expenses: Expense[]
+  expenses: Expense[],
+  unit = 100
 ): Balance[] => {
   const balances: Map<string, number> = new Map();
 
@@ -84,26 +96,27 @@ export const calculateBalances = (
   });
 
   expenses.forEach((expense) => {
-    expenseShares(expense).forEach((share, participantId) => {
+    expenseShares(expense, unit).forEach((share, participantId) => {
       balances.set(participantId, (balances.get(participantId) || 0) - share);
     });
 
-    expensePayers(expense).forEach((paid, payerId) => {
+    expensePayers(expense, unit).forEach((paid, payerId) => {
       balances.set(payerId, (balances.get(payerId) || 0) + paid);
     });
   });
 
   return Array.from(balances.entries()).map(([personId, balance]) => ({
     personId,
-    balance: Math.round(balance * 100) / 100,
+    balance: roundMoney(balance, unit),
   }));
 };
 
 export const calculateSettlements = (
   people: Person[],
-  expenses: Expense[]
+  expenses: Expense[],
+  unit = 100
 ): Settlement[] => {
-  const balances = calculateBalances(people, expenses);
+  const balances = calculateBalances(people, expenses, unit);
   const settlements: Settlement[] = [];
 
   const creditors = balances
@@ -113,12 +126,12 @@ export const calculateSettlements = (
     .filter((b) => b.balance < 0)
     .sort((a, b) => a.balance - b.balance);
 
-  // Settled in whole cents so no float leftover is dropped or invented.
+  // Settled in whole minor units so no float leftover is dropped or invented.
   const creditorBalances = new Map(
-    creditors.map((c) => [c.personId, Math.round(c.balance * 100)])
+    creditors.map((c) => [c.personId, Math.round(c.balance * unit)])
   );
   const debtorBalances = new Map(
-    debtors.map((d) => [d.personId, Math.round(-d.balance * 100)])
+    debtors.map((d) => [d.personId, Math.round(-d.balance * unit)])
   );
 
   while (creditorBalances.size > 0 && debtorBalances.size > 0) {
@@ -137,7 +150,7 @@ export const calculateSettlements = (
     settlements.push({
       from: debtorId,
       to: creditorId,
-      amount: settlementAmount / 100,
+      amount: settlementAmount / unit,
     });
 
     const newCreditorBalance = creditorAmount - settlementAmount;
@@ -182,7 +195,7 @@ export const totalSpent = (expenses: Expense[]): number =>
 /** The viewer's net position in a group, or null when we don't know who they are. */
 export const myBalance = (group: Group): number | null => {
   if (!group.meId) return null;
-  const mine = calculateBalances(group.members, group.expenses).find((b) => b.personId === group.meId);
+  const mine = calculateBalances(group.members, group.expenses, minorUnits(group.currency)).find((b) => b.personId === group.meId);
   return mine ? mine.balance : null;
 };
 
@@ -195,8 +208,9 @@ export const myTotals = (groups: Group[]): MyTotal[] => {
     const balance = group.closedAt ? null : myBalance(group);
     if (balance === null || Math.abs(balance) < 0.01) continue;
     const total = byCode.get(group.currency.code) ?? { currency: group.currency, owe: 0, getBack: 0 };
-    if (balance > 0) total.getBack = cents(total.getBack + balance);
-    else total.owe = cents(total.owe - balance);
+    const unit = minorUnits(group.currency);
+    if (balance > 0) total.getBack = roundMoney(total.getBack + balance, unit);
+    else total.owe = roundMoney(total.owe - balance, unit);
     byCode.set(group.currency.code, total);
   }
   return [...byCode.values()];

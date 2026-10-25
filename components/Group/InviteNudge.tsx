@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Check, Link2, MessageCircle, X } from "lucide-react";
 import type { Group, GroupSyncLink } from "@/types";
 import { MemberAvatar } from "@/components/Group/MemberAvatar";
-import { calculateSettlements } from "@/utils/calculations";
+import { calculateSettlements, minorUnits } from "@/utils/calculations";
 import { formatCurrency } from "@/utils/formatting";
 import { groupUrl } from "@/utils/groupSync";
 import { shownMembers } from "@/utils/identity";
@@ -36,7 +36,7 @@ export const InviteNudge = ({ group, shareLink, onInvite }: InviteNudgeProps) =>
 	 */
 	const [sent, setSent] = useState<Record<string, "sent" | "copied">>({});
 
-	const owed = group.meId ? calculateSettlements(group.members, group.expenses).filter((s) => s.to === group.meId) : [];
+	const owed = group.meId ? calculateSettlements(group.members, group.expenses, minorUnits(group.currency)).filter((s) => s.to === group.meId) : [];
 	const me = group.members.find((m) => m.id === group.meId);
 	const names = Object.fromEntries(shownMembers(group).map((p) => [p.id, p]));
 	const visible = !dismissed && (!group.sync || Object.keys(sent).length > 0);

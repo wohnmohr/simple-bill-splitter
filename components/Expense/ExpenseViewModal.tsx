@@ -3,7 +3,7 @@ import { Expense, ExpenseComment, Person, Currency } from "@/types";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
 import { formatCurrency, joinNames } from "@/utils/formatting";
-import { expensePayers, expenseShares, splitChoice } from "@/utils/calculations";
+import { expensePayers, expenseShares, minorUnits, splitChoice } from "@/utils/calculations";
 import { MAX_COMMENT } from "@/utils/groupOps";
 import { ArrowUp, Pencil, Trash2 } from "lucide-react";
 
@@ -85,8 +85,9 @@ export const ExpenseViewModal = ({
 
 	const isPercentage = expense.splitMethod === "percentage" && !!expense.percentages;
 	const byShares = splitChoice(expense) === "shares";
-	const shares = expenseShares(expense);
-	const payers = expensePayers(expense);
+	const unit = minorUnits(currency);
+	const shares = expenseShares(expense, unit);
+	const payers = expensePayers(expense, unit);
 	const splitLabel = isPercentage ? "by percentage" : byShares ? "by shares" : expense.splitMethod === "exact" ? "by exact amounts" : "equally";
 
 	return (
