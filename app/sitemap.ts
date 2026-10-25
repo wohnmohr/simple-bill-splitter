@@ -1,10 +1,10 @@
 import { MetadataRoute } from "next";
 import { ALL_TOOL_SLUGS } from "@/content/tools";
 import { TEMPLATES } from "@/utils/payStory";
+import { SITE_URL } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-	const baseUrl =
-		process.env.NEXT_PUBLIC_SITE_URL || "https://splitbiller.com";
+	const baseUrl = SITE_URL;
 
 	const toolEntries: MetadataRoute.Sitemap = ALL_TOOL_SLUGS.map((slug) => ({
 		url: `${baseUrl}/${slug}`,

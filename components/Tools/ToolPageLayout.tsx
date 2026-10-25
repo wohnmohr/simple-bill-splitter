@@ -4,9 +4,9 @@ import { ToolPageConfig, TOOL_PAGES } from "@/content/tools";
 import { ToolCalculator } from "@/components/Tools/ToolCalculator";
 import { TrackedLink } from "@/components/UI/TrackedLink";
 import { LogoMark } from "@/components/UI/LogoMark";
+import { SITE_URL } from "@/lib/site";
 
 export function ToolJsonLd({ config }: { config: ToolPageConfig }) {
-	const site = process.env.NEXT_PUBLIC_SITE_URL || "https://splitbiller.com";
 	const faqLd = {
 		"@context": "https://schema.org",
 		"@type": "FAQPage",
@@ -23,7 +23,7 @@ export function ToolJsonLd({ config }: { config: ToolPageConfig }) {
 		"@context": "https://schema.org",
 		"@type": "WebApplication",
 		name: `SplitBiller — ${config.title}`,
-		url: `${site}/${config.slug}`,
+		url: `${SITE_URL}/${config.slug}`,
 		applicationCategory: config.schemaCategory ?? "FinanceApplication",
 		operatingSystem: "Any",
 		offers: {
