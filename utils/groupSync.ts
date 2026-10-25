@@ -18,6 +18,7 @@ import {
 	diffGroup,
 	emptyState,
 	groupAsChanges,
+	joinPending,
 	materialize,
 	maxClock,
 	mergeState,
@@ -247,6 +248,24 @@ export class GroupSync {
 		this.saved.shown = group;
 		save(group.id, this.saved);
 		void this.sync(group.id);
+	}
+
+	/**
+	 * Takes in what another tab of the app saved for this group: its merged
+	 * changes and its queue, and its screen, so that tab's edits are not
+	 * recorded again here as edits of this tab.
+	 */
+	adopt(group: Group): void {
+		const theirs = load(group.id);
+		if (theirs) {
+			mergeState(this.saved.state, theirs.state);
+			this.saved.seq = Math.max(this.saved.seq, theirs.seq);
+			this.saved.snapshotSeq = Math.max(this.saved.snapshotSeq, theirs.snapshotSeq);
+			this.saved.pending = joinPending(this.saved.state, this.saved.pending, theirs.pending);
+			this.saved.gone ||= theirs.gone;
+		}
+		this.shown = this.saved.shown = group;
+		save(group.id, this.saved);
 	}
 
 	/** Pushes queued changes, then pulls everyone else's. One run at a time. */
