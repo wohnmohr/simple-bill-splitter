@@ -68,7 +68,8 @@ self.addEventListener("fetch", (event) => {
 		(async () => {
 			try {
 				const file = (await event.request.formData()).get("bill");
-				if (file instanceof File) {
+				// Only a screenshot: anything else is no bill, and could fill the phone's storage.
+				if (file instanceof File && file.type.startsWith("image/") && file.size <= 20 * 1024 * 1024) {
 					const cache = await caches.open("splitbiller-shared");
 					await cache.put("/shared-bill", new Response(file, { headers: { "content-type": file.type } }));
 				}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Group } from "@/types";
 import { GroupSync, type SyncStatus, deleteForEveryone, forgetSync, startSync } from "@/utils/groupSync";
-import { meAfter } from "@/utils/members";
+import { meAfter, upiChanges } from "@/utils/members";
 import { disableAlerts } from "@/utils/groupAlerts";
 
 // Live while someone is looking, quieter when idle, silent when away.
@@ -35,7 +35,7 @@ export function useGroupSync(
 					const engine = engines.current.get(g.id);
 					if (g.id !== id || !engine) return g;
 					const merged = engine.reconcile(g);
-					return { ...merged, meId: meAfter(g, merged), sync: g.sync };
+					return { ...merged, meId: meAfter(g, merged), sync: g.sync, upiChangedAt: upiChanges(g, merged) };
 				})
 			),
 		[setGroups]
@@ -116,7 +116,7 @@ export function useGroupSync(
 			const { hostId: _old, ...rest } = group;
 			const shared: Group = group.meId ? { ...rest, hostId: group.meId } : rest;
 			const link = await startSync(shared, passphrase);
-			setGroups((prev) => prev.map((g) => (g.id === group.id ? { ...g, hostId: shared.hostId, sync: link } : g)));
+			setGroups((prev) => prev.map((g) => (g.id === group.id ? { ...g, hostId: shared.hostId, sync: link, hosted: true } : g)));
 			return link;
 		},
 		[setGroups]

@@ -141,7 +141,7 @@ export async function joinGroup(link: GroupSyncLink, localId: string): Promise<J
 		const keys = await deriveGroupKeys(link.secret, link.pass);
 		const saved = await fetchAll(keys);
 		save(localId, saved);
-		return { ok: true, group: materialize(saved.state, { id: localId, sync: link }) };
+		return { ok: true, group: materialize(saved.state, { id: localId, sync: link, hosted: false }) };
 	} catch (err) {
 		const cause = syncCause(err);
 		if (cause === "wrong_key") return { ok: false, reason: "wrong-passphrase", cause };

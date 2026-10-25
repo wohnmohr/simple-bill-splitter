@@ -3,6 +3,7 @@ import type { Currency, Expense, Person } from "@/types";
 import type { CompactSharePayload, ShareSnapshot } from "@/types/share";
 import { splitWeights } from "@/utils/calculations";
 import { ID_RE, toExpense, toPerson } from "@/utils/groupOps";
+import { cleanText } from "@/utils/text";
 
 const SHARE_PREFIX = "sb1";
 const SHARE_PATH = "/share";
@@ -49,20 +50,34 @@ async function compress(data: Uint8Array): Promise<Uint8Array> {
 	return new Uint8Array(buffer);
 }
 
+/** Real shares unpack to a few KB; a link that unpacks to more is refused before it can fill the phone's memory. */
+const MAX_UNPACKED_BYTES = 1024 * 1024;
+
 async function decompress(data: Uint8Array): Promise<Uint8Array> {
 	if (typeof DecompressionStream === "undefined") {
 		return data;
 	}
+	const reader = new Blob([data as BlobPart])
+		.stream()
+		.pipeThrough(new DecompressionStream("deflate-raw"))
+		.getReader();
+	const chunks: Uint8Array[] = [];
+	let size = 0;
 	try {
-		const stream = new Blob([data as BlobPart])
-			.stream()
-			.pipeThrough(new DecompressionStream("deflate-raw"));
-		const buffer = await new Response(stream).arrayBuffer();
-		return new Uint8Array(buffer);
+		for (let read = await reader.read(); !read.done; read = await reader.read()) {
+			size += read.value.byteLength;
+			if (size > MAX_UNPACKED_BYTES) break;
+			chunks.push(read.value);
+		}
 	} catch {
 		// Payload may be uncompressed (older browsers / fallback encode)
 		return data;
 	}
+	if (size > MAX_UNPACKED_BYTES) {
+		reader.cancel().catch(() => undefined);
+		throw new Error("Share link too big");
+	}
+	return new Uint8Array(await new Blob(chunks as BlobPart[]).arrayBuffer());
 }
 
 function toCompact(snapshot: ShareSnapshot): CompactSharePayload {
@@ -128,7 +143,7 @@ function fromCompact(payload: CompactSharePayload): ShareSnapshot {
 		.filter((e): e is Expense => !!e);
 
 	return {
-		name: (typeof payload.n === "string" && payload.n.trim().slice(0, 60)) || "Shared split",
+		name: (typeof payload.n === "string" && cleanText(payload.n, 60)) || "Shared split",
 		currency,
 		members,
 		expenses,

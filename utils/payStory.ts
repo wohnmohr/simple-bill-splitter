@@ -1,4 +1,5 @@
 import { personKey, sanitizeClaim, sanitizeItems, type BillItem, type Claim } from "@/utils/billClaims";
+import { cleanText } from "@/utils/text";
 
 export interface SplitFaq {
 	q: string;
@@ -436,12 +437,14 @@ const fromBase64Url = (value: string) => {
 export const encodeRequest = (req: PayRequest): string => toBase64Url(JSON.stringify(req));
 
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
+/** Text people typed, made safe to show beside amounts. */
+const text = (v: unknown, max: number) => (typeof v === "string" ? cleanText(v, max) : "");
 const int = (v: unknown) => (Number.isInteger(v) && (v as number) >= 0 ? (v as number) : 0);
 
 /** One recorded payment from untrusted input, or null. */
 export function sanitizePayment(p: unknown): [string, number] | null {
 	if (!Array.isArray(p) || int(p[1]) < 1) return null;
-	return [str(p[0], 30), int(p[1])];
+	return [text(p[0], 30), int(p[1])];
 }
 
 /**
@@ -476,8 +479,8 @@ export function sanitizeRequest(raw: unknown): PayRequest | null {
 		: [];
 	const req: PayRequest = {
 		kind: getTemplate(r.kind).id,
-		title: str(r.title, 60),
-		name: str(r.name, 40),
+		title: text(r.title, 60),
+		name: text(r.name, 40),
 		upiId: str(r.upiId, 80),
 		target: int(r.target),
 		people: Math.min(int(r.people), 100),
