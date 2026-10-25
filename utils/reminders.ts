@@ -1,5 +1,5 @@
 import type { Group, Settlement } from "@/types";
-import { calculateSettlements } from "@/utils/calculations";
+import { calculateSettlements, minorUnits } from "@/utils/calculations";
 
 const DAY = 86_400_000;
 /** A group quiet this long with money still owed is worth a nudge; a reminder then rests this long too. */
@@ -21,7 +21,7 @@ export function dueReminders(groups: Group[], reminded: Record<string, number>, 
 		const last = Math.max(0, ...group.expenses.map((e) => e.createdAt ?? 0));
 		const days = Math.floor((now - last) / DAY);
 		if (!last || days < QUIET_DAYS) continue;
-		for (const s of calculateSettlements(group.members, group.expenses)) {
+		for (const s of calculateSettlements(group.members, group.expenses, minorUnits(group.currency))) {
 			const since = reminded[reminderKey(group.id, s.from)] ?? 0;
 			if (s.to === group.meId && now - since >= QUIET_DAYS * DAY) due.push({ group, settlement: s, days });
 		}

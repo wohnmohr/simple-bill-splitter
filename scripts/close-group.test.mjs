@@ -13,8 +13,10 @@ const spend = (amount, d, kind) => ({ id: `e${amount}`, amount, paidBy: "p1", pa
 
 test("the summary counts spending, not repayments", () => {
 	const expenses = [spend(6000, 10), spend(2000, 12), spend(4000, 13, "payment")];
-	assert.deepEqual(groupSummary(expenses, 4), { total: 8000, count: 2, days: 3, perPerson: 2000 });
-	assert.deepEqual(groupSummary([], 0), { total: 0, count: 0, days: 0, perPerson: 0 });
+	assert.deepEqual(groupSummary(expenses), { total: 8000, count: 2, days: 3, sharers: 2, perPerson: 4000 });
+	assert.deepEqual(groupSummary([]), { total: 0, count: 0, days: 0, sharers: 0, perPerson: 0 });
+	// Someone on no expense (added after closing, say) doesn't bring "each" down.
+	assert.equal(groupSummary([spend(900, 10)]).perPerson, 450);
 });
 
 const base = { id: "g", name: "Goa trip", currency: { code: "INR", symbol: "₹", name: "Indian Rupee" }, members: [{ id: "p1", name: "Priya" }], expenses: [] };

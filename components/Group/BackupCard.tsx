@@ -87,7 +87,7 @@ export const BackupCard = ({ backup }: { backup: Backup }) => {
 	const status = !state
 		? "Only on this phone. Clearing the browser or changing phones loses them."
 		: state.gone
-		? "Your backup was deleted after 6 months unused. Turn it on again."
+		? "Your backup is gone: it was turned off on another phone, or not used for 6 months. Turn it on again."
 		: backup.failed
 		? "Offline. Your groups will back up when you're back."
 		: `Backed up, end-to-end encrypted${state.savedAt ? ` · ${when(state.savedAt)}` : ""}`;

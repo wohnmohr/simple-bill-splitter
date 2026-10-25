@@ -1,4 +1,5 @@
 import type { Group } from "@/types";
+import { currentMembers } from "@/utils/members";
 
 /** Where a home-screen shortcut or a shared screenshot lands: /dashboard?add or /dashboard?shared. */
 export type Launch = "add" | "shared";
@@ -28,12 +29,12 @@ export async function takeSharedBill(): Promise<File | null> {
 	}
 }
 
-/** The open group you used last: the one with the newest expense, else the newest group. */
+/** The open group you used last, among those with people to add an expense for: the one with the newest expense, else the newest group. */
 export function latestGroup(groups: Group[]): Group | undefined {
 	let best: Group | undefined;
 	let bestAt = -1;
 	for (const g of groups) {
-		if (g.closedAt) continue;
+		if (g.closedAt || currentMembers(g.members).length === 0) continue;
 		const at = Math.max(0, ...g.expenses.map((e) => e.createdAt ?? 0));
 		// Ties (no dates yet) go to the later group in the list, which is the newer one.
 		if (at >= bestAt) [best, bestAt] = [g, at];

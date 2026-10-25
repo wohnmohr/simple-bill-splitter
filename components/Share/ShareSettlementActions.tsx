@@ -6,10 +6,10 @@ import { Currency, Expense, GroupSyncLink, Person } from "@/types";
 import { groupUrl } from "@/utils/groupSync";
 import { buildShareSnapshot, encodeShareUrl } from "@/utils/shareCodec";
 import { formatCurrency } from "@/utils/formatting";
-import { calculateSettlements } from "@/utils/calculations";
+import { calculateSettlements, minorUnits } from "@/utils/calculations";
 import { track, trackError } from "@/lib/analytics";
 import { sendViaWhatsApp } from "@/utils/whatsapp";
-import { overUpiLinkLimit, UPI_LIMIT_TIP } from "@/utils/upi";
+import { isValidUpiId, overUpiLinkLimit, UPI_LIMIT_TIP } from "@/utils/upi";
 
 interface ShareSettlementActionsProps {
 	name: string;
@@ -38,7 +38,7 @@ export const ShareSettlementActions = ({
 	const [copiedLink, setCopiedLink] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const settlements = calculateSettlements(people, expenses);
+	const settlements = calculateSettlements(people, expenses, minorUnits(currency));
 
 	const buildShareText = (url: string) => {
 		const lines =
@@ -51,7 +51,7 @@ export const ShareSettlementActions = ({
 						const toName = to?.name || "Unknown";
 						const amount = formatCurrency(s.amount, currency);
 						const upi =
-							currency.code === "INR" && to?.upiId
+							currency.code === "INR" && to?.upiId && isValidUpiId(to.upiId)
 								? ` (UPI: ${to.upiId})`
 								: "";
 						return `${i + 1}. ${fromName} → ${toName}: ${amount}${upi}`;
@@ -63,7 +63,7 @@ export const ShareSettlementActions = ({
 			"",
 			...lines,
 			...(currency.code === "INR" &&
-			settlements.some((s) => overUpiLinkLimit(s.amount) && people.find((p) => p.id === s.to)?.upiId)
+			settlements.some((s) => overUpiLinkLimit(s.amount) && isValidUpiId(people.find((p) => p.id === s.to)?.upiId ?? ""))
 				? ["", UPI_LIMIT_TIP]
 				: []),
 			"",

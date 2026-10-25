@@ -123,11 +123,12 @@ const isGroup = (g: unknown): g is Group => {
 /**
  * Adds restored groups this device doesn't have yet. A group already here
  * (same id, or the same shared group under another id) keeps this device's copy.
+ * `missed`: new groups that didn't fit under `max`.
  */
-export function mergeRestored(local: Group[], restored: Group[], max: number): { groups: Group[]; added: number } {
+export function mergeRestored(local: Group[], restored: Group[], max: number): { groups: Group[]; added: number; missed: number } {
 	const ids = new Set(local.map((g) => g.id));
 	const secrets = new Set(local.flatMap((g) => (g.sync ? [g.sync.secret] : [])));
 	const fresh = restored.filter((g) => !ids.has(g.id) && !(g.sync && secrets.has(g.sync.secret)));
 	const room = fresh.slice(0, Math.max(0, max - local.length));
-	return { groups: [...local, ...room], added: room.length };
+	return { groups: [...local, ...room], added: room.length, missed: fresh.length - room.length };
 }

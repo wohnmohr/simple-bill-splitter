@@ -19,13 +19,13 @@ interface TripCardProps {
  * its final numbers; once closed, shows them and leads into the next one.
  */
 export const TripCard = ({ group, onClose, onReopen, onStartNext }: TripCardProps) => {
-	const { total, count, days, perPerson } = groupSummary(group.expenses, group.members.length);
+	const { total, count, days, sharers, perPerson } = groupSummary(group.expenses);
 	const closed = !!group.closedAt;
 	const facts = [
 		`${formatCurrency(total, group.currency)} spent`,
 		plural(count, "expense"),
 		...(days > 1 ? [plural(days, "day")] : []),
-		...(group.members.length > 1 ? [`about ${formatCurrency(Math.round(perPerson), group.currency)} each`] : []),
+		...(sharers > 1 ? [`about ${formatCurrency(Math.round(perPerson), group.currency)} each`] : []),
 	];
 
 	return (

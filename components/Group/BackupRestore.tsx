@@ -20,7 +20,7 @@ type State =
 
 const ERRORS = {
 	invalid: ["This link can't be opened", "It looks incomplete. Copy the whole recovery link and try again."],
-	gone: ["This backup isn't available", "It was turned off, or deleted after 6 months unused."],
+	gone: ["This backup isn't available", "It was turned off on another phone, or deleted after 6 months unused."],
 	offline: ["Couldn't reach SplitBiller", "Check your connection and try again."],
 } as const;
 
@@ -75,7 +75,16 @@ export const BackupRestore = () => {
 	};
 
 	const restore = (found: Extract<State, { step: "found" }>) => {
-		const { groups, added } = mergeRestored(loadGroupsFromStorage(), found.groups, MAX_GROUPS);
+		const { groups, added, missed } = mergeRestored(loadGroupsFromStorage(), found.groups, MAX_GROUPS);
+		// All or nothing: a backup that quietly lost a group would look complete.
+		if (missed) {
+			track("backup_restore_failed", { reason: "limit" });
+			return setState({
+				step: "error",
+				title: "Not enough room on this phone",
+				body: `${plural(added + missed)} to add, room for ${added}: a phone holds ${MAX_GROUPS} groups. Delete ${missed} in the app, then open this link again.`,
+			});
+		}
 		saveGroupsToStorage(groups);
 		// This device keeps backing up to the same link, unless it already has a backup of its own.
 		if (!loadBackup()) storeBackup({ link: found.link });

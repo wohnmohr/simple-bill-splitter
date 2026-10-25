@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useMediaQuery } from "@mantine/hooks";
 import { Link2, Plus, UserPlus } from "lucide-react";
 import { Tab, Currency, Expense, Group, Settlement, SplitChoice } from "@/types";
-import { DEFAULT_CURRENCY } from "@/constants";
-import { calculateBalances, calculateSettlements, enteredWeights, splitChoice } from "@/utils/calculations";
+import { CURRENCIES, DEFAULT_CURRENCY, MAX_GROUPS } from "@/constants";
+import { calculateBalances, calculateSettlements, enteredWeights, minorUnits, splitChoice } from "@/utils/calculations";
 import { useGroups } from "@/hooks/useGroups";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
 import { useBackClose } from "@/hooks/useBackClose";
@@ -51,6 +51,9 @@ import { firstExpense, type FirstExpenseInput } from "@/utils/firstExpense";
 import { latestGroup, takeLaunch, takeSharedBill } from "@/utils/launch";
 import { QuickAddBox } from "@/components/QuickAdd/QuickAddBox";
 import { QuickAddPreview } from "@/components/QuickAdd/QuickAddPreview";
+
+/** A new group from a typed sentence is in the currency it was written in ("$50"), else rupees. */
+const quickCurrency = (quick: QuickResolved) => CURRENCIES.find((c) => c.code === quick.currency) ?? DEFAULT_CURRENCY;
 
 export default function Home() {
 	const router = useRouter();
@@ -134,9 +137,9 @@ export default function Home() {
 	// Who new expenses can include: people who left stay on past entries only.
 	const current = currentMembers(people);
 	const expenses = currentGroup?.expenses || [];
-	const balances = calculateBalances(people, expenses);
-	const settlements = calculateSettlements(people, expenses);
 	const currency = currentGroup?.currency || DEFAULT_CURRENCY;
+	const balances = calculateBalances(people, expenses, minorUnits(currency));
+	const settlements = calculateSettlements(people, expenses, minorUnits(currency));
 
 	const [toast, setToast] = useState<ToastState>(null);
 	const [showFeedback, setShowFeedback] = useState(false);
@@ -214,7 +217,7 @@ export default function Home() {
 	const handleQuickAdd = (text: string, newGroup: boolean) => {
 		const group = newGroup ? undefined : currentGroup;
 		const members = group ? currentMembers(shownMembers(group)) : [];
-		const quick = withMyName(resolveQuickAdd(parseQuickAdd(text, members.map((m) => m.name)), members, group?.meId), loadMyName());
+		const quick = withMyName(resolveQuickAdd(parseQuickAdd(text, members.map((m) => m.name)), members, group?.meId, group?.currency.code), loadMyName());
 		if (!quick.expenses.length) return;
 		track("quick_add_previewed", {
 			expense_count: quick.expenses.length,
@@ -253,8 +256,13 @@ export default function Home() {
 		const fill = (g: Group) => applyQuickAdd(g, quick);
 		const me = quick.people.find((p) => p.isMe && p.isNew);
 		if (me) rememberMyName(me.name);
-		if (quickAdd.newGroup) createGroup(groupName, DEFAULT_CURRENCY, fill);
-		else if (currentGroup) setGroups((prev) => prev.map((g) => (g.id === currentGroup.id ? fill(g) : g)));
+		if (quickAdd.newGroup) {
+			// At the group limit nothing is made: say so, and keep the preview so the typed bill isn't lost.
+			if (!createGroup(groupName, quickCurrency(quick), fill)) {
+				setToast({ id: Date.now(), message: `You already have ${MAX_GROUPS} groups. Delete one, then try again.` });
+				return;
+			}
+		} else if (currentGroup) setGroups((prev) => prev.map((g) => (g.id === currentGroup.id ? fill(g) : g)));
 		track("quick_add_saved", { expense_count: quick.expenses.length, edited, new_group: quickAdd.newGroup });
 		setQuickAdd(null);
 		setQuickAddSaves((n) => n + 1);
@@ -437,8 +445,8 @@ export default function Home() {
 	// On wide screens Balances lives in a side panel, so it leaves the tab bar.
 	const isWide = useMediaQuery("(min-width: 1024px)") ?? false;
 	const inGroup = !!currentGroup && currentGroup.members.length > 0;
-	// A closed group is a record: no new expenses until it's reopened.
-	const canAdd = inGroup && !currentGroup.closedAt;
+	// A closed group is a record: no new expenses until it's reopened. Nor when everyone has left: there's nobody to add one for.
+	const canAdd = inGroup && current.length > 0 && !currentGroup.closedAt;
 	const shownTab: Tab = isWide && activeTab === "balances" ? "transactions" : activeTab;
 
 	return (
@@ -666,7 +674,7 @@ export default function Home() {
 					}}
 					onCreate={handleCreateGroup}
 					groupCount={groups.length}
-					note={nextFrom ? `With the same people: ${new Intl.ListFormat("en-IN").format(nextFrom.members.map((m) => m.name))}.` : undefined}
+					note={nextFrom ? `With the same people: ${new Intl.ListFormat("en-IN").format(currentMembers(shownMembers(nextFrom)).map((m) => m.name))}.` : undefined}
 				/>
 
 				{currentGroup && (
@@ -747,7 +755,7 @@ export default function Home() {
 					<QuickAddPreview
 						quick={quickAdd.quick}
 						newGroup={quickAdd.newGroup}
-						currency={quickAdd.newGroup ? DEFAULT_CURRENCY : currency}
+						currency={quickAdd.newGroup ? quickCurrency(quickAdd.quick) : currency}
 						onConfirm={handleSaveQuickAdd}
 						onClose={() => setQuickAdd(null)}
 					/>

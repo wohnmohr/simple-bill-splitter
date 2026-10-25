@@ -5,7 +5,8 @@ import { Modal } from "@/components/UI/Modal";
 import { MemberAvatar } from "@/components/Group/MemberAvatar";
 import { Group, Person } from "@/types";
 import { isValidUpiId } from "@/utils/upi";
-import { splitNames } from "@/utils/firstExpense";
+import { nameKey, splitNames } from "@/utils/firstExpense";
+import { pasteNames } from "@/components/UI/pasteNames";
 import { loadMyName } from "@/utils/myName";
 import { currentMembers, entriesWith } from "@/utils/members";
 
@@ -54,15 +55,21 @@ export const AddMembersModal = ({
 	}, [isOpen, empty]);
 	/** Whose name the pencil changes for everyone; for anyone else in a shared group it's a private nickname. */
 	const renamesForEveryone = (m: Person) => !shared || m.id === group.meId;
+	// Names the group already uses, shared or as this device's nicknames: adding one again would make two people look alike.
+	const taken = group.members.flatMap((m) => [m.name, group.nicknames?.[m.id] ?? ""]);
+	const takenKeys = new Set(taken.map(nameKey));
+	const renameClash = (m: Person) =>
+		!!editing && renamesForEveryone(m) && group.members.some((o) => o.id !== m.id && nameKey(o.name) === nameKey(editing.value));
 	const saveEdit = (m: Person) => {
-		if (!editing) return;
+		if (!editing || renameClash(m)) return;
 		if (renamesForEveryone(m)) onRenameMember(m.id, editing.value);
 		else onSetNickname(m.id, editing.value === m.name ? "" : editing.value);
 		setEditing(null);
 	};
 
 	const isInr = group.currency.code === "INR";
-	const names = splitNames(memberName);
+	const names = splitNames(memberName, taken);
+	const already = splitNames(memberName).filter((n) => takenKeys.has(nameKey(n)));
 	// A UPI ID belongs to one person, so it's asked for only while one name is typed.
 	const askUpi = isInr && names.length <= 1;
 
@@ -105,9 +112,15 @@ export const AddMembersModal = ({
 						aria-label="Name"
 						value={memberName}
 						onChange={(e) => setMemberName(e.target.value)}
+						onPaste={(e) => pasteNames(e, setMemberName)}
 						placeholder={group.members.length === 0 ? "Your name, then everyone else" : "Name, or several: Riya, Kabir"}
 						data-autofocus
 						maxLength={400}
+						description={
+							already.length > 0
+								? `Already in the group: ${already.join(", ")}. For someone else with that name, add an initial.`
+								: undefined
+						}
 					/>
 					{askUpi && (
 						<TextInput
@@ -171,8 +184,9 @@ export const AddMembersModal = ({
 													styles={{ input: { minHeight: 38, fontSize: 15 } }}
 													data-autofocus
 													autoFocus
+													error={renameClash(member) ? "Someone in the group already has this name" : undefined}
 												/>
-												<button type="submit" className="btn-primary !px-3 !py-2" disabled={forEveryone && !editing.value.trim()}>
+												<button type="submit" className="btn-primary !px-3 !py-2" disabled={(forEveryone && !editing.value.trim()) || renameClash(member)}>
 													Save
 												</button>
 											</form>

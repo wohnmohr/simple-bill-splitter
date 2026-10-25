@@ -8,6 +8,7 @@ import { useBackup } from "@/hooks/useBackup";
 import { disableAlerts } from "@/utils/groupAlerts";
 import { newId } from "@/utils/ids";
 import { addDueRepeatsToGroups } from "@/utils/recurring";
+import { cleanText } from "@/utils/text";
 
 export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -23,6 +24,18 @@ export const useGroups = () => {
     if (pendingId && loadedGroups.some((g) => g.id === pendingId)) {
       setSelectedGroupId(pendingId);
     }
+  }, []);
+
+  // A group alert tapped while the app is already open (public/sw.js).
+  useEffect(() => {
+    const sw = typeof navigator !== "undefined" ? navigator.serviceWorker : undefined;
+    if (!sw) return;
+    const onMessage = (e: MessageEvent) => {
+      const id = e.data?.open;
+      if (typeof id === "string" && loadGroupsFromStorage().some((g) => g.id === id)) setSelectedGroupId(id);
+    };
+    sw.addEventListener("message", onMessage);
+    return () => sw.removeEventListener("message", onMessage);
   }, []);
 
   // Synced groups: every change below is picked up and sent, encrypted.
@@ -69,13 +82,14 @@ export const useGroups = () => {
     currency: Currency = DEFAULT_CURRENCY,
     fill: (g: Group) => Group = (g) => g
   ): boolean => {
-    if (!name.trim() || groups.length >= MAX_GROUPS) {
+    const clean = cleanText(name, 60);
+    if (!clean || groups.length >= MAX_GROUPS) {
       return false;
     }
 
     const newGroup: Group = fill({
       id: newId("group"),
-      name: name.trim(),
+      name: clean,
       members: [],
       expenses: [],
       currency,
@@ -108,7 +122,8 @@ export const useGroups = () => {
 
   /** Renames a group; for a synced group everyone sees the new name. */
   const renameGroup = (groupId: string, name: string): void => {
-    setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, name } : g)));
+    const clean = cleanText(name, 60);
+    if (clean) setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, name: clean } : g)));
   };
 
   /** Sets a group's theme; for a synced group everyone sees it. */

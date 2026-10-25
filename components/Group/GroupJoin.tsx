@@ -7,7 +7,7 @@ import { KeyRound, Loader2, Lock } from "lucide-react";
 import type { Group, GroupSyncLink } from "@/types";
 import { MAX_GROUPS } from "@/constants";
 import { track } from "@/lib/analytics";
-import { SETTLE_PARAM, joinGroup } from "@/utils/groupSync";
+import { SETTLE_PARAM, forgetSync, joinGroup } from "@/utils/groupSync";
 import { openOnSettleUp } from "@/utils/shareImport";
 import { type GroupLink, parseGroupFragment, stretchPassphrase } from "@/utils/groupVault";
 import { newId } from "@/utils/ids";
@@ -55,16 +55,18 @@ export const GroupJoin = () => {
 		setState({ step: "error", title: ERRORS[kind][0], body: ERRORS[kind][1], retry });
 	};
 
+	/** Opened again on a device that already has it: same group, same "you". No second join. */
+	const openExisting = (groups: Group[], existing: Group, me: string | undefined) => {
+		if (me) saveGroupsToStorage(groups.map((g) => (g === existing ? asMe(g, me) : g)));
+		openOnDashboard(router, existing.id);
+	};
+
 	const open = async (sync: GroupSyncLink) => {
 		lastTried.current = sync;
 		const me = link.current?.me;
 		const groups = loadGroupsFromStorage();
 		const existing = groups.find((g) => g.sync?.secret === sync.secret);
-		if (existing) {
-			// Opened again on a device that already has it: same group, same "you". No second join.
-			if (me) saveGroupsToStorage(groups.map((g) => (g === existing ? asMe(g, me) : g)));
-			return openOnDashboard(router, existing.id);
-		}
+		if (existing) return openExisting(groups, existing, me);
 		if (groups.length >= MAX_GROUPS) return fail("limit");
 		const localId = newId("group");
 		const result = await joinGroup(sync, localId);
@@ -72,8 +74,15 @@ export const GroupJoin = () => {
 			if (result.reason === "wrong-passphrase") return setState({ step: "passphrase", wrong: true });
 			return fail(result.reason, result.reason === "offline");
 		}
+		// The link opened twice at once (two taps, two tabs): the first one to finish keeps the group.
+		const now = loadGroupsFromStorage();
+		const twin = now.find((g) => g.sync?.secret === sync.secret);
+		if (twin) {
+			forgetSync(localId);
+			return openExisting(now, twin, me);
+		}
 		const joined: Group = asMe({ ...result.group, sync }, me);
-		saveGroupsToStorage([...loadGroupsFromStorage(), joined]);
+		saveGroupsToStorage([...now, joined]);
 		track("group_joined", { passphrase: Boolean(sync.pass), members: joined.members.length, personal: Boolean(me) });
 		// Someone joining a group with bills in it wants to know what they owe first.
 		if (joined.expenses.some((e) => e.kind !== "payment")) openOnSettleUp();
@@ -90,10 +99,7 @@ export const GroupJoin = () => {
 		if (parsed.needsPassphrase) {
 			const groups = loadGroupsFromStorage();
 			const known = groups.find((g) => g.sync?.secret === parsed.secret);
-			if (known) {
-				if (parsed.me) saveGroupsToStorage(groups.map((g) => (g === known ? asMe(g, parsed.me) : g)));
-				return openOnDashboard(router, known.id);
-			}
+			if (known) return openExisting(groups, known, parsed.me);
 			return setState({ step: "passphrase" });
 		}
 		void open({ secret: parsed.secret });

@@ -1,4 +1,5 @@
 import { NEW_ME, type QuickResolved } from "@/utils/quickAdd";
+import { cleanText } from "@/utils/text";
 
 const KEY = "splitbiller-my-name";
 
@@ -13,7 +14,7 @@ export const loadMyName = (): string => {
 
 /** Remembers the name you typed where we asked for yours (not a name picked to join a group anonymously). */
 export const rememberMyName = (name: string): void => {
-	const trimmed = name.trim().slice(0, 40);
+	const trimmed = cleanText(name, 40);
 	if (!trimmed) return;
 	try {
 		localStorage.setItem(KEY, trimmed);

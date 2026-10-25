@@ -1,7 +1,8 @@
 import { CURRENCIES } from "@/constants";
-import { Currency, Expense, Person } from "@/types";
-import { CompactSharePayload, ShareSnapshot } from "@/types/share";
+import type { Currency, Expense, Person } from "@/types";
+import type { CompactSharePayload, ShareSnapshot } from "@/types/share";
 import { splitWeights } from "@/utils/calculations";
+import { ID_RE, toExpense, toPerson } from "@/utils/groupOps";
 
 const SHARE_PREFIX = "sb1";
 const SHARE_PATH = "/share";
@@ -92,31 +93,42 @@ function toCompact(snapshot: ShareSnapshot): CompactSharePayload {
 	};
 }
 
+/** A decrypted link is still untrusted: it's checked the way synced changes are, so a hand-made link can't save a broken group. */
 function fromCompact(payload: CompactSharePayload): ShareSnapshot {
 	const currency: Currency =
 		CURRENCIES.find((c) => c.code === payload.c) || CURRENCIES[0];
 
-	const members: Person[] = payload.m.map((m) => ({
-		id: m.i,
-		name: m.n,
-		...(m.u?.trim() ? { upiId: m.u.trim() } : {}),
-	}));
+	const ids = new Set<string>();
+	const members: Person[] = [];
+	for (const m of payload.m) {
+		const person = typeof m?.i === "string" && ID_RE.test(m.i) && !ids.has(m.i) ? toPerson(m.i, { name: m.n, upiId: m.u }) : null;
+		if (!person) continue;
+		ids.add(person.id);
+		members.push(person);
+	}
 
-	const expenses: Expense[] = payload.e.map((e, index) => ({
-		id: `shared-exp-${index}`,
-		amount: e.a,
-		paidBy: e.p,
-		...(e.y ? { payers: e.y } : {}),
-		participants: e.t,
-		description: e.d,
-		splitMethod: e.s === "p" ? "percentage" : e.s === "x" ? "exact" : "equally",
-		...(e.s === "p" ? { percentages: e.r } : e.s === "x" ? { amounts: e.r } : {}),
-		...(e.k === "s" ? { kind: "payment" as const } : {}),
-		...(e.at ? { createdAt: e.at * 1000 } : {}),
-	}));
+	const expenses = payload.e
+		.map((e, index) =>
+			toExpense(
+				`shared-exp-${index}`,
+				{
+					amount: e?.a,
+					paidBy: e?.p,
+					payers: e?.y,
+					participants: e?.t,
+					description: e?.d,
+					splitMethod: e?.s === "p" ? "percentage" : e?.s === "x" ? "exact" : "equally",
+					...(e?.s === "p" ? { percentages: e.r } : e?.s === "x" ? { amounts: e.r } : {}),
+					...(e?.k === "s" ? { kind: "payment" as const } : {}),
+					...(e?.at ? { createdAt: e.at * 1000 } : {}),
+				},
+				ids
+			)
+		)
+		.filter((e): e is Expense => !!e);
 
 	return {
-		name: payload.n || "Shared split",
+		name: (typeof payload.n === "string" && payload.n.trim().slice(0, 60)) || "Shared split",
 		currency,
 		members,
 		expenses,
@@ -176,6 +188,8 @@ export async function decodeShareUrl(urlOrHash: string): Promise<ShareSnapshot> 
 	// base64url, which never contains "#" or "://", so cut at the first one.
 	const cut = fragment.search(/https?:\/\/|#/);
 	if (cut >= 0) fragment = fragment.slice(0, cut);
+	// A full stop or bracket a chat glued to the end.
+	fragment = fragment.replace(/[^A-Za-z0-9_-]+$/, "");
 
 	const parts = fragment.split(".");
 	if (parts.length !== 3 || parts[0] !== SHARE_PREFIX) {
@@ -213,11 +227,13 @@ export async function decodeShareUrl(urlOrHash: string): Promise<ShareSnapshot> 
 	const json = textDecoder.decode(decompressed);
 	const payload = JSON.parse(json) as CompactSharePayload;
 
-	if (payload.v !== 1 || !Array.isArray(payload.m) || !Array.isArray(payload.e)) {
+	if (payload?.v !== 1 || !Array.isArray(payload.m) || !Array.isArray(payload.e)) {
 		throw new Error("Unsupported share format");
 	}
 
-	return fromCompact(payload);
+	const snapshot = fromCompact(payload);
+	if (!snapshot.members.length) throw new Error("Unsupported share format");
+	return snapshot;
 }
 
 export function buildShareSnapshot(input: {

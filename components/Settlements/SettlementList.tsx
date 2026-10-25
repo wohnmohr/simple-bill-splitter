@@ -10,6 +10,7 @@ import { UpiSettlementActions } from "@/components/Settlements/UpiSettlementActi
 import { reminderText } from "@/utils/reminderText";
 import { track, trackError } from "@/lib/analytics";
 import { sendViaWhatsApp } from "@/utils/whatsapp";
+import { isValidUpiId } from "@/utils/upi";
 
 interface SettlementListProps {
 	settlements: Settlement[];
@@ -267,6 +268,7 @@ export const SettlementList = ({
 				// Shown on one line, never split inside the number; crore amounts
 				// (over 13 characters) step down a size to fit a 320px phone.
 				const amount = formatCurrency(s.amount, currency);
+				const payByUpi = showUpi && isValidUpiId(getPerson(s.to)?.upiId ?? "");
 				return (
 					<section
 						key={`${s.from}-${s.to}`}
@@ -304,10 +306,10 @@ export const SettlementList = ({
 									<button
 										type="button"
 										onClick={() => markPaid(s, "hero")}
-										className={showUpi && getPerson(s.to)?.upiId ? "btn-ghost w-full" : "btn-primary w-full !py-3"}
+										className={payByUpi ? "btn-ghost w-full" : "btn-primary w-full !py-3"}
 									>
 										<Check className="h-4 w-4" />
-										{showUpi && getPerson(s.to)?.upiId ? "Already paid? Mark as paid" : "Mark as paid"}
+										{payByUpi ? "Already paid? Mark as paid" : "Mark as paid"}
 									</button>
 								)}
 								{canRecord && confirmPrompt(s)}
