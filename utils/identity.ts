@@ -1,5 +1,5 @@
 import type { Group, Person } from "@/types";
-import { cleanText } from "@/utils/text";
+import { cleanText, nameKey } from "@/utils/text";
 
 /**
  * Anonymous identities for group members. Someone joining a shared group gets
@@ -62,7 +62,7 @@ export function shownMembers(group: Pick<Group, "members" | "nicknames">): Perso
 	const shown = group.members.map((m) => {
 		// Cleaned here too, for names saved before names were cleaned on the way in.
 		const name = cleanText(group.nicknames?.[m.id] || m.name, 60) || "Someone";
-		const key = name.trim().toLowerCase();
+		const key = nameKey(name);
 		const n = (seen.get(key) ?? 0) + 1;
 		seen.set(key, n);
 		const label = n > 1 ? `${name} (${n})` : name;

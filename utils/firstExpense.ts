@@ -1,8 +1,5 @@
 import { NEW_ME, type QuickResolved } from "@/utils/quickAdd";
-import { cleanText } from "@/utils/text";
-
-/** How a name is compared with the names already in a group: "asha" and "Asha " are the same. */
-export const nameKey = (name: string) => cleanText(name, 40).toLowerCase();
+import { cleanText, nameKey } from "@/utils/text";
 
 /**
  * The names typed into "Who else?": split on commas, "and" or new lines, with

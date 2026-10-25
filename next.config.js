@@ -1,3 +1,31 @@
+// PostHog's ingest host, and the assets host it loads its recorder from.
+const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
+const posthogAssets = posthogHost.replace(".i.posthog.com", "-assets.i.posthog.com");
+// The home page promo video may be hosted elsewhere (components/Landing/PromoVideo.tsx).
+const promoVideoHost = process.env.NEXT_PUBLIC_PROMO_VIDEO_URL ? new URL(process.env.NEXT_PUBLIC_PROMO_VIDEO_URL, "https://splitbiller.com").origin : "";
+
+// Scripts load only from our origin (and PostHog's recorder), and data goes only to
+// our API and PostHog, so an injected script can't pull in more code or send the
+// keys in localStorage elsewhere. 'unsafe-inline' is for the inline scripts Next
+// writes into static pages; 'wasm-unsafe-eval' runs the OCR engine and libsodium.
+// Dev adds 'unsafe-eval' for hot reload.
+const contentSecurityPolicy = [
+	"default-src 'self'",
+	`script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' ${posthogAssets}${process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval' https://va.vercel-scripts.com"}`,
+	"style-src 'self' 'unsafe-inline'",
+	"img-src 'self' data: blob: https://ph-files.imgix.net https://r2.direasy-multi-tenant.focusapps.app",
+	`media-src 'self' blob: ${promoVideoHost}`.trim(),
+	"font-src 'self'",
+	`connect-src 'self' ${posthogHost} ${posthogAssets}`,
+	"worker-src 'self' blob:",
+	"frame-src https://tally.so",
+	"manifest-src 'self'",
+	"object-src 'none'",
+	"base-uri 'none'",
+	"form-action 'self'",
+	"frame-ancestors 'none'",
+].join("; ");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 	poweredByHeader: false,
@@ -15,12 +43,13 @@ const nextConfig = {
 			{
 				// Every response: no MIME sniffing, no framing (the pay and "Received" buttons
 				// can't be clickjacked), only our origin in outgoing Referers, and no access
-				// to device features the app never uses.
+				// to device features the app never uses. The CSP also reaches the OCR worker
+				// scripts, which take their policy from their own response.
 				source: "/:path*",
 				headers: [
 					{ key: "X-Content-Type-Options", value: "nosniff" },
 					{ key: "X-Frame-Options", value: "DENY" },
-					{ key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+					{ key: "Content-Security-Policy", value: contentSecurityPolicy },
 					{ key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
 					{ key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
 				],

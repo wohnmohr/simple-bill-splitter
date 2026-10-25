@@ -20,9 +20,10 @@ import {
 	groupAsChanges,
 	joinPending,
 	materialize,
-	maxClock,
 	mergeState,
+	nextClock,
 	pushBatch,
+	repairClocks,
 	sharedView,
 } from "@/utils/groupOps";
 import { quietTag } from "@/utils/groupAlerts";
@@ -57,7 +58,7 @@ function load(groupId: string): Saved | null {
 		const s = JSON.parse(localStorage.getItem(storeKey(groupId)) || "null");
 		if (!s || typeof s.seq !== "number" || !s.state) return null;
 		// Saved before comments existed: give it their table.
-		s.state = { ...emptyState(), ...s.state };
+		s.state = repairClocks({ ...emptyState(), ...s.state });
 		return s;
 	} catch {
 		return null;
@@ -110,6 +111,9 @@ async function fetchAll(keys: GroupKeys): Promise<Saved> {
 
 /** Merges one pull response into `saved`. Returns true if the server has more. */
 async function mergeResponse(keys: GroupKeys, saved: Saved, res: Record<string, unknown>): Promise<boolean> {
+	// A group's head only grows. A lower one means it was deleted and made again
+	// by someone with the old link: treat it as gone, like a 404.
+	if (Number(res.head ?? res.seq) < saved.seq) throw new HttpError(404, {});
 	saved.expiresAt = Number(res.expiresAt) || saved.expiresAt;
 	saved.snapshotSeq = Number(res.snapshotSeq) || saved.snapshotSeq;
 	if (res.unchanged) return false;
@@ -137,7 +141,7 @@ export async function joinGroup(link: GroupSyncLink, localId: string): Promise<J
 		const keys = await deriveGroupKeys(link.secret, link.pass);
 		const saved = await fetchAll(keys);
 		save(localId, saved);
-		return { ok: true, group: materialize(saved.state, { id: localId, sync: link }) };
+		return { ok: true, group: materialize(saved.state, { id: localId, sync: link, hosted: false }) };
 	} catch (err) {
 		const cause = syncCause(err);
 		if (cause === "wrong_key") return { ok: false, reason: "wrong-passphrase", cause };
@@ -183,13 +187,14 @@ export class GroupSync {
 	/** When sync last went wrong, until it works again. */
 	private troubleSince = 0;
 	status: SyncStatus = "syncing";
+	/** Called when other devices' changes are ready; answer with reconcile(). */
+	private onChange: () => void;
+	private onStatus: (s: SyncStatus) => void;
 
-	constructor(
-		group: Group,
-		/** Called when other devices' changes are ready; answer with reconcile(). */
-		private onChange: () => void,
-		private onStatus: (s: SyncStatus) => void
-	) {
+	// Plain fields, not parameter properties, so tests can load this file with Node's type stripping.
+	constructor(group: Group, onChange: () => void, onStatus: (s: SyncStatus) => void) {
+		this.onChange = onChange;
+		this.onStatus = onStatus;
 		const link = group.sync as GroupSyncLink;
 		this.keys = deriveGroupKeys(link.secret, link.pass);
 		const saved = load(group.id);
@@ -251,8 +256,7 @@ export class GroupSync {
 		const changes = diffGroup(this.shown, group);
 		this.shown = group;
 		if (!changes.length) return;
-		const clock = Math.max(maxClock(this.saved.state), ...this.saved.pending.map((o) => o.t));
-		this.saved.pending.push(...stamp(changes, clock));
+		this.saved.pending.push(...stamp(changes, nextClock(this.saved.state, this.saved.pending)));
 		this.saved.shown = group;
 		save(group.id, this.saved);
 		void this.sync(group.id);

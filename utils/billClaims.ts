@@ -7,8 +7,9 @@
  * every share is (their items) × (bill total ÷ item total), rounded up to a
  * whole rupee for UPI.
  *
- * Pure functions with no imports, so they run in the browser and in node tests.
+ * Pure functions, so they run in the browser and in node tests.
  */
+import { cleanText } from "@/utils/text";
 
 /** A bill line as [name, rupees]; amounts may carry paise. */
 export type BillItem = [string, number];
@@ -29,7 +30,7 @@ export function sanitizeItems(raw: unknown): BillItem[] | null {
 	const items = raw
 		.slice(0, MAX_ITEMS)
 		.filter((i): i is [unknown, unknown] => Array.isArray(i))
-		.map(([n, a]): BillItem => [typeof n === "string" ? n.trim().slice(0, MAX_ITEM_NAME) : "", money(a)])
+		.map(([n, a]): BillItem => [typeof n === "string" ? cleanText(n, MAX_ITEM_NAME) : "", money(a)])
 		.filter(([, a]) => a > 0);
 	return items.length ? items : null;
 }
@@ -37,7 +38,7 @@ export function sanitizeItems(raw: unknown): BillItem[] | null {
 /** One claim from untrusted input, against a bill of `count` lines; null if malformed. */
 export function sanitizeClaim(raw: unknown, count: number): Claim | null {
 	if (!Array.isArray(raw) || typeof raw[0] !== "string" || !Array.isArray(raw[1])) return null;
-	const name = raw[0].trim().slice(0, 30);
+	const name = cleanText(raw[0], 30);
 	if (!personKey(name)) return null;
 	const picks = raw[1].filter((i): i is number => Number.isInteger(i) && i >= 0 && i < count);
 	return [name, Array.from(new Set(picks)).sort((a, b) => a - b)];

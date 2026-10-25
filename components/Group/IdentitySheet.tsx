@@ -9,6 +9,7 @@ import type { Group, Person } from "@/types";
 import { newIdentity, shownMembers } from "@/utils/identity";
 import { newId } from "@/utils/ids";
 import { loadMyName } from "@/utils/myName";
+import { nameKey } from "@/utils/text";
 
 type Props = {
 	isOpen: boolean;
@@ -49,7 +50,7 @@ export const IdentitySheet = ({ isOpen, group, onJoin, onClaim, onJustLooking, o
 	const trimmed = name.trim();
 	// Typing a name the group already has is most likely the same person on a new device.
 	const clash = trimmed
-		? group.members.find((m, i) => [m.name, members[i].name].some((n) => n.trim().toLowerCase() === trimmed.toLowerCase()))
+		? group.members.find((m, i) => [m.name, members[i].name].some((n) => nameKey(n) === nameKey(trimmed)))
 		: undefined;
 	const notJoined = members.filter((m) => !m.joined);
 	const joined = members.filter((m) => m.joined);

@@ -63,3 +63,12 @@ test("a link with nobody in it can't be opened", async () => {
 	await assert.rejects(decodeShareUrl(await link({ v: 1, n: "Trip", c: "INR", m: [{ i: "a" }], e: [] })));
 	await assert.rejects(decodeShareUrl(await link(null)));
 });
+
+test("a link that unpacks to more than a real share is refused", async () => {
+	await assert.rejects(decodeShareUrl(await link({ v: 1, n: "x".repeat(2_000_000), c: "INR", m: members, e: [] })), /too big/);
+});
+
+test("the group name is cleaned like a member's", async () => {
+	const back = await decodeShareUrl(await link({ v: 1, n: "Goa\u202e", c: "INR", m: members, e: [] }));
+	assert.equal(back.name, "Goa");
+});
