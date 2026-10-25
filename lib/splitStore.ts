@@ -91,9 +91,11 @@ export function overLimit(key: string, limit: number, windowMs = 60_000): boolea
 	return b.n > limit;
 }
 
-const bump = (bucket: string, now: number) => ({
-	sql: "INSERT INTO api_quota (bucket, at, n) VALUES (?, ?, 1) ON CONFLICT (bucket) DO UPDATE SET n = n + 1 RETURNING n",
-	args: [bucket, now],
+/** Takes a slot from a global quota, unless split `id` already exists (so re-sending one can't use up the ceiling). */
+const bump = (bucket: string, now: number, id: string) => ({
+	sql: `INSERT INTO api_quota (bucket, at, n) SELECT ?, ?, 1 WHERE NOT EXISTS (SELECT 1 FROM splits WHERE id = ?)
+	      ON CONFLICT (bucket) DO UPDATE SET n = n + 1 RETURNING n`,
+	args: [bucket, now, id],
 });
 
 /**
@@ -109,8 +111,8 @@ export async function insertSplit(
 	const dayBucket = `splits:d:${Math.floor(now / 86_400_000)}`;
 	const [hour, day, inserted] = await db.batch(
 		[
-			bump(hourBucket, now),
-			bump(dayBucket, now),
+			bump(hourBucket, now, id),
+			bump(dayBucket, now, id),
 			{
 				sql: `INSERT INTO splits (id, created_at, expires_at, write_hash, blob, ip_hash)
 				      SELECT ?, ?, ?, ?, ?, ? WHERE (SELECT n FROM api_quota WHERE bucket = ?) <= ? AND (SELECT n FROM api_quota WHERE bucket = ?) <= ?

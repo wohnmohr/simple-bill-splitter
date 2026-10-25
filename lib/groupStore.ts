@@ -19,6 +19,8 @@ export const GROUP_TTL_MS = 180 * 24 * 60 * 60 * 1000;
 /** Changes kept before a snapshot must fold them in (clients compact well before this). */
 export const MAX_UNCOMPACTED = 2000;
 const MAX_OPS_PER_PULL = 200;
+/** Ciphertext per pull response, kept well under the host's 4.5 MB response limit. */
+const MAX_PULL_CHARS = 3_000_000;
 /** 64 KB padded batch → about 87,500 base64url characters. */
 const MAX_OPS_BLOB = 90_000;
 /** 512 KB padded snapshot → about 700,000 base64url characters. */
@@ -29,6 +31,9 @@ export const GROUP_ID_RE = /^[A-Za-z0-9_-]{22}$/;
 const NEW_GROUPS_PER_IP_PER_DAY = 30;
 const NEW_GROUPS_PER_DAY = Number(process.env.GROUPS_PER_DAY_MAX) || 5000;
 const PUSHES_PER_IP_PER_DAY = 3000;
+/** Ciphertext stored per day (new groups and pushed changes), per IP and across everyone, so storage can't be filled. */
+const STORED_CHARS_PER_IP_PER_DAY = 50_000_000;
+const STORED_CHARS_PER_DAY = Number(process.env.GROUP_CHARS_PER_DAY_MAX) || 1_000_000_000;
 
 export const cleanGroupBlob = (v: unknown, kind: "ops" | "snapshot") =>
 	typeof v === "string" && v.length >= 40 && v.length <= (kind === "ops" ? MAX_OPS_BLOB : MAX_SNAPSHOT_BLOB) && BLOB_RE.test(v) ? v : null;
@@ -48,16 +53,30 @@ async function readJson(req: Request, max: number): Promise<Record<string, unkno
 
 const today = () => Math.floor(Date.now() / 86_400_000);
 
-/** Adds one to a quota counter and returns the new count. */
-const bump = (bucket: string, now: number) => ({
-	sql: "INSERT INTO api_quota (bucket, at, n) VALUES (?, ?, 1) ON CONFLICT (bucket) DO UPDATE SET n = n + 1 RETURNING n",
-	args: [bucket, now],
+/** Adds `by` to a quota counter and returns the new count. */
+const bump = (bucket: string, now: number, by = 1) => ({
+	sql: "INSERT INTO api_quota (bucket, at, n) VALUES (?, ?, ?) ON CONFLICT (bucket) DO UPDATE SET n = n + excluded.n RETURNING n",
+	args: [bucket, now, by],
+});
+
+/** Today's stored-ciphertext counters: this IP's (counts every attempt) and everyone's (counts only what was stored). */
+const storedBuckets = (ip: string) => ({ mine: `g:chars:${ip}:${today()}`, all: `g:chars:${today()}` });
+
+/** SQL condition: both stored-ciphertext counters have room for `chars` more. Bind storedRoomArgs after it. */
+const STORED_ROOM =
+	"(SELECT n FROM api_quota WHERE bucket = ?) <= ? AND COALESCE((SELECT n FROM api_quota WHERE bucket = ?), 0) + ? <= ?";
+const storedRoomArgs = (b: { mine: string; all: string }, chars: number) => [b.mine, STORED_CHARS_PER_IP_PER_DAY, b.all, chars, STORED_CHARS_PER_DAY];
+
+/** Adds `chars` to everyone's counter, only if the statement just before it stored a row. */
+const chargeStored = (b: { all: string }, chars: number, now: number) => ({
+	sql: "INSERT INTO api_quota (bucket, at, n) SELECT ?, ?, ? WHERE changes() = 1 ON CONFLICT (bucket) DO UPDATE SET n = n + excluded.n",
+	args: [b.all, now, chars],
 });
 
 /**
  * Creates a group in one transaction: counts it against this IP's daily
  * quota, then (only if that has room) the global one, and inserts the row
- * only if both do.
+ * only if both do and today's stored-ciphertext ceilings have room too.
  */
 export async function insertGroup(
 	db: Client,
@@ -66,10 +85,12 @@ export async function insertGroup(
 	const now = Date.now();
 	const mine = `g:new:${g.ip}:${today()}`;
 	const all = `g:new:${today()}`;
-	const [existing, , , inserted] = await db.batch(
+	const stored = storedBuckets(g.ip);
+	const [existing, , , , inserted] = await db.batch(
 		[
 			{ sql: "SELECT 1 FROM groups WHERE id = ?", args: [g.id] },
 			bump(mine, now),
+			bump(stored.mine, now, g.blob.length),
 			{
 				sql: `INSERT INTO api_quota (bucket, at, n) SELECT ?, ?, 1 WHERE (SELECT n FROM api_quota WHERE bucket = ?) <= ?
 				      ON CONFLICT (bucket) DO UPDATE SET n = n + 1`,
@@ -77,10 +98,11 @@ export async function insertGroup(
 			},
 			{
 				sql: `INSERT INTO groups (id, auth_hash, expires_at, snapshot)
-				      SELECT ?, ?, ?, ? WHERE (SELECT n FROM api_quota WHERE bucket = ?) <= ? AND (SELECT n FROM api_quota WHERE bucket = ?) <= ?
+				      SELECT ?, ?, ?, ? WHERE (SELECT n FROM api_quota WHERE bucket = ?) <= ? AND (SELECT n FROM api_quota WHERE bucket = ?) <= ? AND ${STORED_ROOM}
 				      ON CONFLICT (id) DO NOTHING`,
-				args: [g.id, hashToken(g.token), g.expiresAt, g.blob, mine, NEW_GROUPS_PER_IP_PER_DAY, all, NEW_GROUPS_PER_DAY],
+				args: [g.id, hashToken(g.token), g.expiresAt, g.blob, mine, NEW_GROUPS_PER_IP_PER_DAY, all, NEW_GROUPS_PER_DAY, ...storedRoomArgs(stored, g.blob.length)],
 			},
+			chargeStored(stored, g.blob.length, now),
 		],
 		"write"
 	);
@@ -90,26 +112,30 @@ export async function insertGroup(
 
 /**
  * Appends one encrypted batch of changes in a single transaction, and so a
- * single round trip: the token, the daily push quota and the compaction cap
- * are all checked by the insert itself. Comparing SHA-256 digests in SQL
- * leaks nothing an attacker can use, as a matching digest can't be built up
- * byte by byte. On refusal, the group row read first says why.
+ * single round trip: the token, the daily push and stored-ciphertext quotas
+ * and the compaction cap are all checked by the insert itself. Comparing
+ * SHA-256 digests in SQL leaks nothing an attacker can use, as a matching
+ * digest can't be built up byte by byte. On refusal, the group row read
+ * first says why.
  */
 export async function appendOps(db: Client, g: { ip: string; id: string; token: string; blob: string }): Promise<Response> {
 	const now = Date.now();
 	const bucket = `g:push:${g.ip}:${today()}`;
-	const [group, quota, inserted, head] = await db.batch(
+	const stored = storedBuckets(g.ip);
+	const [group, quota, mineStored, inserted, head] = await db.batch(
 		[
 			{ sql: "SELECT auth_hash, head_seq, snapshot_seq FROM groups WHERE id = ? AND expires_at > ?", args: [g.id, now] },
 			bump(bucket, now),
+			bump(stored.mine, now, g.blob.length),
 			{
 				sql: `INSERT INTO group_ops (group_id, seq, blob) SELECT id, head_seq + 1, ? FROM groups
-				      WHERE id = ? AND expires_at > ? AND auth_hash = ? AND head_seq - snapshot_seq < ? AND (SELECT n FROM api_quota WHERE bucket = ?) <= ?`,
-				args: [g.blob, g.id, now, hashToken(g.token), MAX_UNCOMPACTED, bucket, PUSHES_PER_IP_PER_DAY],
+				      WHERE id = ? AND expires_at > ? AND auth_hash = ? AND head_seq - snapshot_seq < ? AND (SELECT n FROM api_quota WHERE bucket = ?) <= ? AND ${STORED_ROOM}`,
+				args: [g.blob, g.id, now, hashToken(g.token), MAX_UNCOMPACTED, bucket, PUSHES_PER_IP_PER_DAY, ...storedRoomArgs(stored, g.blob.length)],
 			},
 			// Parallel pushes queue behind each other, so none is lost or numbered twice,
 			// and a reader never sees the head ahead of the rows.
 			{ sql: "UPDATE groups SET head_seq = head_seq + 1, expires_at = ? WHERE id = ? AND changes() = 1 RETURNING head_seq", args: [now + GROUP_TTL_MS, g.id] },
+			chargeStored(stored, g.blob.length, now),
 		],
 		"write"
 	);
@@ -117,8 +143,22 @@ export async function appendOps(db: Client, g: { ip: string; id: string; token: 
 	const auth = checkAuth(group.rows[0], g.token);
 	if (!auth.ok) return auth.error;
 	if (auth.head - auth.snapshotSeq >= MAX_UNCOMPACTED) return reply({ error: "Compact first", compact: true }, 409);
-	if (Number(quota.rows[0]?.n ?? 0) > PUSHES_PER_IP_PER_DAY) return reply({ error: "Too many changes today. Try again tomorrow." }, 429, { "Retry-After": "86400" });
-	return reply({ error: "Not found" }, 404);
+	if (Number(quota.rows[0]?.n ?? 0) > PUSHES_PER_IP_PER_DAY || Number(mineStored.rows[0]?.n ?? 0) > STORED_CHARS_PER_IP_PER_DAY)
+		return reply({ error: "Too many changes today. Try again tomorrow." }, 429, { "Retry-After": "86400" });
+	// Everyone's daily ceiling is full; the change stays queued on the device.
+	return reply({ error: "Busy" }, 503, { "Retry-After": "3600" });
+}
+
+/** Keeps the pulled changes that fit one response, always at least one; the client pulls again for the rest. */
+export function fitPull<T extends { blob: string }>(rows: T[], snapshotChars: number): T[] {
+	let chars = snapshotChars;
+	const fit: T[] = [];
+	for (const row of rows) {
+		if (fit.length && chars + row.blob.length > MAX_PULL_CHARS) break;
+		fit.push(row);
+		chars += row.blob.length;
+	}
+	return fit;
 }
 
 /** Deletes groups nobody has changed for GROUP_TTL_MS, with their changes and alert sign-ups, and stale quota counters. */
