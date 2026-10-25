@@ -6,12 +6,13 @@
  * group after that day adds the copy and moves `next` on. Copies get ids made
  * from the original's id and the month, so two phones doing this at once write
  * the same entries rather than duplicates, and a copy someone deleted stays
- * deleted because `next` has already moved past it. No server, no cron: it
- * works the same for groups on one phone and end-to-end encrypted ones.
+ * deleted because `next` has already moved past it (a synced group waits for
+ * its first pull, so a phone that was away sees that too). No server, no
+ * cron: it works the same for groups on one phone and end-to-end encrypted ones.
  *
  * Pure functions with only type imports, so they run in the browser and in node tests.
  */
-import type { Expense } from "@/types";
+import type { Expense, Group } from "@/types";
 
 /** At most this many months are filled in when a group hasn't been opened for a long time. */
 export const MAX_CATCH_UP = 12;
@@ -63,4 +64,23 @@ export function addDueRepeats(expenses: Expense[], now = Date.now()): Expense[] 
 		out.push(...copies.filter((c) => !have.has(c.id)));
 	});
 	return out ?? expenses;
+}
+
+/**
+ * addDueRepeats for every open group. A synced group waits until this device
+ * has pulled it (`pulled`): from an out-of-date copy it would bring back a copy
+ * someone has since deleted and rewrite the original over their edits, stamped
+ * newer so both win the merge. Returns the same array when nothing is due.
+ */
+export function addDueRepeatsToGroups(groups: Group[], pulled: ReadonlySet<string>, now = Date.now()): Group[] {
+	let due = false;
+	const next = groups.map((g) => {
+		// A closed group is finished: its monthly expenses stop.
+		if (g.closedAt || (g.sync && !pulled.has(g.id))) return g;
+		const expenses = addDueRepeats(g.expenses, now);
+		if (expenses === g.expenses) return g;
+		due = true;
+		return { ...g, expenses };
+	});
+	return due ? next : groups;
 }

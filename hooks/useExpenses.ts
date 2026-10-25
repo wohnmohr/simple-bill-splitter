@@ -1,6 +1,6 @@
 import { Expense, ExpenseComment, Group, SplitChoice } from "@/types";
 import { MAX_COMMENT } from "@/utils/groupOps";
-import { newId } from "@/utils/ids";
+import { newId, paymentId } from "@/utils/ids";
 import { firstRepeat } from "@/utils/recurring";
 import { payerFields, splitFields } from "@/utils/calculations";
 
@@ -90,7 +90,8 @@ export const useExpenses = (
   const recordPayment = (from: string, to: string, amount: number): string | null => {
     if (!currentGroup || amount <= 0 || from === to) return null;
     const payment: Expense = {
-      id: newId("payment"),
+      // Both people marking the same debt on their own phones record one payment.
+      id: paymentId(currentGroup.expenses, from, to, amount),
       amount: Math.round(amount * 100) / 100,
       paidBy: from,
       participants: [to],
@@ -100,7 +101,9 @@ export const useExpenses = (
     };
     setGroups((prev) =>
       prev.map((g) =>
-        g.id === currentGroup.id ? { ...g, expenses: [...g.expenses, payment] } : g
+        g.id === currentGroup.id && !g.expenses.some((e) => e.id === payment.id)
+          ? { ...g, expenses: [...g.expenses, payment] }
+          : g
       )
     );
     return payment.id;

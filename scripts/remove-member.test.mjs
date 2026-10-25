@@ -7,7 +7,7 @@ import { register } from "node:module";
 register("./fixtures/alias.mjs", import.meta.url);
 const { bringBack, currentMembers, entriesWith, removeMember } = await import("../utils/members.ts");
 const { calculateBalances } = await import("../utils/calculations.ts");
-const { applyOp, diffGroup, emptyState, groupAsChanges, materialize } = await import("../utils/groupOps.ts");
+const { applyOp, diffGroup, emptyState, groupAsChanges, materialize, mergeState } = await import("../utils/groupOps.ts");
 
 const dinner = { id: "e1", amount: 900, paidBy: "p1", participants: ["p1", "p2", "p3"], splitMethod: "equally" };
 const cab = { id: "e2", amount: 600, paidBy: "p1", payers: { p1: 300, p3: 300 }, participants: ["p1"], splitMethod: "equally" };
@@ -44,7 +44,7 @@ test("bringing someone back puts them on new expenses again", () => {
 
 test("removing someone syncs as one member change and never deletes an entry", () => {
 	const changes = diffGroup(group, removeMember(group, "p2"));
-	assert.deepEqual(changes, [{ k: "m", e: "p2", v: { name: "Ben", left: true } }]);
+	assert.deepEqual(changes, [{ k: "m", e: "p2", v: { name: "Ben", left: true }, f: ["left"] }]);
 
 	const state = emptyState();
 	let t = 0;
@@ -52,4 +52,35 @@ test("removing someone syncs as one member change and never deletes an entry", (
 	const other = materialize(state, { id: "g" });
 	assert.deepEqual(other.expenses.map((e) => e.id), ["e1", "e2"]);
 	assert.deepEqual(other.members.find((m) => m.id === "p2"), { id: "p2", name: "Ben", left: true });
+});
+
+test("in a shared group, someone on no entry is only marked as left", () => {
+	const shared = { ...group, sync: { secret: "s" } };
+	assert.deepEqual(removeMember(shared, "p4").members.find((m) => m.id === "p4"), { id: "p4", name: "Typo", left: true });
+});
+
+// Phone A removes Typo (on no entry) while phone B, not synced yet, adds a hotel Typo paid for.
+const hotel = { id: "e3", amount: 2000, paidBy: "p4", participants: ["p1", "p2", "p3", "p4"], splitMethod: "equally" };
+function concurrently(removal) {
+	const base = emptyState();
+	let t = 0;
+	for (const c of groupAsChanges(group)) applyOp(base, { ...c, i: `o${++t}`, t });
+	const a = removal.map((c) => ({ ...c, i: `a${++t}`, t }));
+	const b = diffGroup(group, { ...group, expenses: [...group.expenses, hotel] }).map((c) => ({ ...c, i: `b${++t}`, t }));
+	// Both arrival orders, and a snapshot of each, show the same group.
+	return [[...a, ...b], [...b, ...a]].flatMap((ops) => {
+		const state = structuredClone(base);
+		for (const op of ops) applyOp(state, op);
+		const snapshot = emptyState();
+		mergeState(snapshot, JSON.parse(JSON.stringify(state)));
+		return [materialize(state, { id: "g" }), materialize(snapshot, { id: "g" })];
+	});
+}
+
+test("removing someone while another phone adds an entry for them loses nothing", () => {
+	const shared = { ...group, sync: { secret: "s" } };
+	for (const g of concurrently(diffGroup(shared, removeMember(shared, "p4")))) {
+		assert.deepEqual(g.expenses.map((e) => e.id), ["e1", "e2", "e3"]);
+		assert.deepEqual(g.members.find((m) => m.id === "p4"), { id: "p4", name: "Typo", left: true });
+	}
 });

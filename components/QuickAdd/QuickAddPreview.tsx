@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { TextInput } from "@mantine/core";
+import { NumberInput, TextInput } from "@mantine/core";
 import { Repeat, X } from "lucide-react";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
@@ -151,12 +151,15 @@ export const QuickAddPreview = ({ quick, currency, newGroup, onConfirm, onClose 
 										maxLength={100}
 									/>
 									<Check on={flagged("amount")}>
-										<TextInput
+										<NumberInput
 											aria-label="Amount"
+											min={0}
+											decimalScale={2}
+											hideControls
 											inputMode="decimal"
 											leftSection={<span className="text-sm text-ink-muted">{currency.symbol}</span>}
-											value={e.amount ? String(e.amount) : ""}
-											onChange={(ev) => editExpense(i, { amount: Number(ev.target.value.replace(/[^\d.]/g, "")) || 0 }, "amount")}
+											value={e.amount || ""}
+											onChange={(v) => editExpense(i, { amount: Number(v) || 0 }, "amount")}
 											classNames={{ input: "!font-semibold !tabular-nums" }}
 										/>
 									</Check>
@@ -176,12 +179,12 @@ export const QuickAddPreview = ({ quick, currency, newGroup, onConfirm, onClose 
 								)}
 
 								<Check on={flagged("payer")}>
-									<label className="flex items-center gap-2 text-sm text-ink-soft">
+									<label className="flex items-center gap-2 whitespace-nowrap text-sm text-ink-soft">
 										Paid by
 										<select
 											value={e.paidBy}
 											onChange={(ev) => editExpense(i, { paidBy: ev.target.value }, "payer")}
-											className="min-h-9 flex-1 rounded-lg border border-line-strong bg-surface px-2 font-medium text-ink"
+											className="min-h-9 min-w-0 flex-1 rounded-lg border border-line-strong bg-surface px-2 font-medium text-ink"
 										>
 											{shown.map((p) => (
 												<option key={p.key} value={p.key}>
@@ -224,16 +227,17 @@ export const QuickAddPreview = ({ quick, currency, newGroup, onConfirm, onClose 
 											{e.participants.map((k) => (
 												<li key={k} className="flex items-center gap-2 text-sm">
 													<span className="flex-1 truncate text-ink">{nameOf(k)}</span>
-													<TextInput
+													<NumberInput
 														aria-label={`Share for ${nameOf(k)}`}
+														min={0}
+														decimalScale={2}
+														hideControls
 														inputMode="decimal"
 														size="xs"
 														w={96}
 														rightSection={<span className="text-xs text-ink-muted">{e.splitMethod === "percentage" ? "%" : currency.symbol}</span>}
-														value={String(e.weights![k] ?? "")}
-														onChange={(ev) =>
-															editExpense(i, { weights: { ...e.weights, [k]: Number(ev.target.value.replace(/[^\d.]/g, "")) || 0 } }, "split")
-														}
+														value={e.weights![k] || ""}
+														onChange={(v) => editExpense(i, { weights: { ...e.weights, [k]: Number(v) || 0 } }, "split")}
 													/>
 												</li>
 											))}

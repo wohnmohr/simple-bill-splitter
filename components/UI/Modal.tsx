@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import { Modal as MantineModal } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
+import { useBackClose } from "@/hooks/useBackClose";
 
 interface ModalProps {
 	isOpen: boolean;
@@ -22,6 +23,7 @@ export const Modal = ({
 	const isMobile = useMediaQuery("(max-width: 640px)", true, {
 		getInitialValueInEffect: false,
 	});
+	useBackClose(isOpen, onClose);
 	return (
 		<MantineModal
 			opened={isOpen}

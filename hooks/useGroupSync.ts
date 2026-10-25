@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Group } from "@/types";
 import { GroupSync, type SyncStatus, deleteForEveryone, forgetSync, startSync } from "@/utils/groupSync";
+import { meAfter } from "@/utils/members";
 
 // Live while someone is looking, quieter when idle, silent when away.
 const TICK_MS = 15_000;
@@ -19,15 +20,21 @@ export function useGroupSync(
 ) {
 	const engines = useRef(new Map<string, GroupSync>());
 	const [status, setStatus] = useState<Record<string, SyncStatus>>({});
+	// Groups pulled at least once this visit: until then this device's copy may be out of date.
+	const [pulled, setPulled] = useState<ReadonlySet<string>>(() => new Set());
 	const selected = useRef(selectedGroupId);
 	selected.current = selectedGroupId;
+	const current = useRef(groups);
+	current.current = groups;
 
 	const reconcile = useCallback(
 		(id: string) =>
 			setGroups((prev) =>
 				prev.map((g) => {
 					const engine = engines.current.get(g.id);
-					return g.id === id && engine ? { ...engine.reconcile(g), meId: g.meId, sync: g.sync } : g;
+					if (g.id !== id || !engine) return g;
+					const merged = engine.reconcile(g);
+					return { ...merged, meId: meAfter(g, merged), sync: g.sync };
 				})
 			),
 		[setGroups]
@@ -47,7 +54,10 @@ export function useGroupSync(
 			const created = new GroupSync(
 				g,
 				() => reconcile(g.id),
-				(s) => setStatus((prev) => ({ ...prev, [g.id]: s }))
+				(s) => {
+					setStatus((prev) => ({ ...prev, [g.id]: s }));
+					if (s === "synced") setPulled((prev) => (prev.has(g.id) ? prev : new Set(prev).add(g.id)));
+				}
 			);
 			engines.current.set(g.id, created);
 			setStatus((prev) => ({ ...prev, [g.id]: created.status }));
@@ -153,8 +163,20 @@ export function useGroupSync(
 		forgetSync(groupId);
 	}, []);
 
+	/** Another tab saved these groups: take them in as they are, not as edits made here. */
+	const adopt = useCallback((next: Group[]) => {
+		for (const g of next) {
+			const engine = engines.current.get(g.id);
+			// A new link (reset in the other tab) needs a new engine; the effect starts it.
+			if (engine && g.sync?.secret !== current.current.find((x) => x.id === g.id)?.sync?.secret) {
+				engine.dispose();
+				engines.current.delete(g.id);
+			} else engine?.adopt(g);
+		}
+	}, []);
+
 	const syncNow = useCallback((groupId: string) => engines.current.get(groupId)?.sync(groupId, true), []);
 	const expiresAt = (groupId: string) => engines.current.get(groupId)?.expiresAt;
 
-	return { status, enableSync, keepLocalCopy, deleteSyncedGroup, resetLink, forgetGroup, syncNow, expiresAt };
+	return { status, pulled, enableSync, keepLocalCopy, deleteSyncedGroup, resetLink, forgetGroup, adopt, syncNow, expiresAt };
 }

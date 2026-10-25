@@ -26,6 +26,8 @@ export type BackupState = {
 	savedAt?: number;
 	/** Fingerprint of what was last uploaded, so unchanged groups aren't sent again. */
 	digest?: string;
+	/** Ids of this device's groups in that upload, so a group deleted here leaves the backup. */
+	ids?: string[];
 	/** The server no longer has it (left alone for 6 months): it needs turning on again. */
 	gone?: true;
 };
@@ -62,31 +64,45 @@ export async function startBackup(groups: Group[], passphrase?: string): Promise
 	const link: GroupSyncLink = passphrase ? { secret, pass: await stretchPassphrase(secret, passphrase) } : { secret };
 	const keys = await deriveGroupKeys(link.secret, link.pass);
 	await api("", { id: keys.id, token: keys.token, blob: await sealGroup(keys, "backup", { groups }) });
-	return { link, savedAt: Date.now(), digest: await digestOf(groups) };
+	return { link, savedAt: Date.now(), digest: await digestOf(groups), ids: groups.map((g) => g.id) };
 }
 
 /**
  * Replaces the copy on the server when the groups changed, or when it's due a
- * refresh. The server only swaps a snapshot in after a change, so a tiny empty
- * batch goes first. Returns the new state, or the same one if nothing was sent.
+ * refresh. A device restored from the recovery link saves to it too, so the
+ * copy is read first and groups only another device has are kept. The server
+ * only swaps a snapshot in after a change, so a tiny empty batch goes first.
+ * Returns the new state, or the same one if nothing was sent.
  */
 export async function saveBackup(state: BackupState, groups: Group[], now = Date.now()): Promise<BackupState> {
 	const digest = await digestOf(groups);
 	if (digest === state.digest && now - (state.savedAt ?? 0) < REFRESH_MS) return state;
 	const keys = await deriveGroupKeys(state.link.secret, state.link.pass);
-	const { seq } = await api("/push", { id: keys.id, token: keys.token, blob: await sealGroup(keys, "ops", { ops: [] }) });
-	await api("/snapshot", { id: keys.id, token: keys.token, upTo: seq, blob: await sealGroup(keys, "backup", { groups }) });
-	return { ...state, savedAt: now, digest };
+	const mine = new Set(state.ids);
+	for (let tries = 0; tries < 3; tries++) {
+		const current = await pullBackup(keys);
+		const others = current.groups.filter((g) => !mine.has(g.id));
+		const { seq } = await api("/push", { id: keys.id, token: keys.token, blob: await sealGroup(keys, "ops", { ops: [] }) });
+		// Another device saved since the read: read again rather than drop its groups.
+		if (seq !== current.head + 1) continue;
+		const blob = await sealGroup(keys, "backup", { groups: mergeRestored(groups, others, Infinity).groups });
+		const snap = await api("/snapshot", { id: keys.id, token: keys.token, upTo: seq, blob });
+		if (snap.seq === seq) return { ...state, savedAt: now, digest, ids: groups.map((g) => g.id) };
+	}
+	throw new Error("backup busy"); // the next change or visit tries again
 }
 
-/** Reads a backup from its recovery link. Throws HttpError 403 for a wrong passphrase, 404 if it's gone. */
-export async function readBackup(link: GroupSyncLink): Promise<Group[]> {
-	const keys = await deriveGroupKeys(link.secret, link.pass);
+async function pullBackup(keys: Awaited<ReturnType<typeof deriveGroupKeys>>): Promise<{ groups: Group[]; head: number }> {
 	const res = await api("/pull", { id: keys.id, token: keys.token, after: -1 });
 	const snap = res.snapshot as { blob: string } | undefined;
 	const opened = snap && ((await openGroup(keys, "backup", snap.blob)) as { groups?: unknown } | null);
 	if (!opened || !Array.isArray(opened.groups)) throw new Error("not a backup");
-	return opened.groups.filter(isGroup);
+	return { groups: opened.groups.filter(isGroup), head: Number(res.head) };
+}
+
+/** Reads a backup from its recovery link. Throws HttpError 403 for a wrong passphrase, 404 if it's gone. */
+export async function readBackup(link: GroupSyncLink): Promise<Group[]> {
+	return (await pullBackup(await deriveGroupKeys(link.secret, link.pass))).groups;
 }
 
 /** Turns the backup off and deletes the copy on the server. */

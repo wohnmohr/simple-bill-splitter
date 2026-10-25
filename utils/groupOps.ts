@@ -3,7 +3,10 @@
  *
  * Every change is an operation on one entity: a member, an expense, or a group
  * setting. For each entity the operation with the highest (clock, op id) wins,
- * and a delete is just an operation whose value is null. Merging is therefore
+ * and a delete is just an operation whose value is null. An edit names the
+ * fields it changed, and each of those fields keeps its own latest edit, so two
+ * phones editing different fields of one expense both keep their change. An
+ * edit never brings back a deleted entity. Merging is therefore
  * commutative, associative and idempotent: any devices that have seen the same
  * operations show the same group, whatever order they arrived in. The server
  * can delay or withhold operations, but it can't change the result by
@@ -18,9 +21,14 @@ import { isThemeId } from "@/utils/themes";
 
 /** Members, expenses, comments, group settings. */
 export type EntityKind = "m" | "e" | "c" | "g";
-/** One change. `v: null` deletes the entity. */
-export type Op = { i: string; t: number; k: EntityKind; e: string; v: unknown };
-type Cell = { t: number; i: string; v: unknown; c: number };
+/**
+ * One change. `v: null` deletes the entity. An edit lists the fields it changed in `f`; `v` still holds the
+ * whole value, which is all that older app versions read.
+ */
+export type Op = { i: string; t: number; k: EntityKind; e: string; v: unknown; f?: string[] };
+type Edit = { t: number; i: string; v: unknown };
+/** `t`/`i` is the last whole write; `f` keeps later edits by field, already laid over `v`. */
+type Cell = { t: number; i: string; v: unknown; c: number; f?: Record<string, Edit> };
 export type SyncState = Record<EntityKind, Record<string, Cell>>;
 
 export const emptyState = (): SyncState => ({ m: {}, e: {}, c: {}, g: {} });
@@ -29,6 +37,7 @@ const KINDS: EntityKind[] = ["m", "e", "c", "g"];
 const wins = (a: { t: number; i: string }, b: { t: number; i: string }) => a.t > b.t || (a.t === b.t && a.i > b.i);
 
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+const FIELD_RE = /^[A-Za-z]{1,32}$/;
 const isOp = (o: unknown): o is Op => {
 	const op = o as Op;
 	return (
@@ -36,16 +45,39 @@ const isOp = (o: unknown): o is Op => {
 		typeof op.i === "string" && ID_RE.test(op.i) &&
 		Number.isSafeInteger(op.t) && op.t > 0 &&
 		KINDS.includes(op.k) &&
-		typeof op.e === "string" && ID_RE.test(op.e)
+		typeof op.e === "string" && ID_RE.test(op.e) &&
+		(op.f === undefined || (Array.isArray(op.f) && op.f.length <= 32 && op.f.every((x) => typeof x === "string" && FIELD_RE.test(x))))
 	);
 };
+
+/** Expense fields that must agree with each other (splits add up to the amount), so they merge as one. */
+const SPLIT = new Set(["amount", "paidBy", "payers", "participants", "splitMethod", "percentages", "amounts", "shares"]);
+const fieldOf = (k: EntityKind, key: string) => (k === "e" && SPLIT.has(key) ? "split" : key);
+const entries = (v: unknown) => (v && typeof v === "object" ? Object.entries(v) : []);
+const part = (k: EntityKind, v: unknown, field: string) => Object.fromEntries(entries(v).filter(([key]) => fieldOf(k, key) === field));
+/** `v` with each field's latest edit laid over it. */
+const overlay = (k: EntityKind, v: unknown, f: Cell["f"]) =>
+	v === null || !f
+		? v
+		: Object.fromEntries([...entries(v).filter(([key]) => !Object.hasOwn(f, fieldOf(k, key))), ...Object.values(f).flatMap((x) => entries(x.v))]);
 
 /** Applies one operation in place. Safe to repeat and to apply in any order. */
 export function applyOp(state: SyncState, op: Op): void {
 	const table = state[op.k];
 	const cell = table[op.e];
-	if (!cell || wins(op, cell)) table[op.e] = { t: op.t, i: op.i, v: op.v ?? null, c: Math.min(cell?.c ?? op.t, op.t) };
-	else if (op.t < cell.c) cell.c = op.t;
+	if (cell && op.f) {
+		let f = cell.f;
+		for (const field of op.f) {
+			if (wins(op, f && Object.hasOwn(f, field) ? f[field] : cell)) f = { ...f, [field]: { t: op.t, i: op.i, v: part(op.k, op.v, field) } };
+		}
+		if (f !== cell.f) Object.assign(cell, { f, v: overlay(op.k, cell.v, f) });
+		if (op.t < cell.c) cell.c = op.t;
+	} else if (!cell || wins(op, cell)) {
+		// A whole write (new entity, delete, or an edit from an older app version) replaces older field edits.
+		const kept = Object.entries(cell?.f ?? {}).filter(([, x]) => wins(x, op));
+		const f = kept.length ? Object.fromEntries(kept) : undefined;
+		table[op.e] = { t: op.t, i: op.i, v: overlay(op.k, op.v ?? null, f), c: Math.min(cell?.c ?? op.t, op.t), ...(f ? { f } : {}) };
+	} else if (op.t < cell.c) cell.c = op.t;
 }
 
 /** Applies untrusted operations, skipping malformed ones. */
@@ -67,14 +99,44 @@ export function mergeState(state: SyncState, other: unknown): void {
 			if (!isOp(op)) continue;
 			applyOp(state, op);
 			if (Number.isSafeInteger(cell.c) && cell.c > 0 && cell.c < state[k][e].c) state[k][e].c = cell.c;
+			for (const [field, x] of entries(cell.f)) {
+				const edit = { i: x?.i, t: x?.t, k, e, v: x?.v, f: [field] };
+				if (isOp(edit)) applyOp(state, edit);
+			}
 		}
 	}
+}
+
+/** Two queues of unconfirmed changes as one (two tabs of one device), less what `state` already has from the server. */
+export function joinPending(state: SyncState, mine: Op[], theirs: Op[]): Op[] {
+	const queued = new Set(mine.map((o) => o.i));
+	return [...mine, ...theirs.filter((o) => !queued.has(o.i))].filter((o) => state[o.k][o.e]?.i !== o.i);
 }
 
 export const cloneState = (s: SyncState): SyncState => JSON.parse(JSON.stringify(s));
 
 /** Highest clock seen, so new operations always sort after everything this device knows. */
-export const maxClock = (s: SyncState) => Math.max(0, ...KINDS.flatMap((k) => Object.values(s[k]).map((c) => c.t)));
+export const maxClock = (s: SyncState) =>
+	Math.max(0, ...KINDS.flatMap((k) => Object.values(s[k]).flatMap((c) => [c.t, ...Object.values(c.f ?? {}).map((x) => x.t)])));
+
+/** Most ops in one push, however small. */
+const MAX_OPS_PER_PUSH = 200;
+/** Largest batch JSON that still seals into the 64 KB bucket, which fits under the server's MAX_OPS_BLOB. */
+export const MAX_PUSH_BYTES = 65535;
+
+const jsonBytes = (v: unknown) => new TextEncoder().encode(JSON.stringify(v)).length;
+
+/** The queued ops for the next push: as many as fit in one request. Empty only when the first op alone is too big. */
+export function pushBatch(pending: Op[]): Op[] {
+	let bytes = jsonBytes({ ops: [] });
+	let count = 0;
+	for (const op of pending.slice(0, MAX_OPS_PER_PUSH)) {
+		bytes += jsonBytes(op) + (count ? 1 : 0); // ops after the first add a comma
+		if (bytes > MAX_PUSH_BYTES) break;
+		count++;
+	}
+	return pending.slice(0, count);
+}
 
 // ── Untrusted values → app types ──────────────────────────────
 
@@ -205,9 +267,14 @@ function diffTable<T extends { id: string }>(k: EntityKind, before: T[], after: 
 	for (const x of after) {
 		if (!ID_RE.test(x.id)) continue;
 		const { id, ...v } = x;
-		const old = prev.get(id);
-		if (!old || !same({ ...old, id: undefined }, { ...x, id: undefined })) out.push({ k, e: id, v });
+		const old = prev.get(id) as Record<string, unknown> | undefined;
 		prev.delete(id);
+		if (!old) {
+			out.push({ k, e: id, v });
+			continue;
+		}
+		const f = new Set(Object.keys({ ...old, ...v }).filter((key) => key !== "id" && !same(old[key], (v as Record<string, unknown>)[key])).map((key) => fieldOf(k, key)));
+		if (f.size) out.push({ k, e: id, v, f: [...f] });
 	}
 	for (const id of prev.keys()) if (ID_RE.test(id)) out.push({ k, e: id, v: null });
 }

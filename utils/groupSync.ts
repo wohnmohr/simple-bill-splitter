@@ -18,9 +18,11 @@ import {
 	diffGroup,
 	emptyState,
 	groupAsChanges,
+	joinPending,
 	materialize,
 	maxClock,
 	mergeState,
+	pushBatch,
 	sharedView,
 } from "@/utils/groupOps";
 import { quietTag } from "@/utils/groupAlerts";
@@ -29,7 +31,6 @@ import { type GroupKeys, deriveGroupKeys, linkFragment, newGroupSecret, openGrou
 
 /** Fold history into a snapshot once this many batches pile up past the last one. */
 const COMPACT_AFTER = 50;
-const MAX_OPS_PER_PUSH = 200;
 
 export type SyncStatus = "synced" | "syncing" | "offline" | "gone" | "locked";
 
@@ -249,6 +250,24 @@ export class GroupSync {
 		void this.sync(group.id);
 	}
 
+	/**
+	 * Takes in what another tab of the app saved for this group: its merged
+	 * changes and its queue, and its screen, so that tab's edits are not
+	 * recorded again here as edits of this tab.
+	 */
+	adopt(group: Group): void {
+		const theirs = load(group.id);
+		if (theirs) {
+			mergeState(this.saved.state, theirs.state);
+			this.saved.seq = Math.max(this.saved.seq, theirs.seq);
+			this.saved.snapshotSeq = Math.max(this.saved.snapshotSeq, theirs.snapshotSeq);
+			this.saved.pending = joinPending(this.saved.state, this.saved.pending, theirs.pending);
+			this.saved.gone ||= theirs.gone;
+		}
+		this.shown = this.saved.shown = group;
+		save(group.id, this.saved);
+	}
+
 	/** Pushes queued changes, then pulls everyone else's. One run at a time. */
 	sync(groupId: string, force = false): Promise<void> {
 		if (this.disposed || this.saved.gone) return Promise.resolve();
@@ -262,7 +281,13 @@ export class GroupSync {
 		this.setStatus("syncing");
 		try {
 			while (this.saved.pending.length && !this.disposed) {
-				const batch = this.saved.pending.slice(0, MAX_OPS_PER_PUSH);
+				const batch = pushBatch(this.saved.pending);
+				if (!batch.length) {
+					// A change too big for any request would block every later one: drop it.
+					this.saved.pending = this.saved.pending.slice(1);
+					save(groupId, this.saved);
+					continue;
+				}
 				try {
 					await api("/push", { id: keys.id, token: keys.token, blob: await sealGroup(keys, "ops", { ops: batch }), quiet: await quietTag() });
 				} catch (err) {

@@ -2,7 +2,11 @@
 //   node --test --experimental-strip-types scripts/recurring.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { MAX_CATCH_UP, addDueRepeats, dueAt, firstRepeat } from "../utils/recurring.ts";
+import { register } from "node:module";
+import { MAX_CATCH_UP, addDueRepeats, addDueRepeatsToGroups, dueAt, firstRepeat } from "../utils/recurring.ts";
+
+register("./fixtures/alias.mjs", import.meta.url);
+const { applyOp, diffGroup, emptyState, groupAsChanges, materialize } = await import("../utils/groupOps.ts");
 
 const at = (y, m, d) => new Date(y, m - 1, d, 12).getTime();
 const rent = (overrides = {}) => ({
@@ -68,4 +72,48 @@ test("the 31st falls on the last day of shorter months", () => {
 test("payments and expenses without a schedule are left alone", () => {
 	const expenses = [rent({ repeat: undefined }), rent({ id: "pay", kind: "payment" })];
 	assert.equal(addDueRepeats(expenses, at(2030, 1, 1)), expenses);
+});
+
+const flat = (overrides = {}) => ({
+	id: "g",
+	name: "Flat",
+	currency: { code: "INR", symbol: "₹", name: "Indian Rupee" },
+	members: [{ id: "p1", name: "Asha" }, { id: "p2", name: "Ben" }, { id: "p3", name: "Kabir" }],
+	expenses: [rent()],
+	...overrides,
+});
+
+test("a synced group gets its copies only once this device has pulled it", () => {
+	const now = at(2026, 11, 9);
+	const synced = [flat({ sync: { secret: "s" } })];
+	assert.equal(addDueRepeatsToGroups(synced, new Set(), now), synced);
+	assert.equal(addDueRepeatsToGroups(synced, new Set(["g"]), now)[0].expenses.length, 2);
+	assert.equal(addDueRepeatsToGroups([flat()], new Set(), now)[0].expenses.length, 2);
+	const closed = [flat({ closedAt: at(2026, 10, 30) })];
+	assert.equal(addDueRepeatsToGroups(closed, new Set(), now), closed);
+});
+
+test("a phone that was away doesn't bring back a deleted copy or undo an edit", () => {
+	// The merged state everyone converges on; each edit is stamped when it's made, like stamp() in groupSync.
+	const server = emptyState();
+	let n = 0;
+	const record = (changes, t) => changes.forEach((c) => applyOp(server, { ...c, i: `o${++n}`, t: t++ }));
+	const open = () => materialize(server, { id: "g", sync: { secret: "s" } });
+	record(groupAsChanges(flat()), at(2026, 10, 5));
+	const stale = open();
+
+	// Asha, 10 Nov: the copy is added, then she deletes it and renames the original.
+	const asha = open();
+	const withCopy = { ...asha, expenses: addDueRepeats(asha.expenses, at(2026, 11, 10)) };
+	record(diffGroup(asha, withCopy), at(2026, 11, 10));
+	const edited = { ...withCopy, expenses: [{ ...withCopy.expenses[0], description: "Rent + maintenance" }] };
+	record(diffGroup(withCopy, edited), at(2026, 11, 10) + 100);
+
+	// Ben, 12 Nov: his out-of-date copy is left alone until it's pulled...
+	assert.equal(addDueRepeatsToGroups([stale], new Set(), at(2026, 11, 12))[0], stale);
+	// ...and once pulled nothing is due, so nothing of Asha's is overwritten.
+	const pulled = open();
+	const [ben] = addDueRepeatsToGroups([pulled], new Set(["g"]), at(2026, 11, 12));
+	record(diffGroup(pulled, ben), at(2026, 11, 12));
+	assert.deepEqual(open().expenses.map((e) => [e.id, e.description]), [["expense-rent", "Rent + maintenance"]]);
 });
