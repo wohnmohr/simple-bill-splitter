@@ -5,6 +5,7 @@ import { Group } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
 import { myBalance, totalSpent } from "@/utils/calculations";
 import type { SyncStatus } from "@/utils/groupSync";
+import { currentMembers } from "@/utils/members";
 
 interface GroupSelectorProps {
 	/** The open group. */
@@ -75,6 +76,8 @@ export const GroupSelector = ({
 }: GroupSelectorProps) => {
 	const [renaming, setRenaming] = useState(false);
 	const mine = myBalance(selectedGroup);
+	// People who left stay on past entries, but aren't counted as in the group.
+	const here = currentMembers(selectedGroup.members);
 	const spent = totalSpent(selectedGroup.expenses);
 	const shareBroken = syncStatus === "gone" || syncStatus === "locked";
 
@@ -184,12 +187,8 @@ export const GroupSelector = ({
 				{onManageMembers && (
 					<button onClick={onManageMembers} className="btn-secondary shrink-0 !py-2">
 						<Users className="h-4 w-4" />
-						{selectedGroup.members.length === 0
-							? "Add members"
-							: selectedGroup.members.length}
-						<span className="sr-only">
-							{selectedGroup.members.length === 1 ? " member" : " members"}
-						</span>
+						{selectedGroup.members.length === 0 ? "Add members" : here.length}
+						<span className="sr-only">{here.length === 1 ? " member" : " members"}</span>
 					</button>
 				)}
 			</div>

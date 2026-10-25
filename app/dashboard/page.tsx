@@ -437,8 +437,8 @@ export default function Home() {
 	// On wide screens Balances lives in a side panel, so it leaves the tab bar.
 	const isWide = useMediaQuery("(min-width: 1024px)") ?? false;
 	const inGroup = !!currentGroup && currentGroup.members.length > 0;
-	// A closed group is a record: no new expenses until it's reopened.
-	const canAdd = inGroup && !currentGroup.closedAt;
+	// A closed group is a record: no new expenses until it's reopened. Nor when everyone has left: there's nobody to add one for.
+	const canAdd = inGroup && current.length > 0 && !currentGroup.closedAt;
 	const shownTab: Tab = isWide && activeTab === "balances" ? "transactions" : activeTab;
 
 	return (
@@ -666,7 +666,7 @@ export default function Home() {
 					}}
 					onCreate={handleCreateGroup}
 					groupCount={groups.length}
-					note={nextFrom ? `With the same people: ${new Intl.ListFormat("en-IN").format(nextFrom.members.map((m) => m.name))}.` : undefined}
+					note={nextFrom ? `With the same people: ${new Intl.ListFormat("en-IN").format(currentMembers(shownMembers(nextFrom)).map((m) => m.name))}.` : undefined}
 				/>
 
 				{currentGroup && (

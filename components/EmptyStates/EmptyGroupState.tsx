@@ -3,6 +3,7 @@ import { NumberInput, TextInput } from "@mantine/core";
 import { DEFAULT_CURRENCY } from "@/constants";
 import { formatCurrency } from "@/utils/formatting";
 import { splitNames, type FirstExpenseInput } from "@/utils/firstExpense";
+import { pasteNames } from "@/components/UI/pasteNames";
 import { loadMyName } from "@/utils/myName";
 
 interface EmptyGroupStateProps {
@@ -26,7 +27,7 @@ export const EmptyGroupState = ({ onFirstExpense, onCreateGroup, quickAdd }: Emp
 	const [othersText, setOthersText] = useState("");
 	const [typing, setTyping] = useState(false);
 
-	const others = splitNames(othersText, myName);
+	const others = splitNames(othersText, [myName]);
 	const total = Number(amount) || 0;
 	const ready = total > 0 && !!myName.trim() && others.length > 0;
 
@@ -78,6 +79,7 @@ export const EmptyGroupState = ({ onFirstExpense, onCreateGroup, quickAdd }: Emp
 						label="Split with"
 						value={othersText}
 						onChange={(e) => setOthersText(e.target.value)}
+						onPaste={(e) => pasteNames(e, setOthersText)}
 						placeholder="Riya, Kabir"
 						autoCapitalize="words"
 					/>
