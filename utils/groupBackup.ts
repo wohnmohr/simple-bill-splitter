@@ -13,6 +13,7 @@
  */
 import type { Group, GroupSyncLink } from "@/types";
 import { HttpError, api } from "@/utils/groupApi";
+import { trackStorageFailure } from "@/lib/analytics";
 import { deriveGroupKeys, linkFragment, newGroupSecret, openGroup, sealGroup, stretchPassphrase } from "@/utils/groupVault";
 
 const STORE_KEY = "splitbiller-backup";
@@ -45,8 +46,9 @@ export function storeBackup(s: BackupState | null) {
 	try {
 		if (s) localStorage.setItem(STORE_KEY, JSON.stringify(s));
 		else localStorage.removeItem(STORE_KEY);
-	} catch {
-		/* storage blocked: the backup simply stays off on this device */
+	} catch (err) {
+		// Storage blocked: the backup simply stays off on this device.
+		trackStorageFailure("backup", err);
 	}
 }
 
