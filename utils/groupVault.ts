@@ -32,11 +32,17 @@ import type _sodium from "libsodium-wrappers-sumo";
 type Sodium = typeof _sodium;
 let loading: Promise<Sodium> | null = null;
 const sodium = (): Promise<Sodium> =>
-	(loading ??= import("libsodium-wrappers-sumo").then(async (m) => {
-		const s = (m.default ?? m) as Sodium;
-		await s.ready;
-		return s;
-	}));
+	(loading ??= import("libsodium-wrappers-sumo")
+		.then(async (m) => {
+			const s = (m.default ?? m) as Sodium;
+			await s.ready;
+			return s;
+		})
+		.catch((err) => {
+			// A failed download (flaky network) must not stick: the next call tries again.
+			loading = null;
+			throw err;
+		}));
 
 /** Format version, first byte of every blob, so the scheme can change later without breaking old groups. */
 const VERSION = 2;

@@ -104,6 +104,12 @@
 		max-width: 100%;
 	}
 
+	/* A fieldset's default min-width is min-content, so a long name inside it
+	   would widen it past the screen instead of truncating. */
+	fieldset {
+		min-width: 0;
+	}
+
 	h1,
 	h2,
 	.font-display {

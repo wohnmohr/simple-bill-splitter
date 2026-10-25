@@ -22,6 +22,7 @@ import {
 	materialize,
 	maxClock,
 	mergeState,
+	pushBatch,
 	sharedView,
 } from "@/utils/groupOps";
 import { quietTag } from "@/utils/groupAlerts";
@@ -30,7 +31,6 @@ import { type GroupKeys, deriveGroupKeys, linkFragment, newGroupSecret, openGrou
 
 /** Fold history into a snapshot once this many batches pile up past the last one. */
 const COMPACT_AFTER = 50;
-const MAX_OPS_PER_PUSH = 200;
 
 export type SyncStatus = "synced" | "syncing" | "offline" | "gone" | "locked";
 
@@ -281,7 +281,13 @@ export class GroupSync {
 		this.setStatus("syncing");
 		try {
 			while (this.saved.pending.length && !this.disposed) {
-				const batch = this.saved.pending.slice(0, MAX_OPS_PER_PUSH);
+				const batch = pushBatch(this.saved.pending);
+				if (!batch.length) {
+					// A change too big for any request would block every later one: drop it.
+					this.saved.pending = this.saved.pending.slice(1);
+					save(groupId, this.saved);
+					continue;
+				}
 				try {
 					await api("/push", { id: keys.id, token: keys.token, blob: await sealGroup(keys, "ops", { ops: batch }), quiet: await quietTag() });
 				} catch (err) {

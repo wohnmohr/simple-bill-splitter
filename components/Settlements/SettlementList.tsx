@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Settlement, Person, Currency, Expense, GroupSyncLink } from "@/types";
 import { MemberAvatar } from "@/components/Group/MemberAvatar";
 import { formatCurrency } from "@/utils/formatting";
@@ -93,7 +93,11 @@ export const SettlementList = ({
 		}
 	}, [settlements, pending]);
 
+	// A marked row disappears and the next one slides under the finger, so a quick second tap is ignored.
+	const lastMarkAt = useRef(0);
 	const markPaid = (s: Settlement, source: string) => {
+		if (Date.now() - lastMarkAt.current < 500) return;
+		lastMarkAt.current = Date.now();
 		onRecordPayment?.([s]);
 		track("settlement_marked_paid", { source, is_me: s.from === meId || s.to === meId });
 	};
@@ -260,6 +264,9 @@ export const SettlementList = ({
 			{mine.map((s) => {
 				const iPay = s.from === me!.id;
 				const other = getPersonName(iPay ? s.to : s.from);
+				// Shown on one line, never split inside the number; crore amounts
+				// (over 13 characters) step down a size to fit a 320px phone.
+				const amount = formatCurrency(s.amount, currency);
 				return (
 					<section
 						key={`${s.from}-${s.to}`}
@@ -269,11 +276,11 @@ export const SettlementList = ({
 							{iPay ? `You pay ${other}` : `${other} owes you`}
 						</p>
 						<p
-							className={`mt-1 font-display text-4xl font-semibold tabular-nums ${
+							className={`mt-1 whitespace-nowrap font-display ${amount.length > 13 ? "text-3xl" : "text-4xl"} font-semibold tabular-nums ${
 								iPay ? "text-ink" : "text-positive"
 							}`}
 						>
-							{formatCurrency(s.amount, currency)}
+							{amount}
 						</p>
 
 						{iPay ? (
@@ -341,7 +348,7 @@ export const SettlementList = ({
 				<section>
 					<div className="mb-2 flex items-baseline justify-between gap-3 px-1">
 						<h2 className="label-text">
-							{me ? "Other people's payments" : `${settlements.length} payments settle the group`}
+							{me ? "Other people's payments" : settlements.length === 1 ? "1 payment settles the group" : `${settlements.length} payments settle the group`}
 						</h2>
 						{canRecord && others.length > 1 && (
 							<button
@@ -415,12 +422,12 @@ const SettlementLine = ({
 	currency: Currency;
 	name: (id: string) => string;
 }) => (
-	<div className="flex items-center justify-between gap-3">
-		<p className="min-w-0 flex-1 truncate text-ink-muted">
+	<div className="flex flex-wrap items-baseline justify-between gap-x-3">
+		<p className="min-w-0 text-ink-muted">
 			<span className="font-semibold text-ink">{name(s.from)}</span> pays{" "}
 			<span className="font-semibold text-ink">{name(s.to)}</span>
 		</p>
-		<p className="shrink-0 font-semibold tabular-nums text-ink">
+		<p className="whitespace-nowrap font-semibold tabular-nums text-ink">
 			{formatCurrency(s.amount, currency)}
 		</p>
 	</div>

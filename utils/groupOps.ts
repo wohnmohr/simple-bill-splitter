@@ -82,6 +82,25 @@ export const cloneState = (s: SyncState): SyncState => JSON.parse(JSON.stringify
 /** Highest clock seen, so new operations always sort after everything this device knows. */
 export const maxClock = (s: SyncState) => Math.max(0, ...KINDS.flatMap((k) => Object.values(s[k]).map((c) => c.t)));
 
+/** Most ops in one push, however small. */
+const MAX_OPS_PER_PUSH = 200;
+/** Largest batch JSON that still seals into the 64 KB bucket, which fits under the server's MAX_OPS_BLOB. */
+export const MAX_PUSH_BYTES = 65535;
+
+const jsonBytes = (v: unknown) => new TextEncoder().encode(JSON.stringify(v)).length;
+
+/** The queued ops for the next push: as many as fit in one request. Empty only when the first op alone is too big. */
+export function pushBatch(pending: Op[]): Op[] {
+	let bytes = jsonBytes({ ops: [] });
+	let count = 0;
+	for (const op of pending.slice(0, MAX_OPS_PER_PUSH)) {
+		bytes += jsonBytes(op) + (count ? 1 : 0); // ops after the first add a comma
+		if (bytes > MAX_PUSH_BYTES) break;
+		count++;
+	}
+	return pending.slice(0, count);
+}
+
 // ── Untrusted values → app types ──────────────────────────────
 
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");

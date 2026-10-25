@@ -19,14 +19,15 @@ interface EmptyGroupStateProps {
  * with it, so nobody has to name and set up a group before splitting anything.
  */
 export const EmptyGroupState = ({ onFirstExpense, onCreateGroup, quickAdd }: EmptyGroupStateProps) => {
-	const [amount, setAmount] = useState<number | "">("");
+	// Kept as typed: Mantine hands over in-between text like "0." as a string, and dropping it wipes the field.
+	const [amount, setAmount] = useState<number | string>("");
 	const [description, setDescription] = useState("");
 	const [myName, setMyName] = useState(loadMyName);
 	const [othersText, setOthersText] = useState("");
 	const [typing, setTyping] = useState(false);
 
 	const others = splitNames(othersText, myName);
-	const total = amount || 0;
+	const total = Number(amount) || 0;
 	const ready = total > 0 && !!myName.trim() && others.length > 0;
 
 	return (
@@ -44,7 +45,7 @@ export const EmptyGroupState = ({ onFirstExpense, onCreateGroup, quickAdd }: Emp
 				<NumberInput
 					label="Amount"
 					value={amount}
-					onChange={(v) => setAmount(typeof v === "number" ? v : "")}
+					onChange={setAmount}
 					placeholder="0"
 					min={0}
 					decimalScale={2}
