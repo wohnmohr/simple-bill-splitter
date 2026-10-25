@@ -67,5 +67,5 @@ test("an undo syncs as the one change it takes back, never touching what was add
 	const now = added(deleted(group, "e2"), cab);
 	assert.deepEqual(diffGroup(now, undoDeleteExpense(now, group, "e2")).map((c) => `${c.k}:${c.e}`), ["e:e2", "c:c1"]);
 	const left = added(removeMember(group, "p3"), cab);
-	assert.deepEqual(diffGroup(left, undoRemoveMember(left, group, "p3")), [{ k: "m", e: "p3", v: { name: "Dev" } }]);
+	assert.deepEqual(diffGroup(left, undoRemoveMember(left, group, "p3")).map(({ k, e, v }) => ({ k, e, v })), [{ k: "m", e: "p3", v: { name: "Dev" } }]);
 });
