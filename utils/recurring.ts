@@ -40,10 +40,12 @@ export const dueAt = (month: string, day: number) => {
 
 /**
  * Adds every copy of a repeating expense that has come due by `now`, and moves
- * each original's `repeat.next` past them. Returns the same array when nothing
- * is due, so callers can skip an update.
+ * each original's `repeat.next` past them. Members in `left` aren't on new
+ * copies; when that can't be done fairly (one of them paid, or the split was set
+ * per person) the expense stops repeating instead. Returns the same array when
+ * nothing is due, so callers can skip an update.
  */
-export function addDueRepeats(expenses: Expense[], now = Date.now()): Expense[] {
+export function addDueRepeats(expenses: Expense[], now = Date.now(), left: ReadonlySet<string> = new Set()): Expense[] {
 	let out: Expense[] | null = null;
 	const oldest = addMonths(monthKey(new Date(now)), 1 - MAX_CATCH_UP);
 	expenses.forEach((e, index) => {
@@ -59,6 +61,13 @@ export function addDueRepeats(expenses: Expense[], now = Date.now()): Expense[] 
 		}
 		if (copies.length === 0) return;
 		out ??= [...expenses];
+		const stays = template.participants.filter((p) => !left.has(p));
+		const payers = template.payers ? Object.keys(template.payers) : [template.paidBy];
+		if (!stays.length || payers.some((p) => left.has(p)) || (stays.length < template.participants.length && template.splitMethod !== "equally")) {
+			out[index] = template;
+			return;
+		}
+		copies.forEach((c) => (c.participants = stays));
 		out[index] = { ...e, repeat: { next } };
 		const have = new Set(out.map((x) => x.id));
 		out.push(...copies.filter((c) => !have.has(c.id)));
@@ -77,7 +86,7 @@ export function addDueRepeatsToGroups(groups: Group[], pulled: ReadonlySet<strin
 	const next = groups.map((g) => {
 		// A closed group is finished: its monthly expenses stop.
 		if (g.closedAt || (g.sync && !pulled.has(g.id))) return g;
-		const expenses = addDueRepeats(g.expenses, now);
+		const expenses = addDueRepeats(g.expenses, now, new Set(g.members.filter((m) => m.left).map((m) => m.id)));
 		if (expenses === g.expenses) return g;
 		due = true;
 		return { ...g, expenses };

@@ -117,3 +117,24 @@ test("a phone that was away doesn't bring back a deleted copy or undo an edit", 
 	record(diffGroup(pulled, ben), at(2026, 11, 12));
 	assert.deepEqual(open().expenses.map((e) => [e.id, e.description]), [["expense-rent", "Rent + maintenance"]]);
 });
+
+test("someone who left isn't on new copies", () => {
+	const [original, copy] = addDueRepeats([rent()], at(2026, 11, 5), new Set(["p3"]));
+	assert.deepEqual(copy.participants, ["p1", "p2"]);
+	assert.deepEqual(original.participants, ["p1", "p2", "p3"]);
+	assert.deepEqual(original.repeat, { next: "2026-12" });
+});
+
+test("it stops repeating when the payer left or the split was set per person", () => {
+	for (const e of [rent({ paidBy: "p3" }), rent({ splitMethod: "percentage", percentages: { p1: 50, p2: 25, p3: 25 } }), rent({ participants: ["p3"] })]) {
+		const out = addDueRepeats([e], at(2027, 2, 5), new Set(["p3"]));
+		assert.equal(out.length, 1);
+		assert.equal(out[0].repeat, undefined);
+	}
+});
+
+test("groups pass the members who left", () => {
+	const group = { id: "g", name: "Flat", currency: { code: "INR", symbol: "₹", name: "Indian Rupee" }, members: [{ id: "p1", name: "Asha" }, { id: "p2", name: "Ben" }, { id: "p3", name: "Dev", left: true }], expenses: [rent()] };
+	const [g] = addDueRepeatsToGroups([group], new Set(), at(2026, 11, 5));
+	assert.deepEqual(g.expenses[1].participants, ["p1", "p2"]);
+});

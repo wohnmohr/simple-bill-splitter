@@ -21,8 +21,9 @@ test("restoring adds only groups this device doesn't have", () => {
 });
 
 test("restoring stops at the group limit", () => {
-	const { groups, added } = mergeRestored([group("a")], [group("b"), group("c")], 2);
+	const { groups, added, missed } = mergeRestored([group("a")], [group("b"), group("c")], 2);
 	assert.equal(added, 1);
+	assert.equal(missed, 1);
 	assert.equal(groups.length, 2);
 });
 
