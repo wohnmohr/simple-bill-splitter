@@ -52,8 +52,40 @@ export const hostOf = (group: Group): string | undefined => group.hostId ?? grou
 
 /**
  * Whether this device may set a member's UPI ID (or, with no id, a new member's).
- * In a shared group only that person or the host can, so no one can slip their
- * own UPI ID under a friend's name. A group on this device alone is all yours.
+ * In a shared group only that person or the device that shared it can, so no
+ * one can slip their own UPI ID under a friend's name. A group on this device
+ * alone is all yours.
  */
 export const canSetUpi = (group: Group, personId?: string): boolean =>
-	!group.sync || (!!group.meId && (group.meId === personId || group.meId === hostOf(group)));
+	!group.sync || group.hosted === true || (!!group.meId && group.meId === personId);
+
+/**
+ * Marks whether this device shared the group, for groups saved before that was
+ * kept: it did if its "you" is the host. Settled once, so choosing the host as
+ * "you" later doesn't make a phone the host.
+ */
+export const withHosted = (group: Group): Group =>
+	!group.sync || group.hosted !== undefined ? group : { ...group, hosted: !!group.meId && group.meId === hostOf(group) };
+
+/** How long Settle up points out a payee's changed UPI ID. */
+const UPI_CHANGE_SHOWN_MS = 14 * 24 * 60 * 60 * 1000;
+
+/**
+ * When another device changed (or removed) someone's UPI ID, the time this
+ * device saw it, so Settle up can say so before anyone pays the new one.
+ * `before` is this device's copy, `after` the same group with the other
+ * devices' changes merged in.
+ */
+export function upiChanges(before: Group, after: Group, now = Date.now()): Group["upiChangedAt"] {
+	const seen = { ...after.upiChangedAt };
+	for (const m of after.members) {
+		const old = before.members.find((b) => b.id === m.id)?.upiId;
+		if (old && old !== m.upiId) seen[m.id] = now;
+	}
+	for (const [id, at] of Object.entries(seen)) if (!(now - at < UPI_CHANGE_SHOWN_MS)) delete seen[id];
+	return Object.keys(seen).length ? seen : undefined;
+}
+
+/** Whether this person's UPI ID was changed on another device lately. */
+export const upiChangedLately = (group: Group, personId: string, now = Date.now()): boolean =>
+	now - (group.upiChangedAt?.[personId] ?? -Infinity) < UPI_CHANGE_SHOWN_MS;

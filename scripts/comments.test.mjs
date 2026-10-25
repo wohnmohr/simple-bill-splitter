@@ -45,3 +45,9 @@ test("a new comment becomes one operation", () => {
 	const after = { ...before, comments: [{ id: "c1", expenseId: "e1", by: "p2", text: "ok", at: 5 }] };
 	assert.deepEqual(diffGroup(before, after), [{ k: "c", e: "c1", v: { expenseId: "e1", by: "p2", text: "ok", at: 5 } }]);
 });
+
+test("a comment from another phone can't flip the text after it", () => {
+	const state = group();
+	put(state, "c", "c1", { expenseId: "e1", text: "Paid\u202e 300", at: 1 });
+	assert.equal(view(state).comments[0].text, "Paid 300");
+});

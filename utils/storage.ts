@@ -1,6 +1,7 @@
 import type { Group } from "@/types";
 import { STORAGE_KEY } from "@/constants";
 import { trackStorageFailure } from "@/lib/analytics";
+import { withHosted } from "@/utils/members";
 
 /** The least the app needs to show a group; a hand-edited or half-written entry is skipped rather than crashing every screen. */
 const usable = (g: unknown): g is Group => {
@@ -15,7 +16,7 @@ export const loadGroupsFromStorage = (): Group[] => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const groups: unknown = JSON.parse(stored);
-      return Array.isArray(groups) ? groups.filter(usable) : [];
+      return Array.isArray(groups) ? groups.filter(usable).map(withHosted) : [];
     }
   } catch (e) {
     console.error("Failed to load groups from storage", e);

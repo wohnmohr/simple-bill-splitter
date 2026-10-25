@@ -212,7 +212,7 @@ export const MAX_COMMENT = 500;
 function toComment(id: string, v: unknown, expenses: Set<string>, members: Set<string>): ExpenseComment | null {
 	const x = v as Partial<ExpenseComment>;
 	const expenseId = str(x?.expenseId, 64);
-	const text = str(x?.text, MAX_COMMENT).trim();
+	const text = cleanText(str(x?.text, MAX_COMMENT), MAX_COMMENT);
 	if (!expenses.has(expenseId) || !text || !Number.isSafeInteger(x.at) || (x.at as number) <= 0) return null;
 	const by = str(x.by, 64);
 	return { id, expenseId, text, at: x.at as number, ...(members.has(by) ? { by } : {}) };
@@ -225,8 +225,8 @@ const live = (table: Record<string, Cell>) =>
 		.filter(([, c]) => c.v !== null)
 		.sort(([a, x], [b, y]) => x.c - y.c || (a < b ? -1 : 1));
 
-/** The group this state describes. Device-only fields (local id, "who am I", sync link, nicknames) come from `local`. */
-export function materialize(state: SyncState, local: Pick<Group, "id" | "meId" | "sync" | "nicknames">): Group {
+/** The group this state describes. Device-only fields (local id, "who am I", sync link, nicknames, host, UPI changes seen) come from `local`. */
+export function materialize(state: SyncState, local: Pick<Group, "id" | "meId" | "sync" | "nicknames" | "hosted" | "upiChangedAt">): Group {
 	const members = live(state.m).map(([id, c]) => toPerson(id, c.v)).filter((p): p is Person => !!p);
 	const ids = new Set(members.map((m) => m.id));
 	const expenses = live(state.e)
@@ -250,6 +250,8 @@ export function materialize(state: SyncState, local: Pick<Group, "id" | "meId" |
 		...(local.meId !== undefined ? { meId: local.meId } : {}),
 		...(local.sync ? { sync: local.sync } : {}),
 		...(local.nicknames ? { nicknames: local.nicknames } : {}),
+		...(local.hosted !== undefined ? { hosted: local.hosted } : {}),
+		...(local.upiChangedAt ? { upiChangedAt: local.upiChangedAt } : {}),
 	};
 }
 

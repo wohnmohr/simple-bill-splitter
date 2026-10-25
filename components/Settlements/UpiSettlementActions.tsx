@@ -16,6 +16,8 @@ interface UpiSettlementActionsProps {
 	currency: Currency;
 	groupName: string;
 	onSaveUpi?: (personId: string, upiId: string) => void;
+	/** Another device changed this UPI ID lately. */
+	upiChanged?: boolean;
 	/** Called when the Pay link is tapped, before the UPI app opens. */
 	onPay?: () => void;
 }
@@ -27,6 +29,7 @@ export const UpiSettlementActions = ({
 	currency,
 	groupName,
 	onSaveUpi,
+	upiChanged,
 	onPay,
 }: UpiSettlementActionsProps) => {
 	const [draftUpi, setDraftUpi] = useState(to?.upiId || "");
@@ -146,6 +149,9 @@ export const UpiSettlementActions = ({
 					</button>
 				)}
 			</div>
+			{upiChanged && (
+				<p className="text-sm font-medium text-amber-700">UPI ID changed recently. Check the name your UPI app shows.</p>
+			)}
 			<span className="sr-only" aria-live="polite">
 				{copied ? "UPI ID copied" : ""}
 			</span>

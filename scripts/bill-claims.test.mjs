@@ -2,7 +2,11 @@
 //   node --test --experimental-strip-types scripts/bill-claims.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { billTarget, sanitizeClaim, sanitizeItems, tally } from "../utils/billClaims.ts";
+import { register } from "node:module";
+
+register("./fixtures/alias.mjs", import.meta.url);
+const { billTarget, sanitizeClaim, sanitizeItems, tally } = await import("../utils/billClaims.ts");
+const { sanitizeRequest } = await import("../utils/payStory.ts");
 
 // The sample Swiggy order: ₹1,098 of items, ₹1,079.35 to pay after fees, GST and a discount.
 const items = [
@@ -81,4 +85,12 @@ test("untrusted bills and claims are cleaned", () => {
 	assert.equal(sanitizeClaim(["   ", [0]], 3), null);
 	assert.equal(sanitizeClaim(["Asha", 0], 3), null);
 	assert.equal(sanitizeClaim({ name: "Asha" }, 3), null);
+	// A right-to-left override would flip the amounts shown after the name.
+	assert.deepEqual(sanitizeItems([["Naan\u202e", 45]]), [["Naan", 45]]);
+	assert.deepEqual(sanitizeClaim(["Asha\u202e", [0]], 3), ["Asha", [0]]);
+});
+
+test("names on a pay request link are cleaned too", () => {
+	const req = sanitizeRequest({ kind: "dinner", title: "Goa\u202e", name: "Asha\u202e", upiId: "asha@okaxis", target: 900, people: 3, paid: [["Ben\u202e", 300]] });
+	assert.deepEqual([req.title, req.name, req.paid[0][0]], ["Goa", "Asha", "Ben"]);
 });

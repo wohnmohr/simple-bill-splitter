@@ -22,6 +22,8 @@ interface SettlementListProps {
 	onUpdateMemberUpi?: (personId: string, upiId: string) => void;
 	/** Whose UPI ID this device may set (in a shared group: your own, or anyone's if you're the host). Default: everyone's. */
 	canSetUpi?: (personId: string) => boolean;
+	/** Whose UPI ID another device changed lately, pointed out before paying it. */
+	upiChanged?: (personId: string) => boolean;
 	/** Who is holding this device. undefined = not asked, null = just viewing.
 	 * With onSetMe but no onRecordPayment (a shared link), it shows "you pay X" first without the ledger buttons. */
 	meId?: string | null;
@@ -49,6 +51,7 @@ export const SettlementList = ({
 	expenses = [],
 	onUpdateMemberUpi,
 	canSetUpi = () => true,
+	upiChanged = () => false,
 	meId: storedMeId,
 	onSetMe,
 	onRecordPayment,
@@ -299,6 +302,7 @@ export const SettlementList = ({
 										currency={currency}
 										groupName={groupName}
 										onSaveUpi={canSetUpi(s.to) ? onUpdateMemberUpi : undefined}
+										upiChanged={upiChanged(s.to)}
 										onPay={() => {
 											setPending({ from: s.from, to: s.to, amount: s.amount });
 											setAskConfirm(false);

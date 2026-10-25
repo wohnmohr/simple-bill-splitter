@@ -84,6 +84,13 @@ export type Group = {
    * device: not synced, not in share links. See utils/identity shownMembers.
    */
   nicknames?: Record<string, string>;
+  /**
+   * This device shared the group, so it may set anyone's UPI ID. Stays on the
+   * device: picking the host as "you" on another phone doesn't make it the host.
+   */
+  hosted?: boolean;
+  /** When this device saw another device change a member's UPI ID, by person id. Stays on the device. */
+  upiChangedAt?: Record<string, number>;
 };
 
 export type GroupSyncLink = {

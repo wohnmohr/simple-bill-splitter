@@ -7,11 +7,19 @@ export type Launch = "add" | "shared";
 const SHARED_CACHE = "splitbiller-shared";
 const SHARED_BILL = "/shared-bill";
 
-/** Reads how the app was opened, once: the query is cleared so a reload doesn't repeat it. */
+/**
+ * Reads how the app was opened, once: the query is cleared so a reload doesn't repeat it.
+ * A real share opens the installed app; in a browser tab it's another site posting a
+ * picture of its choosing, so it's dropped.
+ */
 export function takeLaunch(): Launch | null {
 	const params = new URLSearchParams(window.location.search);
 	const launch = params.has("shared") ? "shared" : params.has("add") ? "add" : null;
 	if (launch) window.history.replaceState(null, "", window.location.pathname + window.location.hash);
+	if (launch === "shared" && !window.matchMedia("(display-mode: standalone)").matches) {
+		window.caches?.delete(SHARED_CACHE).catch(() => undefined);
+		return null;
+	}
 	return launch;
 }
 
