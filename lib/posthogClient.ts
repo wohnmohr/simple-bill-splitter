@@ -6,7 +6,7 @@
  * before it is ready is queued with its real timestamp and sent once it loads.
  */
 import type { PostHog } from "posthog-js";
-import { isPrivatePath, scrubErrorText, scrubUrl } from "@/lib/privateUrl";
+import { isRecordedPath, scrubErrorText, scrubUrl } from "@/lib/privateUrl";
 
 type Job = (ph: PostHog) => void;
 
@@ -92,14 +92,19 @@ export function startPostHog(): void {
 	if (!key || !analyticsEnabled() || client || starting) return;
 	starting = true;
 
-	import("posthog-js")
-		.then(({ default: posthog }) => {
+	// Replay and error capture are bundled here, so posthog-js never loads
+	// vendor-hosted script into the page (it could read keys in the URL or storage).
+	Promise.all([import("posthog-js"), import("posthog-js/dist/lazy-recorder"), import("posthog-js/dist/exception-autocapture")])
+		.then(([{ default: posthog }]) => {
 			posthog.init(key, {
 				api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
 				person_profiles: "identified_only",
 				capture_pageview: false, // sent on route change by PostHogPageView
 				capture_pageleave: true,
 				persistence: "localStorage+cookie",
+				disable_external_dependency_loading: true,
+				// No feature flags are used; the /flags request would carry the first page's URL, a split id included.
+				advanced_disable_feature_flags: true,
 				// Privacy: names, group titles, amounts and UPI IDs appear on screen and
 				// in links. Clicks are tracked by element only, never by their text or
 				// attributes (a UPI pay link carries the payee's ID, name and amount).
@@ -107,7 +112,7 @@ export function startPostHog(): void {
 				mask_all_element_attributes: true,
 				disable_capture_url_hashes: true, // shared links keep their data and keys in the #fragment
 				mask_personal_data_properties: true,
-				disable_session_recording: false,
+				disable_session_recording: true, // started only on isRecordedPath pages
 				enable_recording_console_log: false,
 				session_recording: {
 					// Replays show layout and clicks only: every input and every piece of text is masked.
@@ -124,7 +129,7 @@ export function startPostHog(): void {
 					stripLinks(event.properties);
 					scrubUrls(event.properties?.$set);
 					scrubUrls(event.properties?.$set_once);
-					if (event.event === "$snapshot" && isPrivatePath(window.location.pathname)) return null;
+					if (event.event === "$snapshot" && !isRecordedPath(window.location.pathname)) return null;
 					if (event.event !== "$exception") return event;
 					const props = event.properties ?? {};
 					const message: unknown = props.$exception_list?.[0]?.value ?? props.$exception_message;
@@ -134,7 +139,7 @@ export function startPostHog(): void {
 				},
 				loaded: (ph) => {
 					ph.startExceptionAutocapture?.();
-					if (!isPrivatePath(window.location.pathname)) ph.startSessionRecording?.();
+					if (isRecordedPath(window.location.pathname)) ph.startSessionRecording?.();
 				},
 			});
 			client = posthog;

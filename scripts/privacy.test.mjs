@@ -3,7 +3,7 @@
 //   node --test --experimental-strip-types scripts/privacy.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isPrivatePath, scrubUrl } from "../lib/privateUrl.ts";
+import { isRecordedPath, scrubUrl } from "../lib/privateUrl.ts";
 
 const ID = "AbCdEfGhIjKlMnOpQrStUv";
 const KEY = "k".repeat(43);
@@ -16,14 +16,21 @@ test("scrubUrl drops the fragment and the split id", () => {
 	assert.equal(scrubUrl("https://splitbiller.com/pay-story#eyJ1cGlJZCI6InByaXlhQG9rYXhpcyJ9"), "https://splitbiller.com/pay-story");
 });
 
+test("scrubUrl drops a split id with junk a chat app stuck on", () => {
+	assert.equal(scrubUrl(`/s/${ID}.`), "/s/[id]");
+	assert.equal(scrubUrl(`/s/${ID}%7E?v=3`), "/s/[id]?v=3");
+	assert.equal(scrubUrl(`failed /s/${ID} and /s/${ID})`), "failed /s/[id] and /s/[id]");
+});
+
 test("scrubUrl leaves ordinary pages alone", () => {
 	assert.equal(scrubUrl("https://splitbiller.com/tools"), "https://splitbiller.com/tools");
 	assert.equal(scrubUrl("/split/dinner"), "/split/dinner");
 });
 
-test("pages that carry private data are never recorded", () => {
-	for (const p of [`/s/${ID}`, "/g", "/r", "/dashboard", "/share", "/pay-story", "/secret-santa"]) assert.ok(isPrivatePath(p), p);
-	for (const p of ["/", "/tools", "/split/dinner", "/shared-costs", "/roadmap"]) assert.ok(!isPrivatePath(p), p);
+test("replay records only pages that show no one's data", () => {
+	for (const p of ["/", "/features", "/tools", "/about", "/roadmap", "/contact", "/split", "/split/"]) assert.ok(isRecordedPath(p), p);
+	const tools = ["/upi-qr-code-generator", "/upi-bill-splitter", "/split-swiggy-zomato-bill", "/secret-santa-generator", "/group-contribution-collector", "/split/dinner", "/split/by-item"];
+	for (const p of [`/s/${ID}`, "/g", "/r", "/dashboard", "/share", "/pay-story", "/secret-santa", ...tools]) assert.ok(!isRecordedPath(p), p);
 });
 
 test("error messages lose the data they quote", async () => {
