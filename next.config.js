@@ -1,6 +1,8 @@
 // PostHog's ingest host, and the assets host it loads its recorder from.
 const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
 const posthogAssets = posthogHost.replace(".i.posthog.com", "-assets.i.posthog.com");
+// The home page promo video may be hosted elsewhere (components/Landing/PromoVideo.tsx).
+const promoVideoHost = process.env.NEXT_PUBLIC_PROMO_VIDEO_URL ? new URL(process.env.NEXT_PUBLIC_PROMO_VIDEO_URL, "https://splitbiller.com").origin : "";
 
 // Scripts load only from our origin (and PostHog's recorder), and data goes only to
 // our API and PostHog, so an injected script can't pull in more code or send the
@@ -12,7 +14,7 @@ const contentSecurityPolicy = [
 	`script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' ${posthogAssets}${process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval' https://va.vercel-scripts.com"}`,
 	"style-src 'self' 'unsafe-inline'",
 	"img-src 'self' data: blob: https://ph-files.imgix.net https://r2.direasy-multi-tenant.focusapps.app",
-	"media-src 'self' blob:",
+	`media-src 'self' blob: ${promoVideoHost}`.trim(),
 	"font-src 'self'",
 	`connect-src 'self' ${posthogHost} ${posthogAssets}`,
 	"worker-src 'self' blob:",

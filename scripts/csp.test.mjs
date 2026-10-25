@@ -7,7 +7,7 @@ import { createRequire } from "node:module";
 
 async function policy(env = {}) {
 	const saved = { ...process.env };
-	Object.assign(process.env, { NODE_ENV: "production", NEXT_PUBLIC_POSTHOG_HOST: "" }, env);
+	Object.assign(process.env, { NODE_ENV: "production", NEXT_PUBLIC_POSTHOG_HOST: "", NEXT_PUBLIC_PROMO_VIDEO_URL: "" }, env);
 	const require = createRequire(import.meta.url);
 	const path = require.resolve("../next.config.js");
 	delete require.cache[path];
@@ -35,6 +35,12 @@ test("data goes only to our API and PostHog", async () => {
 		"https://eu.i.posthog.com",
 		"https://eu-assets.i.posthog.com",
 	]);
+});
+
+test("media plays from our origin, and from the promo video's host if it has one", async () => {
+	assert.deepEqual((await policy())["media-src"], ["'self'", "blob:"]);
+	const p = await policy({ NEXT_PUBLIC_PROMO_VIDEO_URL: "https://videos.example.com/promo.mp4" });
+	assert.deepEqual(p["media-src"], ["'self'", "blob:", "https://videos.example.com"]);
 });
 
 test("the page can't be framed, and frames only Tally's forms", async () => {
