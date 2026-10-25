@@ -44,7 +44,7 @@ test("bringing someone back puts them on new expenses again", () => {
 
 test("removing someone syncs as one member change and never deletes an entry", () => {
 	const changes = diffGroup(group, removeMember(group, "p2"));
-	assert.deepEqual(changes, [{ k: "m", e: "p2", v: { name: "Ben", left: true } }]);
+	assert.deepEqual(changes, [{ k: "m", e: "p2", v: { name: "Ben", left: true }, f: ["left"] }]);
 
 	const state = emptyState();
 	let t = 0;

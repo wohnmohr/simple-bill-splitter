@@ -9,6 +9,7 @@ import { DEFAULT_CURRENCY } from "@/constants";
 import { calculateBalances, calculateSettlements, enteredWeights, splitChoice } from "@/utils/calculations";
 import { useGroups } from "@/hooks/useGroups";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
+import { useBackClose } from "@/hooks/useBackClose";
 import { type ExpenseInput, useExpenses } from "@/hooks/useExpenses";
 import { Header } from "@/components/Header/Header";
 import { GroupSelector } from "@/components/Group/GroupSelector";
@@ -117,6 +118,8 @@ export default function Home() {
 	const openTheme = selectedGroupId ? currentGroup?.theme : undefined;
 	useEffect(() => applyTheme(openTheme), [openTheme]);
 	useEffect(() => () => applyTheme(undefined), []);
+	// Back from a group goes to the group list (after closing any sheet on top).
+	useBackClose(selectedGroupId !== null, () => setSelectedGroupId(null), true);
 
 	const { addMember, updateMemberUpi, renameMember, markJoined, setNickname, deleteMember, bringBackMember } = useGroupMembers(setGroups, currentGroup);
 
