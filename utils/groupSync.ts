@@ -26,7 +26,8 @@ import {
 	sharedView,
 } from "@/utils/groupOps";
 import { quietTag } from "@/utils/groupAlerts";
-import { HttpError, api } from "@/utils/groupApi";
+import { HttpError, UnreadableError, api, syncCause } from "@/utils/groupApi";
+import { secondsBucket, track, trackOnce, trackStorageFailure } from "@/lib/analytics";
 import { type GroupKeys, deriveGroupKeys, linkFragment, newGroupSecret, openGroup, sealGroup, stretchPassphrase } from "@/utils/groupVault";
 
 /** Fold history into a snapshot once this many batches pile up past the last one. */
@@ -66,8 +67,9 @@ function load(groupId: string): Saved | null {
 function save(groupId: string, s: Saved) {
 	try {
 		localStorage.setItem(storeKey(groupId), JSON.stringify(s));
-	} catch {
-		/* storage full or blocked: the queue still lives in memory for this visit */
+	} catch (err) {
+		// Storage full or blocked: the queue still lives in memory for this visit.
+		trackStorageFailure("sync", err);
 	}
 }
 
@@ -87,6 +89,8 @@ export const groupUrl = (link: GroupSyncLink, me?: string, settle = false) =>
 	`${window.location.origin}/g${settle ? `?${SETTLE_PARAM}` : ""}#${linkFragment(link.secret, Boolean(link.pass), me)}`;
 
 export const SETTLE_PARAM = "settle";
+
+const countBucket = (n: number) => (n === 0 ? "0" : n <= 5 ? "1-5" : n <= 20 ? "6-20" : "20+");
 
 const stamp = (changes: Omit<Op, "i" | "t">[], after: number): Op[] => {
 	let t = Math.max(Date.now(), after + 1);
@@ -112,19 +116,20 @@ async function mergeResponse(keys: GroupKeys, saved: Saved, res: Record<string, 
 	const snap = res.snapshot as { seq: number; blob: string } | undefined;
 	if (snap) {
 		const opened = await openGroup(keys, "snapshot", snap.blob);
-		if (opened === null) throw new Error("undecryptable snapshot");
+		if (opened === null) throw new UnreadableError("undecryptable snapshot");
 		mergeState(saved.state, opened);
 	}
 	for (const row of (res.ops as { seq: number; blob: string }[]) ?? []) {
 		const opened = (await openGroup(keys, "ops", row.blob)) as { ops?: unknown } | null;
 		// A batch that won't open was not written with this key: skip it rather than stall.
 		if (opened) applyOps(saved.state, opened.ops);
+		else trackOnce("sync_batch_unreadable");
 	}
 	saved.seq = Math.max(saved.seq, Number(res.seq) || 0);
 	return Boolean(res.more);
 }
 
-export type JoinResult = { ok: true; group: Group } | { ok: false; reason: "wrong-passphrase" | "gone" | "offline" };
+export type JoinResult = { ok: true; group: Group } | { ok: false; reason: "wrong-passphrase" | "gone" | "offline"; cause: string };
 
 /** Opens a group link on this device. `link.pass` is the Argon2id output of the passphrase, if any. */
 export async function joinGroup(link: GroupSyncLink, localId: string): Promise<JoinResult> {
@@ -134,9 +139,10 @@ export async function joinGroup(link: GroupSyncLink, localId: string): Promise<J
 		save(localId, saved);
 		return { ok: true, group: materialize(saved.state, { id: localId, sync: link }) };
 	} catch (err) {
-		if (err instanceof HttpError && err.status === 403) return { ok: false, reason: "wrong-passphrase" };
-		if (err instanceof HttpError && err.status === 404) return { ok: false, reason: "gone" };
-		return { ok: false, reason: "offline" };
+		const cause = syncCause(err);
+		if (cause === "wrong_key") return { ok: false, reason: "wrong-passphrase", cause };
+		if (cause === "deleted") return { ok: false, reason: "gone", cause };
+		return { ok: false, reason: "offline", cause };
 	}
 }
 
@@ -174,6 +180,8 @@ export class GroupSync {
 	private busy: Promise<void> = Promise.resolve();
 	private retryAt = 0;
 	private disposed = false;
+	/** When sync last went wrong, until it works again. */
+	private troubleSince = 0;
 	status: SyncStatus = "syncing";
 
 	constructor(
@@ -285,6 +293,7 @@ export class GroupSync {
 				if (!batch.length) {
 					// A change too big for any request would block every later one: drop it.
 					this.saved.pending = this.saved.pending.slice(1);
+					track("sync_change_dropped");
 					save(groupId, this.saved);
 					continue;
 				}
@@ -306,6 +315,8 @@ export class GroupSync {
 			await this.compact(keys);
 			this.retryAt = 0;
 			this.setStatus("synced");
+			if (this.troubleSince) track("sync_recovered", { after: secondsBucket(Date.now() - this.troubleSince) });
+			this.troubleSince = 0;
 		} catch (err) {
 			if (err instanceof HttpError && err.status === 404) {
 				this.saved.gone = true;
@@ -317,6 +328,11 @@ export class GroupSync {
 				// Network or server trouble: keep the queue, back off, try again.
 				this.retryAt = Date.now() + 10_000;
 				this.setStatus("offline");
+			}
+			// Once per spell of trouble: retries every few seconds would only repeat it.
+			if (!this.troubleSince) {
+				this.troubleSince = Date.now();
+				track("sync_problem", { status: this.status, cause: syncCause(err), pending: countBucket(this.saved.pending.length) });
 			}
 		}
 	}

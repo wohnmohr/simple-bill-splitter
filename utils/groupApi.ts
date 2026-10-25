@@ -10,6 +10,21 @@ export class HttpError extends Error {
 	}
 }
 
+/** A group snapshot that won't open with this group's key: a damaged or mismatched link, never a network blip. */
+export class UnreadableError extends Error {}
+
+/** Why sync failed, in words that say nothing about the group. */
+export function syncCause(err: unknown): string {
+	if (err instanceof UnreadableError) return "unreadable";
+	if (err instanceof HttpError) {
+		if (err.status === 403) return "wrong_key";
+		if (err.status === 404) return "deleted";
+		if (err.status === 429) return "rate_limited";
+		return err.status >= 500 ? "server" : "rejected";
+	}
+	return typeof navigator !== "undefined" && !navigator.onLine ? "device_offline" : "network";
+}
+
 export async function api(path: string, body: unknown): Promise<Record<string, unknown>> {
 	const res = await fetch(`/api/groups${path}`, {
 		method: "POST",

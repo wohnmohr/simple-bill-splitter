@@ -14,3 +14,14 @@ const SPLIT_PATH = /\/s\/[A-Za-z0-9_-]{22}(?=[/?]|$)/;
  * split page reads "/s/[id]" instead of its id.
  */
 export const scrubUrl = (url: string) => url.split("#")[0].replace(SPLIT_PATH, "/s/[id]");
+
+/** Browsers quote the text that failed ("Unexpected token 'R', \"Rahul paid…\" is not valid JSON"). */
+const QUOTED = /"[^"]*"|'[^']*'|`[^`]*`|“[^”]*”/g;
+
+/**
+ * An error message safe to send: quoted text (which can be a name, amount or
+ * UPI ID the app was reading), long digit runs and anything past 200
+ * characters are gone. What's left still says what kind of error it was.
+ */
+export const scrubErrorText = (message: string) =>
+	scrubUrl(message.replace(QUOTED, "…").replace(/\d{4,}/g, "…").replace(/[\w.+-]+@[\w.-]+/g, "[upi]").slice(0, 200));

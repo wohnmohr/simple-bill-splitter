@@ -1,5 +1,6 @@
 import type { Group } from "@/types";
 import { STORAGE_KEY } from "@/constants";
+import { trackStorageFailure } from "@/lib/analytics";
 
 /** The least the app needs to show a group; a hand-edited or half-written entry is skipped rather than crashing every screen. */
 const usable = (g: unknown): g is Group => {
@@ -29,6 +30,7 @@ export const saveGroupsToStorage = (groups: Group[]): void => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(groups));
   } catch (e) {
     console.error("Failed to save groups to storage", e);
+    trackStorageFailure("groups", e);
   }
 };
 

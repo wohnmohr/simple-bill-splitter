@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Group } from "@/types";
-import { HttpError } from "@/utils/groupApi";
 import { type BackupState, loadBackup, saveBackup, startBackup, stopBackup, storeBackup } from "@/utils/groupBackup";
-import { track } from "@/lib/analytics";
+import { track, trackOnce } from "@/lib/analytics";
+import { HttpError, syncCause } from "@/utils/groupApi";
 
 /** Waits for typing to settle before uploading. */
 const DEBOUNCE_MS = 4000;
@@ -31,7 +31,10 @@ export const useBackup = (groups: Group[], loaded: boolean) => {
 				if (next !== backup) keep(next);
 			} catch (err) {
 				if (err instanceof HttpError && err.status === 404) keep({ ...backup, gone: true });
-				else setFailed(true); // offline: the next change or visit tries again
+				else {
+					setFailed(true); // offline: the next change or visit tries again
+					trackOnce("backup_save_failed", { cause: syncCause(err) });
+				}
 			}
 		}, DEBOUNCE_MS);
 		return () => clearTimeout(timer);

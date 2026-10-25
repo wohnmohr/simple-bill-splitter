@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { KeyRound, Loader2, Lock } from "lucide-react";
 import type { Group, GroupSyncLink } from "@/types";
 import { MAX_GROUPS } from "@/constants";
-import { track } from "@/lib/analytics";
+import { secondsBucket, track } from "@/lib/analytics";
 import { SETTLE_PARAM, forgetSync, joinGroup } from "@/utils/groupSync";
 import { openOnSettleUp } from "@/utils/shareImport";
 import { type GroupLink, parseGroupFragment, stretchPassphrase } from "@/utils/groupVault";
@@ -50,8 +50,8 @@ export const GroupJoin = () => {
 	const [passphrase, setPassphrase] = useState("");
 	const [working, setWorking] = useState(false);
 
-	const fail = (kind: keyof typeof ERRORS, retry = false) => {
-		track("group_join_failed", { reason: kind });
+	const fail = (kind: keyof typeof ERRORS, retry = false, cause?: string) => {
+		track("group_join_failed", { reason: kind, cause });
 		setState({ step: "error", title: ERRORS[kind][0], body: ERRORS[kind][1], retry });
 	};
 
@@ -69,10 +69,12 @@ export const GroupJoin = () => {
 		if (existing) return openExisting(groups, existing, me);
 		if (groups.length >= MAX_GROUPS) return fail("limit");
 		const localId = newId("group");
+		const started = Date.now();
 		const result = await joinGroup(sync, localId);
+		const seconds = secondsBucket(Date.now() - started);
 		if (!result.ok) {
 			if (result.reason === "wrong-passphrase") return setState({ step: "passphrase", wrong: true });
-			return fail(result.reason, result.reason === "offline");
+			return fail(result.reason, result.reason === "offline", result.cause);
 		}
 		// The link opened twice at once (two taps, two tabs): the first one to finish keeps the group.
 		const now = loadGroupsFromStorage();
@@ -83,7 +85,7 @@ export const GroupJoin = () => {
 		}
 		const joined: Group = asMe({ ...result.group, sync }, me);
 		saveGroupsToStorage([...now, joined]);
-		track("group_joined", { passphrase: Boolean(sync.pass), members: joined.members.length, personal: Boolean(me) });
+		track("group_joined", { passphrase: Boolean(sync.pass), members: joined.members.length, personal: Boolean(me), seconds });
 		// Someone joining a group with bills in it wants to know what they owe first.
 		if (joined.expenses.some((e) => e.kind !== "payment")) openOnSettleUp();
 		openOnDashboard(router, localId);
