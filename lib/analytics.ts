@@ -1,5 +1,6 @@
 import { noteFeedbackMoment } from "@/lib/feedbackNudge";
 import { capture, withPostHog } from "@/lib/posthogClient";
+import { scrubErrorText } from "@/lib/privateUrl";
 
 /** High-level product events only — never send names, amounts, or expense details. */
 export type AnalyticsEvent =
@@ -80,7 +81,13 @@ export type AnalyticsEvent =
 	| "app_launched_to_add"
 	| "install_prompt_clicked"
 	| "install_prompt_dismissed"
-	| "app_installed";
+	| "app_installed"
+	| "sync_problem"
+	| "sync_recovered"
+	| "sync_change_dropped"
+	| "sync_batch_unreadable"
+	| "storage_save_failed"
+	| "backup_save_failed";
 
 type EventProps = Record<string, string | number | boolean | undefined | null>;
 
@@ -110,6 +117,28 @@ export function track(event: AnalyticsEvent, properties?: EventProps): void {
 	capture(event, properties);
 }
 
+const sentOnce = new Set<string>();
+
+/** For failures that repeat on every retry or save: only the first one per visit is worth sending. */
+export function trackOnce(event: AnalyticsEvent, properties?: EventProps, key = ""): void {
+	const id = `${event}:${key}`;
+	if (sentOnce.has(id)) return;
+	sentOnce.add(id);
+	track(event, properties);
+}
+
+/** How long a step took, coarse enough to say nothing about the person. */
+export const secondsBucket = (ms: number) => {
+	const s = ms / 1000;
+	return s < 5 ? "<5s" : s < 15 ? "5-15s" : s < 30 ? "15-30s" : s < 60 ? "30-60s" : "60s+";
+};
+
+/** A saved copy on the phone failed: a full or blocked localStorage silently loses data. */
+export function trackStorageFailure(store: "groups" | "sync" | "backup", err: unknown): void {
+	const reason = err instanceof DOMException && /quota/i.test(err.name) ? "quota" : "blocked";
+	trackOnce("storage_save_failed", { store, reason }, store);
+}
+
 export function trackError(
 	error: unknown,
 	context?: EventProps & { source?: string }
@@ -125,7 +154,7 @@ export function trackError(
 		try {
 			ph.captureException(err, { ...context, source: context?.source || "app" });
 		} catch {
-			ph.capture("client_error", { message: err.message, name: err.name, ...context });
+			ph.capture("client_error", { message: scrubErrorText(err.message), name: err.name, ...context });
 		}
 	});
 }

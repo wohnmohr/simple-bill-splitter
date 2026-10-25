@@ -25,3 +25,32 @@ test("pages that carry private data are never recorded", () => {
 	for (const p of [`/s/${ID}`, "/g", "/r", "/dashboard", "/share", "/pay-story", "/secret-santa"]) assert.ok(isPrivatePath(p), p);
 	for (const p of ["/", "/tools", "/split/dinner", "/shared-costs", "/roadmap"]) assert.ok(!isPrivatePath(p), p);
 });
+
+test("error messages lose the data they quote", async () => {
+	const { scrubErrorText } = await import("../lib/privateUrl.ts");
+	let json;
+	try {
+		JSON.parse("Rahul rahul@okaxis 45000");
+	} catch (err) {
+		json = err.message;
+	}
+	const scrubbed = scrubErrorText(json);
+	for (const secret of ["Rahul", "rahul@okaxis", "45000"]) assert.ok(!scrubbed.includes(secret), scrubbed);
+	assert.match(scrubbed, /JSON/);
+	assert.equal(scrubErrorText("Cannot read properties of undefined (reading 'Priya')"), "Cannot read properties of undefined (reading …)");
+	assert.equal(scrubErrorText("pay priya@okaxis 125000 now"), "pay [upi] … now");
+	assert.equal(scrubErrorText("failed at https://splitbiller.com/g#secret"), "failed at https://splitbiller.com/g");
+	assert.equal(scrubErrorText("HTTP 404"), "HTTP 404");
+	assert.ok(scrubErrorText("x".repeat(500)).length <= 200);
+});
+
+test("sync failures are reported as a fixed word", async () => {
+	const { HttpError, UnreadableError, syncCause } = await import("../utils/groupApi.ts");
+	assert.equal(syncCause(new HttpError(403, {})), "wrong_key");
+	assert.equal(syncCause(new HttpError(404, {})), "deleted");
+	assert.equal(syncCause(new HttpError(429, {})), "rate_limited");
+	assert.equal(syncCause(new HttpError(503, {})), "server");
+	assert.equal(syncCause(new HttpError(400, { error: "Rahul" })), "rejected");
+	assert.equal(syncCause(new UnreadableError("x")), "unreadable");
+	assert.ok(["network", "device_offline"].includes(syncCause(new TypeError("Failed to fetch"))));
+});

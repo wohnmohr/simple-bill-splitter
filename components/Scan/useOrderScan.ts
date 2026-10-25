@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { parseOrderText, type ParsedOrder } from "@/utils/orderBill";
-import { track } from "@/lib/analytics";
+import { secondsBucket, track } from "@/lib/analytics";
 
 export type ScanState =
 	| { status: "idle" }
@@ -25,6 +25,8 @@ export function useOrderScan(where: string) {
 			const token = ++latest.current;
 			const current = () => token === latest.current;
 			track("order_scan_started", { where });
+			const started = Date.now();
+			const seconds = () => secondsBucket(Date.now() - started);
 			setState({ status: "reading", progress: 0, step: "Starting…" });
 			let ocr: typeof import("@/lib/ocr") | undefined;
 			try {
@@ -33,25 +35,25 @@ export function useOrderScan(where: string) {
 				if (!current()) return null;
 				const order = parseOrderText(text);
 				if (!order.items.length && order.total === undefined) {
-					track("order_scan_failed", { where, reason: "no_order" });
+					track("order_scan_failed", { where, reason: "no_order", seconds: seconds() });
 					setState({
 						status: "error",
 						message: "Couldn’t find an order in that image. Try a screenshot of the order summary, or add the items yourself.",
 					});
 					return null;
 				}
-				track("order_scan_read", { where, items: order.items.length, balanced: order.balanced, app: order.app ?? "unknown" });
+				track("order_scan_read", { where, items: order.items.length, balanced: order.balanced, app: order.app ?? "unknown", seconds: seconds() });
 				setState({ status: "done", order });
 				return order;
 			} catch (err) {
 				if (!current()) return null;
 				console.error("Order scan failed", err);
 				if (ocr && err instanceof ocr.UnreadableImageError) {
-					track("order_scan_failed", { where, reason: "unreadable_image" });
+					track("order_scan_failed", { where, reason: "unreadable_image", seconds: seconds() });
 					setState({ status: "error", message: "Couldn’t open that image. Try another screenshot." });
 					return null;
 				}
-				track("order_scan_failed", { where, reason: "engine" });
+				track("order_scan_failed", { where, reason: "engine", seconds: seconds() });
 				setState({ status: "error", message: "The scanner couldn’t start. Check your connection and try again." });
 				return null;
 			}

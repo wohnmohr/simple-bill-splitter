@@ -6,7 +6,7 @@
  * before it is ready is queued with its real timestamp and sent once it loads.
  */
 import type { PostHog } from "posthog-js";
-import { isPrivatePath, scrubUrl } from "@/lib/privateUrl";
+import { isPrivatePath, scrubErrorText, scrubUrl } from "@/lib/privateUrl";
 
 type Job = (ph: PostHog) => void;
 
@@ -44,6 +44,18 @@ function scrubUrls(props: Record<string, unknown> | undefined) {
 		if (typeof v === "string" && URL_PROP.test(k)) props[k] = scrubUrl(v);
 	}
 }
+/** Exception messages can quote the data that failed to parse or render: scrub every copy of them. */
+function scrubException(props: Record<string, unknown>) {
+	const list = props.$exception_list;
+	if (Array.isArray(list)) {
+		for (const ex of list as { value?: unknown }[]) if (typeof ex.value === "string") ex.value = scrubErrorText(ex.value);
+	}
+	if (typeof props.$exception_message === "string") props.$exception_message = scrubErrorText(props.$exception_message);
+	if (Array.isArray(props.$exception_values)) {
+		props.$exception_values = props.$exception_values.map((v) => (typeof v === "string" ? scrubErrorText(v) : v));
+	}
+}
+
 let client: PostHog | null = null;
 let starting = false;
 const queue: Job[] = [];
@@ -116,7 +128,9 @@ export function startPostHog(): void {
 					if (event.event !== "$exception") return event;
 					const props = event.properties ?? {};
 					const message: unknown = props.$exception_list?.[0]?.value ?? props.$exception_message;
-					return message === "Script error." ? null : event;
+					if (message === "Script error.") return null;
+					scrubException(props);
+					return event;
 				},
 				loaded: (ph) => {
 					ph.startExceptionAutocapture?.();
