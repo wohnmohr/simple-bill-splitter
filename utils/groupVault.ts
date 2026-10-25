@@ -50,7 +50,6 @@ const KDF_CONTEXT = "sbgrp_v2"; // crypto_kdf contexts are exactly 8 bytes
 const SUBKEY = { id: 1, enc: 2, auth: 3, safety: 4 } as const;
 const AD_PREFIX = "splitbiller/g/v2";
 
-export const GROUP_SECRET_RE = /^[A-Za-z0-9_-]{43}$/;
 /** Fragment prefix for groups that also need a passphrase. */
 const PASS_PREFIX = "p.";
 
@@ -91,17 +90,18 @@ export async function newGroupSecret(): Promise<string> {
  */
 export type GroupLink = { secret: string; needsPassphrase: boolean; me?: string };
 
-const MEMBER_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+/** The secret (after "p." when there's a passphrase), then "~" and a member id on a personal link. */
+const LINK_RE = /^(p\.)?([A-Za-z0-9_-]{43})(?:~([A-Za-z0-9_-]{1,64}))?/;
 
 export const linkFragment = (secret: string, needsPassphrase: boolean, me?: string) =>
 	(needsPassphrase ? PASS_PREFIX : "") + secret + (me ? `~${me}` : "");
 
 export function parseGroupFragment(fragment: string): GroupLink | null {
-	const [raw, me] = fragment.replace(/^#/, "").split("~");
-	const needsPassphrase = raw.startsWith(PASS_PREFIX);
-	const secret = needsPassphrase ? raw.slice(PASS_PREFIX.length) : raw;
-	if (!GROUP_SECRET_RE.test(secret)) return null;
-	return me && MEMBER_ID_RE.test(me) ? { secret, needsPassphrase, me } : { secret, needsPassphrase };
+	// Some apps write "~" as %7E, and chats glue a full stop or bracket to the end: read what's ours, skip the rest.
+	const m = LINK_RE.exec(fragment.replace(/^#/, "").replace(/%7e/gi, "~"));
+	if (!m) return null;
+	const [, pass, secret, me] = m;
+	return me ? { secret, needsPassphrase: Boolean(pass), me } : { secret, needsPassphrase: Boolean(pass) };
 }
 
 /**

@@ -55,6 +55,7 @@ export async function enableAlerts(group: Group): Promise<boolean> {
 	const sub = await subscription(true);
 	await api("/alerts", { id: keys.id, token: keys.token, sub: sub!.toJSON(), on: true });
 	await store("readwrite", (s) => s.put({ name: group.name, localId: group.id } satisfies Watched, keys.id));
+	ownTag = null; // this device may have had no push address until now
 	return true;
 }
 

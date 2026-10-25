@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Group } from "@/types";
 import { GroupSync, type SyncStatus, deleteForEveryone, forgetSync, startSync } from "@/utils/groupSync";
 import { meAfter } from "@/utils/members";
+import { disableAlerts } from "@/utils/groupAlerts";
 
 // Live while someone is looking, quieter when idle, silent when away.
 const TICK_MS = 15_000;
@@ -121,6 +122,9 @@ export function useGroupSync(
 	/** Stops syncing on this device and keeps the group as a local copy. */
 	const keepLocalCopy = useCallback(
 		(groupId: string) => {
+			// A copy that no longer syncs gets no news, so no alerts either.
+			const group = current.current.find((g) => g.id === groupId);
+			if (group) disableAlerts(group).catch(() => undefined);
 			engines.current.get(groupId)?.dispose();
 			engines.current.delete(groupId);
 			forgetSync(groupId);
