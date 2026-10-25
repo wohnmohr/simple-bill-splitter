@@ -49,7 +49,11 @@ self.addEventListener("notificationclick", (event) => {
 		(async () => {
 			const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
 			const open = windows.find((w) => new URL(w.url).pathname === "/dashboard");
-			if (open) return open.focus();
+			if (open) {
+				// The app is already open: it switches to the group itself (hooks/useGroups.ts).
+				if (localId) open.postMessage({ open: localId });
+				return open.focus();
+			}
 			return self.clients.openWindow(localId ? `/dashboard#open=${encodeURIComponent(localId)}` : "/dashboard");
 		})()
 	);

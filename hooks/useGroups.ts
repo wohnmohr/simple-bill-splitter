@@ -25,6 +25,18 @@ export const useGroups = () => {
     }
   }, []);
 
+  // A group alert tapped while the app is already open (public/sw.js).
+  useEffect(() => {
+    const sw = typeof navigator !== "undefined" ? navigator.serviceWorker : undefined;
+    if (!sw) return;
+    const onMessage = (e: MessageEvent) => {
+      const id = e.data?.open;
+      if (typeof id === "string" && loadGroupsFromStorage().some((g) => g.id === id)) setSelectedGroupId(id);
+    };
+    sw.addEventListener("message", onMessage);
+    return () => sw.removeEventListener("message", onMessage);
+  }, []);
+
   // Synced groups: every change below is picked up and sent, encrypted.
   const sync = useGroupSync(groups, setGroups, selectedGroupId);
   // Opt-in: once turned on, every change is backed up too, encrypted.

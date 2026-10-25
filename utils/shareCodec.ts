@@ -1,6 +1,6 @@
 import { CURRENCIES } from "@/constants";
-import { Currency, Expense, Person } from "@/types";
-import { CompactSharePayload, ShareSnapshot } from "@/types/share";
+import type { Currency, Expense, Person } from "@/types";
+import type { CompactSharePayload, ShareSnapshot } from "@/types/share";
 import { splitWeights } from "@/utils/calculations";
 
 const SHARE_PREFIX = "sb1";
@@ -176,6 +176,8 @@ export async function decodeShareUrl(urlOrHash: string): Promise<ShareSnapshot> 
 	// base64url, which never contains "#" or "://", so cut at the first one.
 	const cut = fragment.search(/https?:\/\/|#/);
 	if (cut >= 0) fragment = fragment.slice(0, cut);
+	// A full stop or bracket a chat glued to the end.
+	fragment = fragment.replace(/[^A-Za-z0-9_-]+$/, "");
 
 	const parts = fragment.split(".");
 	if (parts.length !== 3 || parts[0] !== SHARE_PREFIX) {

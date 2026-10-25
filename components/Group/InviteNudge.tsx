@@ -12,6 +12,7 @@ import { oweMessage, sendViaWhatsApp } from "@/utils/whatsapp";
 import { track, trackError } from "@/lib/analytics";
 import { inviteNudgeKey } from "@/utils/shareImport";
 
+const SENDING = "sending";
 
 interface InviteNudgeProps {
 	group: Group;
@@ -26,10 +27,12 @@ interface InviteNudgeProps {
  * owe you, with their own link into the group: "you owe me" gets answered, and
  * the link brings them in. When nobody owes you, it offers the group link.
  * Shown until the card is dismissed, once per group; for a group that was
- * already shared, only while you're sending from it.
+ * already shared, only once you send from it. Its first Send turns sync on, so
+ * that is saved: after a reload the card is still there for everyone else.
  */
 export const InviteNudge = ({ group, shareLink, onInvite }: InviteNudgeProps) => {
-	const [dismissed, setDismissed] = useState(true);
+	/** What this device saved for the card: nothing yet, SENDING, or done with ("dismissed", "imported"). */
+	const [mark, setMark] = useState<string | null>("dismissed");
 	/**
 	 * Who you tapped Send for on this visit: "sent", or "copied" on a computer.
 	 * We can't tell if WhatsApp actually sent it, so the row offers to send again.
@@ -39,36 +42,41 @@ export const InviteNudge = ({ group, shareLink, onInvite }: InviteNudgeProps) =>
 	const owed = group.meId ? calculateSettlements(group.members, group.expenses).filter((s) => s.to === group.meId) : [];
 	const me = group.members.find((m) => m.id === group.meId);
 	const names = Object.fromEntries(shownMembers(group).map((p) => [p.id, p]));
-	const visible = !dismissed && (!group.sync || Object.keys(sent).length > 0);
+	const visible = mark === SENDING || (mark === null && !group.sync);
 
 	useEffect(() => {
-		let seen = false;
+		let saved: string | null = null;
 		try {
-			seen = localStorage.getItem(inviteNudgeKey(group.id)) !== null;
+			saved = localStorage.getItem(inviteNudgeKey(group.id));
 		} catch {
 			/* storage unavailable: show it */
 		}
-		setDismissed(seen);
+		setMark(saved);
 		setSent({});
 	}, [group.id]);
+
+	const remember = (value: string) => {
+		setMark(value);
+		try {
+			localStorage.setItem(inviteNudgeKey(group.id), value);
+		} catch {
+			/* storage unavailable: it only lasts this visit */
+		}
+	};
 
 	useEffect(() => {
 		if (visible) track("invite_nudge_shown");
 	}, [visible]);
 
 	const dismiss = () => {
-		setDismissed(true);
 		track("invite_nudge_dismissed");
-		try {
-			localStorage.setItem(inviteNudgeKey(group.id), "dismissed");
-		} catch {
-			/* storage unavailable: it will just show again next time */
-		}
+		remember("dismissed");
 	};
 
 	// Their own link opens the group as them, on what they owe; the message uses shared names, not nicknames.
 	const send = async (personId: string, amount: number) => {
 		track("invite_nudge_sent", { was_shared: !!group.sync });
+		if (mark !== SENDING) remember(SENDING);
 		try {
 			const link = await shareLink();
 			const name = group.members.find((m) => m.id === personId)?.name ?? "";
