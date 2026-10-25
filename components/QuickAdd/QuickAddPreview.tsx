@@ -179,12 +179,12 @@ export const QuickAddPreview = ({ quick, currency, newGroup, onConfirm, onClose 
 								)}
 
 								<Check on={flagged("payer")}>
-									<label className="flex items-center gap-2 text-sm text-ink-soft">
+									<label className="flex items-center gap-2 whitespace-nowrap text-sm text-ink-soft">
 										Paid by
 										<select
 											value={e.paidBy}
 											onChange={(ev) => editExpense(i, { paidBy: ev.target.value }, "payer")}
-											className="min-h-9 flex-1 rounded-lg border border-line-strong bg-surface px-2 font-medium text-ink"
+											className="min-h-9 min-w-0 flex-1 rounded-lg border border-line-strong bg-surface px-2 font-medium text-ink"
 										>
 											{shown.map((p) => (
 												<option key={p.key} value={p.key}>

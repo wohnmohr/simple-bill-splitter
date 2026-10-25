@@ -264,6 +264,9 @@ export const SettlementList = ({
 			{mine.map((s) => {
 				const iPay = s.from === me!.id;
 				const other = getPersonName(iPay ? s.to : s.from);
+				// Shown on one line, never split inside the number; crore amounts
+				// (over 13 characters) step down a size to fit a 320px phone.
+				const amount = formatCurrency(s.amount, currency);
 				return (
 					<section
 						key={`${s.from}-${s.to}`}
@@ -273,11 +276,11 @@ export const SettlementList = ({
 							{iPay ? `You pay ${other}` : `${other} owes you`}
 						</p>
 						<p
-							className={`mt-1 font-display text-4xl font-semibold tabular-nums ${
+							className={`mt-1 whitespace-nowrap font-display ${amount.length > 13 ? "text-3xl" : "text-4xl"} font-semibold tabular-nums ${
 								iPay ? "text-ink" : "text-positive"
 							}`}
 						>
-							{formatCurrency(s.amount, currency)}
+							{amount}
 						</p>
 
 						{iPay ? (
@@ -419,12 +422,12 @@ const SettlementLine = ({
 	currency: Currency;
 	name: (id: string) => string;
 }) => (
-	<div className="flex items-center justify-between gap-3">
-		<p className="min-w-0 flex-1 truncate text-ink-muted">
+	<div className="flex flex-wrap items-baseline justify-between gap-x-3">
+		<p className="min-w-0 text-ink-muted">
 			<span className="font-semibold text-ink">{name(s.from)}</span> pays{" "}
 			<span className="font-semibold text-ink">{name(s.to)}</span>
 		</p>
-		<p className="shrink-0 font-semibold tabular-nums text-ink">
+		<p className="whitespace-nowrap font-semibold tabular-nums text-ink">
 			{formatCurrency(s.amount, currency)}
 		</p>
 	</div>

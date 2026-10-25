@@ -55,7 +55,7 @@ export const BalanceHeadline = ({
 			<span className={big ? "text-ink" : "text-ink-muted"}>
 				{owed ? "You get back " : "You owe "}
 			</span>
-			<span className={`tabular-nums ${owed ? "text-positive" : "text-negative"}`}>
+			<span className={`whitespace-nowrap tabular-nums ${owed ? "text-positive" : "text-negative"}`}>
 				{amount}
 			</span>
 		</span>
