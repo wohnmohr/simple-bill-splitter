@@ -75,6 +75,8 @@ export type Group = {
   sync?: GroupSyncLink;
   /** Epoch ms when the group was closed as finished (a trip that's over). Shared. */
   closedAt?: number;
+  /** Who shared the group (their person id). Set once, when the group is first shared. */
+  hostId?: string;
   /** Theme id from utils/themes. Shared with everyone in a synced group. */
   theme?: string;
   /**

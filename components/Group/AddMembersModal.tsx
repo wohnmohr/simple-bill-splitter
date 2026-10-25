@@ -8,7 +8,7 @@ import { isValidUpiId } from "@/utils/upi";
 import { nameKey, splitNames } from "@/utils/firstExpense";
 import { pasteNames } from "@/components/UI/pasteNames";
 import { loadMyName } from "@/utils/myName";
-import { currentMembers, entriesWith } from "@/utils/members";
+import { canSetUpi, currentMembers, entriesWith } from "@/utils/members";
 
 interface AddMembersModalProps {
 	isOpen: boolean;
@@ -71,7 +71,7 @@ export const AddMembersModal = ({
 	const names = splitNames(memberName, taken);
 	const already = splitNames(memberName).filter((n) => takenKeys.has(nameKey(n)));
 	// A UPI ID belongs to one person, so it's asked for only while one name is typed.
-	const askUpi = isInr && names.length <= 1;
+	const askUpi = isInr && names.length <= 1 && canSetUpi(group);
 
 	const handleSubmit = () => {
 		if (names.length && !(askUpi && upiError(memberUpi))) {
@@ -246,7 +246,7 @@ export const AddMembersModal = ({
 													: `Only on this device. The group still sees “${member.name}”. Leave it empty to use that.`}
 										</p>
 									)}
-									{isInr && onUpdateMemberUpi && (
+									{isInr && onUpdateMemberUpi && (canSetUpi(group, member.id) ? (
 										<TextInput
 											aria-label={`${member.name}'s UPI ID`}
 											value={member.upiId || ""}
@@ -261,7 +261,10 @@ export const AddMembersModal = ({
 											styles={{ input: { minHeight: 38, fontSize: 15 } }}
 											data-ph-mask
 										/>
-									)}
+									) : member.upiId && (
+										// Only they or the host can change it, so a UPI ID can't be swapped for someone else's.
+										<p className="truncate text-xs text-ink-muted" data-ph-mask>UPI: {member.upiId}</p>
+									))}
 								</li>
 								);
 							})}
