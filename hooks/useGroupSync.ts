@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Group } from "@/types";
 import { GroupSync, type SyncStatus, deleteForEveryone, forgetSync, startSync } from "@/utils/groupSync";
+import { meAfter } from "@/utils/members";
 
 // Live while someone is looking, quieter when idle, silent when away.
 const TICK_MS = 15_000;
@@ -29,7 +30,9 @@ export function useGroupSync(
 			setGroups((prev) =>
 				prev.map((g) => {
 					const engine = engines.current.get(g.id);
-					return g.id === id && engine ? { ...engine.reconcile(g), meId: g.meId, sync: g.sync } : g;
+					if (g.id !== id || !engine) return g;
+					const merged = engine.reconcile(g);
+					return { ...merged, meId: meAfter(g, merged), sync: g.sync };
 				})
 			),
 		[setGroups]
