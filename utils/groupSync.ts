@@ -111,6 +111,9 @@ async function fetchAll(keys: GroupKeys): Promise<Saved> {
 
 /** Merges one pull response into `saved`. Returns true if the server has more. */
 async function mergeResponse(keys: GroupKeys, saved: Saved, res: Record<string, unknown>): Promise<boolean> {
+	// A group's head only grows. A lower one means it was deleted and made again
+	// by someone with the old link: treat it as gone, like a 404.
+	if (Number(res.head ?? res.seq) < saved.seq) throw new HttpError(404, {});
 	saved.expiresAt = Number(res.expiresAt) || saved.expiresAt;
 	saved.snapshotSeq = Number(res.snapshotSeq) || saved.snapshotSeq;
 	if (res.unchanged) return false;
@@ -184,13 +187,14 @@ export class GroupSync {
 	/** When sync last went wrong, until it works again. */
 	private troubleSince = 0;
 	status: SyncStatus = "syncing";
+	/** Called when other devices' changes are ready; answer with reconcile(). */
+	private onChange: () => void;
+	private onStatus: (s: SyncStatus) => void;
 
-	constructor(
-		group: Group,
-		/** Called when other devices' changes are ready; answer with reconcile(). */
-		private onChange: () => void,
-		private onStatus: (s: SyncStatus) => void
-	) {
+	// Plain fields, not parameter properties, so tests can load this file with Node's type stripping.
+	constructor(group: Group, onChange: () => void, onStatus: (s: SyncStatus) => void) {
+		this.onChange = onChange;
+		this.onStatus = onStatus;
 		const link = group.sync as GroupSyncLink;
 		this.keys = deriveGroupKeys(link.secret, link.pass);
 		const saved = load(group.id);
