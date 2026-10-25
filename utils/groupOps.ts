@@ -71,6 +71,12 @@ export function mergeState(state: SyncState, other: unknown): void {
 	}
 }
 
+/** Two queues of unconfirmed changes as one (two tabs of one device), less what `state` already has from the server. */
+export function joinPending(state: SyncState, mine: Op[], theirs: Op[]): Op[] {
+	const queued = new Set(mine.map((o) => o.i));
+	return [...mine, ...theirs.filter((o) => !queued.has(o.i))].filter((o) => state[o.k][o.e]?.i !== o.i);
+}
+
 export const cloneState = (s: SyncState): SyncState => JSON.parse(JSON.stringify(s));
 
 /** Highest clock seen, so new operations always sort after everything this device knows. */

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Group, Currency } from "@/types";
-import { MAX_GROUPS, DEFAULT_CURRENCY } from "@/constants";
+import { MAX_GROUPS, DEFAULT_CURRENCY, STORAGE_KEY } from "@/constants";
 import { loadGroupsFromStorage, saveGroupsToStorage } from "@/utils/storage";
 import { consumePendingGroupSelection } from "@/utils/shareImport";
 import { useGroupSync } from "@/hooks/useGroupSync";
@@ -36,6 +36,19 @@ export const useGroups = () => {
       saveGroupsToStorage(groups);
     }
   }, [groups, loaded]);
+
+  // Another tab or the installed app saved: show its groups, so this tab never saves an older copy over them.
+  const { adopt } = sync;
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== STORAGE_KEY) return;
+      const next = loadGroupsFromStorage();
+      adopt(next);
+      setGroups(next);
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [adopt]);
 
   // Monthly expenses that have come due: on load, on every change, and when the app comes back to the front.
   const [awake, setAwake] = useState(0);

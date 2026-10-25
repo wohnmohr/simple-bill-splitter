@@ -21,6 +21,8 @@ export function useGroupSync(
 	const [status, setStatus] = useState<Record<string, SyncStatus>>({});
 	const selected = useRef(selectedGroupId);
 	selected.current = selectedGroupId;
+	const current = useRef(groups);
+	current.current = groups;
 
 	const reconcile = useCallback(
 		(id: string) =>
@@ -153,8 +155,20 @@ export function useGroupSync(
 		forgetSync(groupId);
 	}, []);
 
+	/** Another tab saved these groups: take them in as they are, not as edits made here. */
+	const adopt = useCallback((next: Group[]) => {
+		for (const g of next) {
+			const engine = engines.current.get(g.id);
+			// A new link (reset in the other tab) needs a new engine; the effect starts it.
+			if (engine && g.sync?.secret !== current.current.find((x) => x.id === g.id)?.sync?.secret) {
+				engine.dispose();
+				engines.current.delete(g.id);
+			} else engine?.adopt(g);
+		}
+	}, []);
+
 	const syncNow = useCallback((groupId: string) => engines.current.get(groupId)?.sync(groupId, true), []);
 	const expiresAt = (groupId: string) => engines.current.get(groupId)?.expiresAt;
 
-	return { status, enableSync, keepLocalCopy, deleteSyncedGroup, resetLink, forgetGroup, syncNow, expiresAt };
+	return { status, enableSync, keepLocalCopy, deleteSyncedGroup, resetLink, forgetGroup, adopt, syncNow, expiresAt };
 }
