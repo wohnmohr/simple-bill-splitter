@@ -36,7 +36,8 @@ export const UpiSettlementActions = ({
 
 	if (currency.code !== "INR" || !to) return null;
 
-	const upiId = to.upiId?.trim() || "";
+	// A half-typed or mistyped UPI ID counts as none: it's asked for again instead of building a pay link that fails.
+	const upiId = to.upiId && isValidUpiId(to.upiId) ? to.upiId.trim() : "";
 	const link = upiId
 		? buildUpiLink({
 				pa: upiId,

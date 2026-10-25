@@ -1,18 +1,16 @@
-import { Currency } from "@/types";
+import type { Currency } from "@/types";
+import { roundMoney } from "@/utils/calculations";
 
+/**
+ * "₹1,25,000", "₹33.33", "$1,250.00", "¥1,000". Rupees use Indian digit
+ * grouping and drop ".00" on whole amounts; yen have no decimals.
+ */
 export const formatCurrency = (amount: number, currency: Currency): string => {
-  if (currency.code === "JPY") {
-    return `${currency.symbol}${Math.round(amount).toLocaleString("en-IN")}`;
-  }
-
-  if (currency.code === "INR") {
-    return `${currency.symbol}${amount.toLocaleString("en-IN", {
-      minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
-      maximumFractionDigits: 2,
-    })}`;
-  }
-
-  return `${currency.symbol}${amount.toFixed(2)}`;
+  const digits = currency.code === "JPY" || (currency.code === "INR" && Number.isInteger(roundMoney(amount))) ? 0 : 2;
+  return `${currency.symbol}${amount.toLocaleString(currency.code === "INR" ? "en-IN" : "en-US", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  })}`;
 };
 
 /** "Priya", "Priya and Asha", "Priya + 2". */

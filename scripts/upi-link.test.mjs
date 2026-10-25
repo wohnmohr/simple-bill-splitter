@@ -18,3 +18,13 @@ test("only amounts above ₹2,000 get the pay-in-app fallback", () => {
 	assert.equal(overUpiLinkLimit(2000.5), true);
 	assert.equal(overUpiLinkLimit(2300), true);
 });
+
+test("a mistyped UPI ID gets no pay link", () => {
+	for (const pa of ["asha@", "asha", "@ybl", "a@b", "asha@ok axis"]) assert.equal(buildUpiLink({ pa, pn: "Asha", am: 300 }), null, pa);
+	assert.match(buildUpiLink({ pa: "asha@kotak811", pn: "Asha", am: 300 }), /^upi:\/\/pay\?pa=asha%40kotak811/);
+});
+
+test("the note is cut at 50 characters, never through an emoji", () => {
+	const link = buildUpiLink({ pa: "asha@okaxis", pn: "Asha", tn: `${"x".repeat(49)}😀 trip` });
+	assert.equal(new URL(link.replace("upi:", "https:")).searchParams.get("tn"), `${"x".repeat(49)}😀`);
+});

@@ -7,8 +7,8 @@ import { Currency, Expense, Person, SplitChoice } from "@/types";
 import type { ExpenseInput } from "@/hooks/useExpenses";
 import { DEFAULT_CURRENCY } from "@/constants";
 import { formatCurrency, fromDateInput, toDateInput } from "@/utils/formatting";
-import { enteredWeights, splitChoice } from "@/utils/calculations";
-import { MAX_SHARES } from "@/utils/groupOps";
+import { enteredWeights, minorUnits, roundMoney, splitChoice } from "@/utils/calculations";
+import { MAX_AMOUNT, MAX_SHARES } from "@/utils/groupOps";
 import { findDuplicate, looksMonthly, suggestPast } from "@/utils/suggestions";
 import { track } from "@/lib/analytics";
 import { OrderSplit } from "@/components/Scan/OrderSplit";
@@ -131,17 +131,20 @@ export const ExpenseFormModal = ({
 		defaultPayerId,
 	]);
 
-	const equalShares = (ids: Set<string>, total: number) => {
+	// Money is typed and checked in whole minor units: paise, or whole yen.
+	const unitScale = minorUnits(currency);
+	const moneyDecimals = unitScale === 1 ? 0 : 2;
+
+	const equalShares = (ids: Set<string>, total: number, unit = 100) => {
 		const shares: Record<string, number> = {};
 		if (ids.size === 0) return shares;
-		const each = Math.round((total / ids.size) * 100) / 100;
+		const each = roundMoney(total / ids.size, unit);
 		const list = Array.from(ids);
 		list.forEach((id) => {
 			shares[id] = each;
 		});
 		// Put the rounding remainder on the last person so the total is exact.
-		shares[list[list.length - 1]] =
-			Math.round((total - each * (list.length - 1)) * 100) / 100;
+		shares[list[list.length - 1]] = roundMoney(total - each * (list.length - 1), unit);
 		return shares;
 	};
 
@@ -150,7 +153,7 @@ export const ExpenseFormModal = ({
 		method === "percentage"
 			? equalShares(ids, 100)
 			: method === "exact" && total > 0
-			? equalShares(ids, total)
+			? equalShares(ids, total, unitScale)
 			: method === "shares"
 			? Object.fromEntries(Array.from(ids, (id) => [id, 1]))
 			: {};
@@ -197,19 +200,19 @@ export const ExpenseFormModal = ({
 	}, [isOpen, scanFile]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const amountNum = parseFloat(amount);
-	const hasAmount = amountNum > 0;
+	const hasAmount = amountNum > 0 && amountNum <= MAX_AMOUNT;
 	const isPercentage = splitMethod === "percentage";
 	const isExact = splitMethod === "exact";
 	const isShares = splitMethod === "shares";
-	// A custom split has to add up: to 100%, or to the amount. Shares just need someone to have one.
-	const assigned = Math.round(
-		Array.from(participants).reduce((sum, id) => sum + (weights[id] || 0), 0) * 100
-	) / 100;
+	// A custom split has to add up exactly: to 100% (to 0.01%), or to the amount (to the paisa). Shares just need someone to have one.
+	const splitUnit = isExact ? unitScale : 100;
+	const assigned = roundMoney(Array.from(participants).reduce((sum, id) => sum + (weights[id] || 0), 0), splitUnit);
 	const target = isPercentage ? 100 : amountNum;
-	const splitOff = isShares ? assigned <= 0 : (isPercentage || isExact) && Math.abs(assigned - target) > 0.01;
-	const paidTotal = payerAmounts ? Math.round(Object.values(payerAmounts).reduce((sum, n) => sum + n, 0) * 100) / 100 : 0;
+	const differs = (a: number, b: number, unit: number) => Math.round(a * unit) !== Math.round(b * unit);
+	const splitOff = isShares ? assigned <= 0 : (isPercentage || isExact) && differs(assigned, target, splitUnit);
+	const paidTotal = payerAmounts ? roundMoney(Object.values(payerAmounts).reduce((sum, n) => sum + n, 0), unitScale) : 0;
 	const hasPayer = payerAmounts ? paidTotal > 0 : !!paidBy;
-	const paidOff = !!payerAmounts && hasAmount && Math.abs(paidTotal - amountNum) > 0.01;
+	const paidOff = !!payerAmounts && hasAmount && differs(paidTotal, amountNum, unitScale);
 	const canSubmit = hasAmount && hasPayer && !paidOff && participants.size > 0 && !splitOff;
 	const unit = (n: number) => (isPercentage ? `${Math.round(n * 100) / 100}%` : formatCurrency(n, currency));
 	const isEdit = title.includes("Edit");
@@ -225,7 +228,7 @@ export const ExpenseFormModal = ({
 		const sharing = new Set(e.participants.filter((id) => here.has(id)));
 		setDescription(e.description ?? "");
 		if (!hasAmount) setAmount(e.amount.toString());
-		const amountChanged = hasAmount && Math.abs(amountNum - e.amount) > 0.01;
+		const amountChanged = hasAmount && differs(amountNum, e.amount, unitScale);
 		if (e.payers && !amountChanged && Object.keys(e.payers).every((id) => here.has(id))) setPayerAmounts({ ...e.payers });
 		else if (here.has(e.paidBy)) {
 			setPayerAmounts(null);
@@ -241,7 +244,9 @@ export const ExpenseFormModal = ({
 	};
 
 	// The button says what's still missing instead of just going grey.
-	const submitLabel = !hasAmount
+	const submitLabel = amountNum > MAX_AMOUNT
+		? "That's too big an amount"
+		: !hasAmount
 		? "Enter an amount"
 		: !hasPayer
 		? "Choose who paid"
@@ -387,7 +392,9 @@ export const ExpenseFormModal = ({
 					onChange={(value) => setAmount(value === "" ? "" : value.toString())}
 					placeholder="0"
 					min={0}
-					decimalScale={2}
+					max={MAX_AMOUNT}
+					clampBehavior="strict"
+					decimalScale={moneyDecimals}
 					thousandSeparator=","
 					thousandsGroupStyle={currency.code === "INR" ? "lakh" : "thousand"}
 					hideControls
@@ -475,7 +482,9 @@ export const ExpenseFormModal = ({
 											onChange={(value) => setPayerAmount(person.id, value === "" ? undefined : parseFloat(value.toString()))}
 											placeholder="0"
 											min={0}
-											decimalScale={2}
+											max={MAX_AMOUNT}
+											clampBehavior="strict"
+											decimalScale={moneyDecimals}
 											prefix={currency.symbol}
 											thousandSeparator=","
 											thousandsGroupStyle={currency.code === "INR" ? "lakh" : "thousand"}
@@ -501,7 +510,7 @@ export const ExpenseFormModal = ({
 									<p className={`mt-2 text-sm tabular-nums ${paidOff ? "text-negative" : "text-ink-muted"}`} role={paidOff ? "alert" : undefined}>
 										{formatCurrency(paidTotal, currency)} of {formatCurrency(amountNum, currency)} paid
 										{paidOff &&
-											` — ${formatCurrency(Math.round(Math.abs(amountNum - paidTotal) * 100) / 100, currency)} ${paidTotal < amountNum ? "still to add" : "too much"}`}
+											` — ${formatCurrency(roundMoney(Math.abs(amountNum - paidTotal), unitScale), currency)} ${paidTotal < amountNum ? "still to add" : "too much"}`}
 									</p>
 								)
 							)}
@@ -594,7 +603,7 @@ export const ExpenseFormModal = ({
 									</button>
 									{selected && hasAmount && !isExact && (
 										<span className="shrink-0 text-sm tabular-nums text-ink-muted">
-											{formatCurrency(Math.round(shareOf(person.id) * 100) / 100, currency)}
+											{formatCurrency(roundMoney(shareOf(person.id), unitScale), currency)}
 										</span>
 									)}
 									{selected && (isPercentage || isExact || isShares) && (
@@ -609,7 +618,7 @@ export const ExpenseFormModal = ({
 											}
 											min={0}
 											max={isPercentage ? 100 : isShares ? MAX_SHARES : undefined}
-											decimalScale={isShares ? 1 : 2}
+											decimalScale={isShares ? 1 : isExact ? moneyDecimals : 2}
 											{...(isPercentage ? { suffix: "%" } : isShares ? { suffix: "×" } : { prefix: currency.symbol })}
 											thousandSeparator={isExact ? "," : undefined}
 											thousandsGroupStyle={currency.code === "INR" ? "lakh" : "thousand"}
@@ -641,7 +650,7 @@ export const ExpenseFormModal = ({
 						>
 							{splitOff
 								? "Give at least one person a share"
-								: `${assigned} ${assigned === 1 ? "share" : "shares"}${hasAmount ? ` · ${formatCurrency(Math.round((amountNum / assigned) * 100) / 100, currency)} a share` : ""}`}
+								: `${assigned} ${assigned === 1 ? "share" : "shares"}${hasAmount ? ` · ${formatCurrency(roundMoney(amountNum / assigned, unitScale), currency)} a share` : ""}`}
 						</p>
 					) : (
 						(isPercentage || (isExact && hasAmount)) &&

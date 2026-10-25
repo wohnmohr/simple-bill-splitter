@@ -59,3 +59,27 @@ test("random groups always settle to exactly zero after Mark all paid", () => {
 		assertSettled(markAllPaid(expenses));
 	}
 });
+
+test("yen are shared out and settled in whole yen", () => {
+	const yen = 1;
+	const dinner = [expense("e1", 1000, "a", ["a", "b", "c"])];
+	assert.deepEqual([...expenseShares(dinner[0], yen).values()], [333, 333, 334]);
+	const settlements = calculateSettlements(people, dinner, yen);
+	assert.deepEqual(settlements.map((s) => s.amount).sort(), [333, 334]);
+	assert.equal(calculateBalances(people, dinner, yen).find((b) => b.personId === "a").balance, 667);
+	// ¥1 between three: nobody owes a fraction of a yen.
+	const coin = calculateSettlements(people, [expense("e2", 1, "a", ["a", "b", "c"])], yen);
+	assert.deepEqual(coin, [{ from: "c", to: "a", amount: 1 }]);
+});
+
+test("amounts are written the way each currency is", async () => {
+	const { formatCurrency } = await import("../utils/formatting.ts");
+	const { CURRENCIES } = await import("../constants/index.ts");
+	const [inr, usd, , , jpy] = CURRENCIES;
+	assert.equal(formatCurrency(125000, inr), "₹1,25,000");
+	assert.equal(formatCurrency(33.333, inr), "₹33.33");
+	assert.equal(formatCurrency(100.001, inr), "₹100");
+	assert.equal(formatCurrency(1250, usd), "$1,250.00");
+	assert.equal(formatCurrency(100000, jpy), "¥100,000");
+	assert.equal(formatCurrency(333.33, jpy), "¥333");
+});
