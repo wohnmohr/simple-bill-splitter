@@ -72,6 +72,7 @@ const SCHEMA = [
 		endpoint_hash  TEXT NOT NULL,
 		sub            TEXT NOT NULL,
 		notified_at    INTEGER NOT NULL DEFAULT 0,
+		fails          INTEGER NOT NULL DEFAULT 0,
 		PRIMARY KEY (group_id, endpoint_hash)
 	)`,
 	// Global counters per hour and per day ("h:<hour>", "d:<day>"): ceilings on new
@@ -84,7 +85,10 @@ const SCHEMA = [
 ];
 
 /** Columns added after a table first shipped; "duplicate column" means it's already there. */
-const MIGRATIONS = ["ALTER TABLE splits ADD COLUMN payments INTEGER NOT NULL DEFAULT 0"];
+const MIGRATIONS = [
+	"ALTER TABLE splits ADD COLUMN payments INTEGER NOT NULL DEFAULT 0",
+	"ALTER TABLE group_push ADD COLUMN fails INTEGER NOT NULL DEFAULT 0",
+];
 
 export class FeedbackUnavailableError extends Error {}
 

@@ -1,6 +1,6 @@
 // Resolves the app's "@/..." imports for tests that load modules using them.
 // "server-only" (which throws outside Next's server build) becomes an empty module,
-// and "next/server" gets the file extension plain Node needs.
+// and "next/server" gets the file extension Node needs.
 // Use: register("./fixtures/alias.mjs", import.meta.url), then import dynamically.
 export async function resolve(specifier, context, next) {
 	if (specifier === "server-only") return { url: "data:text/javascript,", shortCircuit: true };

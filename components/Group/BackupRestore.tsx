@@ -47,7 +47,8 @@ export const BackupRestore = () => {
 		} catch (err) {
 			if (err instanceof HttpError && err.status === 403) return setState({ step: "passphrase", wrong: true });
 			if (err instanceof HttpError && err.status === 404) return fail("gone");
-			if (err instanceof HttpError) return fail("invalid");
+			// 429 (too many tries) is a wait, like being offline, not a broken link.
+			if (err instanceof HttpError && err.status !== 429) return fail("invalid");
 			fail(err instanceof Error && err.message === "not a backup" ? "invalid" : "offline", true);
 		}
 	};
