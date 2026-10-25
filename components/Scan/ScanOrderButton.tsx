@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { Loader2, ScanLine, ShieldCheck } from "lucide-react";
 import type { ScanState } from "@/components/Scan/useOrderScan";
+import { ReportProblem } from "@/components/Feedback/ReportProblem";
 
 type Props = {
 	state: ScanState;
@@ -57,9 +58,12 @@ export const ScanOrderButton = ({ state, onFile, label = "Scan a food order scre
 					</p>
 				</>
 			) : state.status === "error" ? (
-				<p role="alert" className="mt-2 text-sm text-negative">
-					{state.message}
-				</p>
+				<>
+					<p role="alert" className="mt-2 text-sm text-negative">
+						{state.message}
+					</p>
+					<ReportProblem problem="scan_failed" className="mt-1" />
+				</>
 			) : (
 				<p className="mt-2 flex items-center gap-1.5 text-xs text-ink-muted">
 					<ShieldCheck className="h-3.5 w-3.5 shrink-0 text-positive" />

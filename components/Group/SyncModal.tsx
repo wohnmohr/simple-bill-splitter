@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check, ChevronDown, Copy, KeyRound, Loader2, Lock, QrCode, RefreshCw, Share2, Trash2, Unlink } from "lucide-react";
 import { Modal } from "@/components/UI/Modal";
+import { ReportProblem } from "@/components/Feedback/ReportProblem";
 import type { Group } from "@/types";
 import type { SyncStatus } from "@/utils/groupSync";
 import { groupUrl, syncShareText } from "@/utils/groupSync";
@@ -213,6 +214,7 @@ export const SyncModal = ({ isOpen, onClose, group, status, expiresAt, onEnable,
 						<button type="button" onClick={() => { onKeepLocal(group.id); onClose(); }} className="btn-primary w-full">
 							Keep my copy on this device
 						</button>
+						<ReportProblem problem={`sync_${status}`} className="self-center" />
 					</>
 				) : (
 					<>

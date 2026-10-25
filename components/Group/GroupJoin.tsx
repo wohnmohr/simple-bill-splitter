@@ -7,6 +7,7 @@ import { KeyRound, Loader2, Lock } from "lucide-react";
 import type { Group, GroupSyncLink } from "@/types";
 import { MAX_GROUPS } from "@/constants";
 import { track } from "@/lib/analytics";
+import { ReportProblem } from "@/components/Feedback/ReportProblem";
 import { SETTLE_PARAM, forgetSync, joinGroup } from "@/utils/groupSync";
 import { openOnSettleUp } from "@/utils/shareImport";
 import { type GroupLink, parseGroupFragment, stretchPassphrase } from "@/utils/groupVault";
@@ -169,6 +170,7 @@ export const GroupJoin = () => {
 						)}
 						<Link href="/dashboard" className="btn-secondary">Your groups</Link>
 					</div>
+					<ReportProblem problem="join_failed" className="mt-5" />
 				</div>
 			)}
 		</div>
