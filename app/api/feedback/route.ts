@@ -12,7 +12,7 @@ import { overLimit, readSmallJson, sameOrigin } from "@/lib/splitStore";
 
 export const runtime = "nodejs";
 
-const TRIGGERS = new Set(["group_settled", "manual", "share_viewed", "moment"]);
+const TRIGGERS = new Set(["group_settled", "manual", "share_viewed", "moment", "problem"]);
 
 export async function POST(req: Request) {
 	if (!sameOrigin(req)) return Response.json({ error: "Forbidden" }, { status: 403 });

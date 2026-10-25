@@ -72,6 +72,7 @@ export function describeContext(ctx: FeedbackContext): string[] {
 			)} recorded (${ctx.currency})`
 		);
 	}
+	if (ctx.problem) lines.push(`What failed: ${String(ctx.problem).replace(/_/g, " ")}`);
 	const actions = ctx.recent_actions as string[] | undefined;
 	if (actions?.length) {
 		lines.push(`Recent steps: ${actions.slice(-5).map((a) => a.replace(/_/g, " ")).join(" → ")}`);
