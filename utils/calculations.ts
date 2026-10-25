@@ -175,16 +175,22 @@ export const calculateSettlements = (
 
 const DAY = 24 * 60 * 60 * 1000;
 
-/** The headline numbers of a group: what it cost, over how many days, and roughly per person. */
-export const groupSummary = (expenses: Expense[], memberCount: number) => {
+/**
+ * The headline numbers of a group: what it cost, over how many days, and
+ * roughly per person among the people who shared in the spending (someone
+ * added later, on no expense, isn't counted).
+ */
+export const groupSummary = (expenses: Expense[]) => {
   const spent = expenses.filter((e) => e.kind !== "payment");
+  const sharers = new Set(spent.flatMap((e) => e.participants)).size;
   const dates = spent.map((e) => e.createdAt).filter((t): t is number => !!t);
   const total = totalSpent(expenses);
   return {
     total,
     count: spent.length,
     days: dates.length ? Math.round((Math.max(...dates) - Math.min(...dates)) / DAY) + 1 : 0,
-    perPerson: memberCount ? total / memberCount : 0,
+    sharers,
+    perPerson: sharers ? total / sharers : 0,
   };
 };
 

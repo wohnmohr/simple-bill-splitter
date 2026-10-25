@@ -9,6 +9,7 @@ import { InstallCard } from "@/components/Group/InstallCard";
 import { BackupCard } from "@/components/Group/BackupCard";
 import { RemindCard } from "@/components/Group/RemindCard";
 import type { useBackup } from "@/hooks/useBackup";
+import { currentMembers } from "@/utils/members";
 
 interface GroupsHomeProps {
 	groups: Group[];
@@ -100,7 +101,7 @@ export const GroupsHome = ({
 											<BalanceHeadline balance={mine} group={group} size="sm" />
 										) : (
 											<>
-												{plural(group.members.length, "member")} ·{" "}
+												{plural(currentMembers(group.members).length, "member")} ·{" "}
 												{plural(group.expenses.filter((e) => e.kind !== "payment").length, "expense")}
 											</>
 										)}

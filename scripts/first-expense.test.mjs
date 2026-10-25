@@ -5,14 +5,24 @@ import assert from "node:assert/strict";
 import { register } from "node:module";
 
 register("./fixtures/alias.mjs", import.meta.url);
-const { splitNames, firstExpense } = await import("../utils/firstExpense.ts");
+const { splitNames, pastedNames, firstExpense } = await import("../utils/firstExpense.ts");
 const { applyQuickAdd } = await import("../utils/quickAddSave.ts");
 
 test("names split on commas and 'and', without blanks, repeats or you", () => {
-	assert.deepEqual(splitNames("Riya, Kabir and  Meera S", "Arjun"), ["Riya", "Kabir", "Meera S"]);
-	assert.deepEqual(splitNames("riya, Riya,, arjun & Dev", "Arjun"), ["riya", "Dev"]);
-	assert.deepEqual(splitNames("Anand", ""), ["Anand"]);
-	assert.deepEqual(splitNames(" , ", "Arjun"), []);
+	assert.deepEqual(splitNames("Riya, Kabir and  Meera S", ["Arjun"]), ["Riya", "Kabir", "Meera S"]);
+	assert.deepEqual(splitNames("riya, Riya,, arjun & Dev", ["Arjun"]), ["riya", "Dev"]);
+	assert.deepEqual(splitNames("Anand"), ["Anand"]);
+	assert.deepEqual(splitNames(" , ", ["Arjun"]), []);
+});
+
+test("names already in the group, new lines and long names", () => {
+	assert.deepEqual(splitNames("asha, Ben, Esha", ["Asha", "Ben", "Chitra"]), ["Esha"]);
+	assert.deepEqual(splitNames("Farah\nGopal\n\nHari"), ["Farah", "Gopal", "Hari"]);
+	// Cut to 40 characters before comparing, so a long name can't sneak in as a copy of yours.
+	const me = "A".repeat(40);
+	assert.deepEqual(splitNames("A".repeat(200), [me]), []);
+	assert.deepEqual(pastedNames("Farah\r\nGopal\n\n Hari \n"), "Farah, Gopal, Hari");
+	assert.equal(pastedNames("Farah, Gopal"), null);
 });
 
 test("the first expense becomes a group: you paid, everyone splits equally, you are its me", () => {

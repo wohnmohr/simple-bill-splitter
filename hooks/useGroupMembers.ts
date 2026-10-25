@@ -2,6 +2,7 @@ import { Person } from "@/types";
 import { Group } from "@/types";
 import { newId } from "@/utils/ids";
 import { bringBack, removeMember } from "@/utils/members";
+import { cleanText } from "@/utils/text";
 
 export const useGroupMembers = (
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>,
@@ -20,13 +21,14 @@ export const useGroupMembers = (
    * Someone joining passes their pre-made id and is marked as joined.
    */
   const addMember = (name: string, upiId?: string, joiner?: { id: string }): string | null => {
-    if (!name.trim() || !currentGroup) {
+    const clean = cleanText(name, 40);
+    if (!clean || !currentGroup) {
       return null;
     }
 
     const newPerson: Person = {
       id: joiner?.id ?? newId("person"),
-      name: name.trim(),
+      name: clean,
       ...(upiId?.trim() ? { upiId: upiId.trim() } : {}),
       ...(joiner ? { joined: true as const } : {}),
     };
@@ -45,13 +47,13 @@ export const useGroupMembers = (
 
   /** Renames a member for everyone in the group. */
   const renameMember = (personId: string, name: string): void => {
-    const trimmed = name.trim();
-    if (trimmed) updateMember(personId, (m) => ({ ...m, name: trimmed.slice(0, 40) }));
+    const clean = cleanText(name, 40);
+    if (clean) updateMember(personId, (m) => ({ ...m, name: clean }));
   };
 
   /** Sets (or, when empty, clears) the nickname this device shows for a member. Never synced. */
   const setNickname = (personId: string, nickname: string): void => {
-    const trimmed = nickname.trim().slice(0, 40);
+    const trimmed = cleanText(nickname, 40);
     updateCurrent((g) => {
       const { [personId]: _old, ...rest } = g.nicknames ?? {};
       const nicknames = trimmed ? { ...rest, [personId]: trimmed } : rest;

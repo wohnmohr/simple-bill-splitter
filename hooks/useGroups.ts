@@ -8,6 +8,7 @@ import { useBackup } from "@/hooks/useBackup";
 import { disableAlerts } from "@/utils/groupAlerts";
 import { newId } from "@/utils/ids";
 import { addDueRepeatsToGroups } from "@/utils/recurring";
+import { cleanText } from "@/utils/text";
 
 export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -69,13 +70,14 @@ export const useGroups = () => {
     currency: Currency = DEFAULT_CURRENCY,
     fill: (g: Group) => Group = (g) => g
   ): boolean => {
-    if (!name.trim() || groups.length >= MAX_GROUPS) {
+    const clean = cleanText(name, 60);
+    if (!clean || groups.length >= MAX_GROUPS) {
       return false;
     }
 
     const newGroup: Group = fill({
       id: newId("group"),
-      name: name.trim(),
+      name: clean,
       members: [],
       expenses: [],
       currency,
@@ -108,7 +110,8 @@ export const useGroups = () => {
 
   /** Renames a group; for a synced group everyone sees the new name. */
   const renameGroup = (groupId: string, name: string): void => {
-    setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, name } : g)));
+    const clean = cleanText(name, 60);
+    if (clean) setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, name: clean } : g)));
   };
 
   /** Sets a group's theme; for a synced group everyone sees it. */

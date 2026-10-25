@@ -3,6 +3,7 @@ import { newId } from "@/utils/ids";
 import { firstRepeat } from "@/utils/recurring";
 import { splitFields } from "@/utils/calculations";
 import type { QuickResolved } from "@/utils/quickAdd";
+import { cleanText } from "@/utils/text";
 
 /**
  * Adds a confirmed quick-add preview to a group: the new people who are in an
@@ -19,7 +20,7 @@ export function applyQuickAdd(group: Group, quick: QuickResolved, now = Date.now
 		const id = newId("person");
 		ids.set(p.key, id);
 		// The person typing is here on this device, so they count as joined.
-		added.push({ id, name: p.name.trim().slice(0, 40), ...(p.isMe ? { joined: true as const } : {}) });
+		added.push({ id, name: cleanText(p.name, 40), ...(p.isMe ? { joined: true as const } : {}) });
 	}
 	const id = (key: string) => ids.get(key)!;
 	const byId = (weights: Record<string, number>) => Object.fromEntries(Object.entries(weights).map(([k, v]) => [id(k), v]));
@@ -29,7 +30,7 @@ export function applyQuickAdd(group: Group, quick: QuickResolved, now = Date.now
 		amount: e.amount,
 		paidBy: id(e.paidBy),
 		participants: e.participants.map(id),
-		description: e.description.trim() || undefined,
+		description: cleanText(e.description, 100) || undefined,
 		...splitFields(e.splitMethod, e.weights && byId(e.weights), e.amount),
 		createdAt: e.date ?? now,
 		...(e.monthly ? { repeat: { next: firstRepeat(now) } } : {}),
