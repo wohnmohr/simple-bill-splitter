@@ -1,19 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { track, type AnalyticsEvent } from "@/lib/analytics";
 
-const EMBED_SCRIPT = "https://tally.so/widgets/embed.js";
-
-type TallyWindow = Window & { Tally?: { loadEmbeds: () => void } };
-
-/** Tally's own loader sizes the frame to the form; without it, the frame still loads at a fixed height. */
-function loadEmbeds() {
-	const w = window as TallyWindow;
-	if (w.Tally) return w.Tally.loadEmbeds();
-	document.querySelectorAll<HTMLIFrameElement>("iframe[data-tally-src]:not([src])").forEach((f) => {
-		f.src = f.dataset.tallySrc!;
-	});
+/** Tally posts its events to the parent page as JSON strings. */
+function tallyMessage(data: unknown): { event?: string; payload?: { height?: unknown } } | null {
+	if (typeof data !== "string" || !data.includes("Tally.")) return null;
+	try {
+		return JSON.parse(data);
+	} catch {
+		return null;
+	}
 }
 
 type Props = {
@@ -24,7 +21,7 @@ type Props = {
 	source: string;
 	/** Counted when the form is submitted. */
 	event: AnalyticsEvent;
-	/** Room to reserve before Tally sizes the frame to the form. */
+	/** Room to reserve until Tally sends the form's height. */
 	height?: number;
 };
 
@@ -33,24 +30,24 @@ type Props = {
  * its colours and font are set to SplitBiller's in Tally itself.
  */
 export const TallyForm = ({ formId, title, source, event, height = 560 }: Props) => {
-	useEffect(() => {
-		if ((window as TallyWindow).Tally) loadEmbeds();
-		else if (!document.querySelector(`script[src="${EMBED_SCRIPT}"]`)) {
-			const s = document.createElement("script");
-			s.src = EMBED_SCRIPT;
-			s.async = true;
-			s.onload = s.onerror = loadEmbeds;
-			document.body.appendChild(s);
-		}
+	const frame = useRef<HTMLIFrameElement>(null);
 
+	// The form runs in Tally's own frame; no Tally script runs on our page, where it
+	// could read the group keys. The frame tells us its height, and when it's sent.
+	useEffect(() => {
 		const onMessage = (e: MessageEvent) => {
-			if (e.origin !== "https://tally.so" || typeof e.data !== "string" || !e.data.includes("Tally.FormSubmitted")) return;
-			if (!e.data.includes(formId)) return;
-			track(event, { source });
+			if (e.origin !== "https://tally.so" || e.source !== frame.current?.contentWindow) return;
+			const msg = tallyMessage(e.data);
+			if (msg?.event === "Tally.FormResized" && typeof msg.payload?.height === "number" && frame.current) {
+				frame.current.style.height = `${msg.payload.height}px`;
+			}
+			if (msg?.event === "Tally.FormSubmitted") track(event, { source });
 		};
 		window.addEventListener("message", onMessage);
+		// Load the form only now, so its first height message isn't missed.
+		if (frame.current && !frame.current.src) frame.current.src = frame.current.dataset.tallySrc!;
 		return () => window.removeEventListener("message", onMessage);
-	}, [formId, source, event]);
+	}, [source, event]);
 
 	const params = new URLSearchParams({
 		alignLeft: "1",
@@ -63,6 +60,7 @@ export const TallyForm = ({ formId, title, source, event, height = 560 }: Props)
 	return (
 		<>
 			<iframe
+				ref={frame}
 				data-tally-src={`https://tally.so/embed/${formId}?${params}`}
 				loading="lazy"
 				width="100%"
