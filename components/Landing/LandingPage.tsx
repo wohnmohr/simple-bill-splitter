@@ -8,9 +8,10 @@ import { HeroQuickAdd } from "@/components/Landing/HeroQuickAdd";
 import { UpiQr } from "@/components/Settlements/UpiQr";
 import { ALL_TOOL_SLUGS } from "@/content/tools";
 import { SPLIT_TTL_DAYS } from "@/utils/splitCloud";
+import { SITE_URL } from "@/lib/site";
 
 // Bills get split at the table, on a phone with UPI apps; desktop visitors scan to continue there.
-const PHONE_APP_URL = "https://splitbiller.com/dashboard?utm_source=desktop_qr";
+const PHONE_APP_URL = `${SITE_URL}/dashboard?utm_source=desktop_qr`;
 
 const PROMISES = [
 	{ icon: Scale, title: "Who owes whom, in seconds", body: "Split equally, by percentage or exact amounts, and settle in the fewest payments." },
