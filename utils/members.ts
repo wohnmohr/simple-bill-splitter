@@ -46,3 +46,14 @@ export const bringBack = (group: Group, personId: string): Group => ({
 		return back;
 	}),
 });
+
+/** Who shared the group. Groups shared before hosts were recorded fall back to the first person added, usually whoever made it. */
+export const hostOf = (group: Group): string | undefined => group.hostId ?? group.members[0]?.id;
+
+/**
+ * Whether this device may set a member's UPI ID (or, with no id, a new member's).
+ * In a shared group only that person or the host can, so no one can slip their
+ * own UPI ID under a friend's name. A group on this device alone is all yours.
+ */
+export const canSetUpi = (group: Group, personId?: string): boolean =>
+	!group.sync || (!!group.meId && (group.meId === personId || group.meId === hostOf(group)));
