@@ -82,7 +82,7 @@ export const ShareViewer = () => {
 		if (state.status !== "ready") return;
 		setImporting(true);
 		setImportError(null);
-		const result = importShareSnapshot(state.snapshot);
+		const result = importShareSnapshot(state.snapshot, meId ?? undefined);
 		if (!result.ok) {
 			setImporting(false);
 			track("share_import_failed", { reason: result.reason });

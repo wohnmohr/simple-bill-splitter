@@ -37,7 +37,7 @@ export const emptyState = (): SyncState => ({ m: {}, e: {}, c: {}, g: {} });
 const KINDS: EntityKind[] = ["m", "e", "c", "g"];
 const wins = (a: { t: number; i: string }, b: { t: number; i: string }) => a.t > b.t || (a.t === b.t && a.i > b.i);
 
-const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+export const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const FIELD_RE = /^[A-Za-z]{1,32}$/;
 const isOp = (o: unknown): o is Op => {
 	const op = o as Op;
@@ -149,7 +149,7 @@ const money = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v 
 /** Whole paise, so sums compare exactly. */
 const paise = (n: number) => Math.round(n * 100);
 
-function toPerson(id: string, v: unknown): Person | null {
+export function toPerson(id: string, v: unknown): Person | null {
 	const p = v as Partial<Person>;
 	const name = cleanText(str(p?.name, 200), 60);
 	if (!name) return null;
@@ -164,7 +164,7 @@ function toPerson(id: string, v: unknown): Person | null {
 /** Most shares one person can hold in a split by shares. */
 export const MAX_SHARES = 1000;
 
-function toExpense(id: string, v: unknown, members: Set<string>): Expense | null {
+export function toExpense(id: string, v: unknown, members: Set<string>): Expense | null {
 	const x = v as Partial<Expense>;
 	const amount = money(x?.amount);
 	const paidBy = str(x?.paidBy, 64);
