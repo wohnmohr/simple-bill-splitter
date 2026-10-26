@@ -1,5 +1,5 @@
 import type { Currency } from "@/types";
-import { type Award, awardDetail } from "@/utils/awards";
+import { type Award, type AwardId, awardDetail } from "@/utils/awards";
 import { formatCurrency } from "@/utils/formatting";
 
 export const CARD_W = 1080;
@@ -19,7 +19,11 @@ export type SettledCardData = {
 	nameOf: (id: string) => string;
 	/** Off for a card that shows no money. */
 	amounts: boolean;
+	icons: CardIcons;
 };
+
+/** What the card draws for each award, plus the "settled" check. */
+export type CardIcons = { badges: Partial<Record<AwardId, { img: HTMLImageElement; color: string }>>; check: HTMLImageElement };
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
@@ -56,6 +60,16 @@ const wrap = (ctx: CanvasRenderingContext2D, text: string, width: number, max: n
 	return lines;
 };
 
+/** A round badge of `size` pixels at (x, y): the icon, white, on its color. */
+const badge = (ctx: CanvasRenderingContext2D, fill: string, img: HTMLImageElement | undefined, x: number, y: number, size: number) => {
+	ctx.fillStyle = fill;
+	ctx.beginPath();
+	ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+	ctx.fill();
+	const icon = size * 0.52;
+	if (img) ctx.drawImage(img, x + (size - icon) / 2, y + (size - icon) / 2, icon, icon);
+};
+
 /** Cuts `text` to fit `width` pixels. */
 const fit = (ctx: CanvasRenderingContext2D, text: string, width: number) => wrap(ctx, text, width, 1)[0] ?? "";
 
@@ -79,8 +93,10 @@ export function drawSettledCard(canvas: HTMLCanvasElement, d: SettledCardData) {
 	ctx.fillStyle = "#ffffff";
 
 	// Header: the stamp, the group, its numbers.
+	badge(ctx, "rgba(255,255,255,0.18)", d.icons.check, PAD, 166, 60);
+	ctx.fillStyle = "#ffffff";
 	ctx.font = `700 40px ${font}`;
-	ctx.fillText("✓  ALL SETTLED", PAD, 210);
+	ctx.fillText("ALL SETTLED", PAD + 84, 210);
 	ctx.font = `700 104px ${font}`;
 	let y = 340;
 	for (const line of wrap(ctx, d.groupName, inner, 2)) {
@@ -101,9 +117,8 @@ export function drawSettledCard(canvas: HTMLCanvasElement, d: SettledCardData) {
 		ctx.beginPath();
 		ctx.roundRect(PAD, y - 90, inner, 420, 48);
 		ctx.fill();
-		ctx.fillStyle = "#ffffff";
-		ctx.font = `160px ${font}`;
-		ctx.fillText(mine.emoji, PAD + 56, y + 110);
+		const b = d.icons.badges[mine.id];
+		badge(ctx, b?.color ?? soft, b?.img, PAD + 56, y - 40, 150);
 		ctx.font = `600 40px ${font}`;
 		ctx.fillStyle = soft;
 		ctx.fillText(fit(ctx, `${d.nameOf(d.forId)} is the`, inner - 112), PAD + 56, y + 200);
@@ -125,9 +140,10 @@ export function drawSettledCard(canvas: HTMLCanvasElement, d: SettledCardData) {
 	const fits = Math.floor(space / rowH);
 	const shown = rest.length > fits ? rest.slice(0, fits - 1) : rest;
 	for (const a of shown) {
+		const b = d.icons.badges[a.id];
+		const size = full ? 72 : 56;
+		badge(ctx, b?.color ?? soft, b?.img, PAD, y + 36 - size / 2, size);
 		ctx.fillStyle = "#ffffff";
-		ctx.font = `${full ? 56 : 44}px ${font}`;
-		ctx.fillText(a.emoji, PAD, y + 56);
 		ctx.font = `600 44px ${font}`;
 		const name = fit(ctx, d.nameOf(a.personId), 360);
 		ctx.textAlign = "right";

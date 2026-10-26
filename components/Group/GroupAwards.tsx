@@ -1,6 +1,7 @@
 import { Sparkles } from "lucide-react";
 import type { Currency, Person } from "@/types";
 import { type Award, awardDetail } from "@/utils/awards";
+import { AWARD_ICONS } from "@/components/Group/awardIcons";
 
 interface GroupAwardsProps {
 	awards: Award[];
@@ -30,7 +31,7 @@ export const GroupAwards = ({ awards, people, currency, meId, onCard }: GroupAwa
 			<ul className="divide-y divide-line">
 				{awards.map((a) => (
 					<li key={a.id + a.personId} className="flex items-center gap-3 px-4 py-2.5">
-						<span className="text-xl" aria-hidden>{a.emoji}</span>
+						<AwardBadge id={a.id} />
 						<div className="min-w-0 flex-1">
 							<p className="truncate text-sm font-semibold text-ink">{a.title}</p>
 							<p className="truncate text-xs text-ink-muted">{awardDetail(a, currency)}</p>
@@ -42,5 +43,15 @@ export const GroupAwards = ({ awards, people, currency, meId, onCard }: GroupAwa
 				))}
 			</ul>
 		</section>
+	);
+};
+
+/** An award's icon on its color. */
+export const AwardBadge = ({ id }: { id: Award["id"] }) => {
+	const { Icon, color } = AWARD_ICONS[id];
+	return (
+		<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: color }} aria-hidden>
+			<Icon className="h-[18px] w-[18px] text-white" strokeWidth={2.25} />
+		</span>
 	);
 };

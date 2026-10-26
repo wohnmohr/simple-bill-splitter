@@ -12,7 +12,6 @@ export type AwardId = "spender" | "rounds" | "bigBill" | "fastest" | "allIn" | "
 
 export type Award = {
 	id: AwardId;
-	emoji: string;
 	title: string;
 	personId: string;
 	/** What earned it, in the award's own unit: money, a count, or milliseconds. */
@@ -68,15 +67,15 @@ const statsFor = (expenses: Expense[], personId: string, unit: number): Stats =>
 };
 
 /** In the order they're handed out: each goes to its top scorer who has no award yet. A score of 0 or less doesn't qualify. */
-const AWARDS: { id: AwardId; emoji: string; title: string; score: (s: Stats) => number; value: (s: Stats) => number }[] = [
-	{ id: "spender", emoji: "💰", title: "Big spender", score: (s) => s.paid, value: (s) => s.paid },
-	{ id: "rounds", emoji: "☕", title: "Chai sponsor", score: (s) => s.rounds, value: (s) => s.rounds },
-	{ id: "fastest", emoji: "⚡", title: "Fastest payer", score: (s) => (s.payDelay === undefined ? 0 : 1 / (1 + s.payDelay)), value: (s) => s.payDelay ?? 0 },
-	{ id: "nightOwl", emoji: "🦉", title: "Night owl", score: (s) => s.late, value: (s) => s.late },
-	{ id: "bigBill", emoji: "🧾", title: "Took the big bill", score: (s) => s.biggest, value: (s) => s.biggest },
-	{ id: "allIn", emoji: "🙌", title: "Always in", score: (s) => s.in, value: (s) => s.in },
+const AWARDS: { id: AwardId; title: string; score: (s: Stats) => number; value: (s: Stats) => number }[] = [
+	{ id: "spender", title: "Big spender", score: (s) => s.paid, value: (s) => s.paid },
+	{ id: "rounds", title: "Chai sponsor", score: (s) => s.rounds, value: (s) => s.rounds },
+	{ id: "fastest", title: "Fastest payer", score: (s) => (s.payDelay === undefined ? 0 : 1 / (1 + s.payDelay)), value: (s) => s.payDelay ?? 0 },
+	{ id: "nightOwl", title: "Night owl", score: (s) => s.late, value: (s) => s.late },
+	{ id: "bigBill", title: "Took the big bill", score: (s) => s.biggest, value: (s) => s.biggest },
+	{ id: "allIn", title: "Always in", score: (s) => s.in, value: (s) => s.in },
 ];
-const COMPANY = { id: "company" as const, emoji: "🫶", title: "Good company" };
+const COMPANY = { id: "company" as const, title: "Good company" };
 
 /** The group's awards, in hand-out order, then "Good company" for everyone else who shared in the spending. */
 export const groupAwards = (group: Pick<Group, "members" | "expenses">, unit = 100): Award[] => {
@@ -93,7 +92,7 @@ export const groupAwards = (group: Pick<Group, "members" | "expenses">, unit = 1
 		}
 		if (!best) continue;
 		taken.add(best.id);
-		awards.push({ id: a.id, emoji: a.emoji, title: a.title, personId: best.id, value: a.value(stats.get(best.id)!) });
+		awards.push({ id: a.id, title: a.title, personId: best.id, value: a.value(stats.get(best.id)!) });
 	}
 	for (const p of sharers) {
 		if (!taken.has(p.id)) awards.push({ ...COMPANY, personId: p.id, value: stats.get(p.id)!.in });

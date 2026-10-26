@@ -172,7 +172,7 @@ export default function Home() {
 		setToast({
 			id: undo.toastId,
 			message: undo.ids.length === 1
-				? `${nameOf(s.from)} paid ${nameOf(s.to)} ${formatCurrency(s.amount, currency)}${streak ? ` · ⚡ Settle streak ${streak}` : ""}`
+				? `${nameOf(s.from)} paid ${nameOf(s.to)} ${formatCurrency(s.amount, currency)}${streak ? ` · Settle streak ${streak}` : ""}`
 				: `${undo.ids.length} payments marked paid`,
 			actionLabel: "Undo",
 			onAction: () => undo.ids.forEach((id) => deleteExpense(id)),

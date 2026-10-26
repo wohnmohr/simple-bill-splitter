@@ -9,6 +9,7 @@ import { drawSettledCard } from "@/utils/settledCard";
 import { SITE_URL } from "@/lib/site";
 import { track } from "@/lib/analytics";
 import { Modal } from "@/components/UI/Modal";
+import { loadCardIcons } from "@/components/Group/awardIcons";
 
 interface SettledCardModalProps {
 	isOpen: boolean;
@@ -43,7 +44,7 @@ export const SettledCardModal = ({ isOpen, onClose, group, awards }: SettledCard
 	useEffect(() => {
 		if (!canvas) return;
 		let live = true;
-		document.fonts.ready.then(() => {
+		Promise.all([loadCardIcons(awards.map((a) => a.id)), document.fonts.ready]).then(([icons]) => {
 			if (!live) return;
 			drawSettledCard(canvas, {
 				groupName: group.name,
@@ -56,6 +57,7 @@ export const SettledCardModal = ({ isOpen, onClose, group, awards }: SettledCard
 				forId,
 				nameOf: (id) => group.members.find((p) => p.id === id)?.name ?? "Someone",
 				amounts,
+				icons,
 			});
 		});
 		return () => {

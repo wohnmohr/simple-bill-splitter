@@ -33,11 +33,11 @@ export function useAwardNews(group: Group | undefined, awards: Award[], nameOf: 
 		}
 		const news = before && meId ? awardNews(before, awards, meId) : null;
 		if (!news) return;
-		const { emoji, title } = news.award;
+		const { title } = news.award;
 		say(
 			news.gained
-				? `${emoji} You're the ${title} now${news.other ? `, taking it from ${nameOf(news.other)}` : ""}`
-				: `${emoji} ${nameOf(news.other!)} took your ${title}`
+				? `You're the ${title} now${news.other ? `, taking it from ${nameOf(news.other)}` : ""}`
+				: `${nameOf(news.other!)} took your ${title}`
 		);
 		// Only a change in who holds what is news; `seen` stands for `holders` and `awards`.
 		// eslint-disable-next-line react-hooks/exhaustive-deps

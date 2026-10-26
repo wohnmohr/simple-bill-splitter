@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ChevronRight, Lock, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, Lock, Plus, Trash2, Zap } from "lucide-react";
 import { Group } from "@/types";
 import { MAX_GROUPS } from "@/constants";
 import { formatCurrency } from "@/utils/formatting";
@@ -64,8 +64,9 @@ export const GroupsHome = ({
 						</p>
 					)}
 					{streak > 0 && (
-						<p className="mt-1 text-sm font-semibold text-brand-700" title="Times in a row you paid back within a day">
-							⚡ Settle streak: {streak}
+						<p className="mt-1 flex items-center gap-1 text-sm font-semibold text-brand-700" title="Times in a row you paid back within a day">
+							<Zap className="h-4 w-4 fill-current" aria-hidden />
+							Settle streak: {streak}
 						</p>
 					)}
 				</div>
