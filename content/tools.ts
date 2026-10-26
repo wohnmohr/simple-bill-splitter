@@ -5,7 +5,7 @@ export type ToolSlug =
 	| "split-bill-with-tip"
 	| "split-bill-unequally"
 	| "roommate-expense-splitter"
-	| "split-bill-without-signup"
+	| "split-rent-by-room-size"
 	| "splitwise-alternative"
 	| "upi-bill-splitter"
 	| "upi-charges-above-2000"
@@ -29,7 +29,6 @@ export type CalculatorKind =
 	| "unequal"
 	| "trip"
 	| "roommate"
-	| "simple"
 	| "upi"
 	| "splitwise"
 	| "upi-fee-customer"
@@ -47,6 +46,9 @@ export type CalculatorKind =
 
 export type ToolFaq = { q: string; a: string };
 
+/** A longer explainer section under the intro: paragraphs, then an optional table. */
+export type ToolGuideSection = { heading: string; body: string[]; table?: { head: string[]; rows: string[][] } };
+
 export type ToolPageConfig = {
 	slug: ToolSlug;
 	calculator: CalculatorKind;
@@ -57,6 +59,7 @@ export type ToolPageConfig = {
 	subhead: string;
 	intro: string[];
 	howTo: { title: string; body: string }[];
+	guide?: ToolGuideSection[];
 	faqs: ToolFaq[];
 	related: ToolSlug[];
 	ctaLabel: string;
@@ -126,20 +129,20 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		slug: "trip-expense-splitter",
 		calculator: "trip",
 		title: "Trip Expense Splitter",
-		metaTitle: "Trip Expense Splitter — Split Travel Costs Fairly",
+		metaTitle: "Trip Expense Splitter — Split Travel Costs Fairly, Settle by UPI",
 		metaDescription:
-			"Track and split trip expenses — hotels, food, transport, activities. Minimize who owes whom and share a private settlement link.",
+			"Split trip expenses with friends — stays, food, cabs, activities — and settle in the fewest UPI payments. Worked Goa trip example, no signup.",
 		headline: "Split trip expenses without the spreadsheet",
 		subhead:
-			"Log flights, hotels, meals, and rides. See who is owed what, then share the settlement.",
+			"Log stays, meals and rides as they happen. See who is owed what, then settle in as few payments as possible.",
 		intro: [
-			"Group trips accumulate uneven spending — one person books the hotel, another covers taxis, someone else pays for dinner. This tool totals everything and settles with the fewest payments.",
-			"Start with a quick multi-expense calculator here, then open the full app for ongoing trip tracking.",
+			"Group trips accumulate uneven spending — one person books the stay, another covers cabs, someone else pays for dinner. This tool totals everything and settles with the fewest payments.",
+			"Start with the quick calculator here, then open the full app to track the whole trip together with your friends.",
 		],
 		howTo: [
 			{
 				title: "Add each trip expense",
-				body: "Name it (hotel, Uber, groceries), enter the amount, and who paid.",
+				body: "Name it (villa, scooters, dinner), enter the amount, and who paid.",
 			},
 			{
 				title: "Include everyone on the trip",
@@ -147,24 +150,62 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			},
 			{
 				title: "Settle at the end",
-				body: "Share one encrypted link so the whole group sees the final who-owes-whom.",
+				body: "Share one encrypted link so the whole group sees the final who-owes-whom, and pay by UPI.",
+			},
+		],
+		guide: [
+			{
+				heading: "A Goa trip, settled in three payments",
+				body: [
+					"Four friends spend ₹36,000 over a long weekend, so each person’s share is ₹9,000. Priya booked the villa, Rohan rented the scooters, Aisha paid for the dinners and Dev covered fuel and parking.",
+				],
+				table: {
+					head: ["Person", "Paid", "Balance"],
+					rows: [
+						["Priya", "₹24,000", "Gets back ₹15,000"],
+						["Rohan", "₹4,800", "Owes ₹4,200"],
+						["Aisha", "₹6,000", "Owes ₹3,000"],
+						["Dev", "₹1,200", "Owes ₹7,800"],
+					],
+				},
+			},
+			{
+				heading: "Fewest payments, not the most",
+				body: [
+					"Settling every expense one by one could take nine or ten transfers. Netting the balances first needs just three: Dev sends Priya ₹7,800, Rohan sends ₹4,200 and Aisha sends ₹3,000. Each is a free person-to-person UPI transfer, and SplitBiller opens the payer’s UPI app with the amount filled in.",
+				],
+			},
+			{
+				heading: "Habits that keep a trip fair",
+				body: [
+					"Collect an advance before you book, so one person isn’t out of pocket for weeks; a split link collects it by UPI and shows who has paid. Log expenses the same day, while everyone remembers. Leave people out of the expenses they skipped, like the friend who didn’t go parasailing. Pick one currency for the whole trip.",
+					"In the SplitBiller app, share the trip group so everyone can add expenses from their own phone. When the trip is over, settle up, close it, and start the next one with the same people in one tap.",
+				],
 			},
 		],
 		faqs: [
 			{
 				q: "Can I mix currencies?",
-				a: "Pick one currency for the trip (convert rough amounts before entering) to keep settlements simple.",
+				a: "Pick one currency for the trip and convert rough amounts before entering, to keep settlements simple.",
 			},
 			{
 				q: "What if not everyone shared every expense?",
-				a: "Use the full SplitBiller dashboard to exclude people from specific expenses.",
+				a: "In the full SplitBiller app, choose who shared each expense; the rest aren’t charged for it.",
+			},
+			{
+				q: "What if two people paid for one thing?",
+				a: "The app supports several payers on one expense, for example when two friends split the villa deposit between their cards.",
+			},
+			{
+				q: "Does everyone need the app?",
+				a: "No. Friends open the shared link in their phone browser, tap their name and see what they owe. No download or signup.",
 			},
 		],
 		related: [
-			"roommate-expense-splitter",
+			"road-trip-cost-splitter",
 			"split-bill-unequally",
 			"splitwise-alternative",
-			"road-trip-cost-splitter",
+			"group-contribution-collector",
 		],
 		ctaLabel: "Track the whole trip in SplitBiller",
 	},
@@ -334,7 +375,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		faqs: [
 			{
 				q: "Can rent be split unequally by room size?",
-				a: "Yes — use percentage or custom amounts for rent, and equal split for shared groceries.",
+				a: "Yes — use percentage or custom amounts for rent, and equal split for shared groceries. The rent by room size calculator shows how to work out fair percentages.",
 			},
 			{
 				q: "Do we need an ongoing account?",
@@ -342,105 +383,182 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			},
 		],
 		related: [
+			"split-rent-by-room-size",
+			"split-electricity-bill",
 			"split-bill-unequally",
 			"splitwise-alternative",
-			"split-bill-without-signup",
-			"split-electricity-bill",
 		],
 		ctaLabel: "Manage monthly splits in SplitBiller",
 	},
-	"split-bill-without-signup": {
-		slug: "split-bill-without-signup",
-		calculator: "simple",
-		title: "Split Bills Without Signup",
-		metaTitle: "Split Bills Without Signup — No Login Expense Splitter",
+	"split-rent-by-room-size": {
+		slug: "split-rent-by-room-size",
+		calculator: "unequal",
+		title: "Split Rent by Room Size",
+		metaTitle: "Split Rent by Room Size — Fair Rent Calculator for Flatmates",
 		metaDescription:
-			"Split group expenses with no account, no app download, and no cloud storage. Privacy-first bill splitter you can use instantly.",
-		headline: "Split bills with zero signup",
+			"Work out a fair rent split when rooms differ in size: common area shared equally, bedrooms by square feet, extra for an attached bathroom or balcony. Worked ₹ example, free.",
+		headline: "Split the rent fairly when rooms differ",
 		subhead:
-			"No email, no app store, no account. Open the page, split the bill, share the result.",
+			"Share the common area equally and the bedrooms by size, then settle each month by UPI.",
 		intro: [
-			"Most expense apps force signups before you can add a single lunch. SplitBiller runs in the browser — calculate and share immediately.",
-			"Privacy is the point: expenses stay on your device. Share links encrypt the split in the URL fragment so our servers never receive it.",
+			"Splitting rent equally works when the rooms are alike. When one flatmate has the master bedroom with an attached bathroom and another has the small room by the kitchen, an equal split quietly overcharges the small room.",
+			"The fairest common method: everyone shares the living room, kitchen and passages equally, and pays for their own bedroom by its size. Work the percentages out below, enter them in the calculator, and everyone sees the same numbers.",
 		],
 		howTo: [
 			{
-				title: "Use the calculator",
-				body: "Enter amount, people, and who paid — no form asking for your email first.",
+				title: "Measure the rooms",
+				body: "Note each bedroom’s area in square feet, and the flat’s total from the rent agreement.",
 			},
 			{
-				title: "Share the settlement",
-				body: "Friends open the link and see the same result in their browser.",
+				title: "Enter each share",
+				body: "Switch the calculator to percentage and enter each person’s share of the rent.",
 			},
 			{
-				title: "Optional: keep editing",
-				body: "Open in SplitBiller to save on this device for ongoing groups.",
+				title: "Settle every month",
+				body: "Mark who pays the landlord, and everyone else sends their share by UPI.",
+			},
+		],
+		guide: [
+			{
+				heading: "A worked example",
+				body: [
+					"Three flatmates rent a 1,200 sq ft flat for ₹45,000 a month. The bedrooms are 200 sq ft (with attached bathroom), 150 and 150 sq ft, so 500 sq ft is private and 700 sq ft is shared.",
+					"The shared 700 sq ft is 58.3% of the flat, or ₹26,250 of the rent, split equally at ₹8,750 each. The private 500 sq ft is the other ₹18,750, split by bedroom size: ₹7,500, ₹5,625 and ₹5,625. Add the two parts for each person:",
+				],
+				table: {
+					head: ["Flatmate", "Bedroom", "Pays", "Share"],
+					rows: [
+						["Asha", "200 sq ft", "₹16,250", "36.1%"],
+						["Ben", "150 sq ft", "₹14,375", "31.9%"],
+						["Chitra", "150 sq ft", "₹14,375", "31.9%"],
+					],
+				},
+			},
+			{
+				heading: "Adjusting for bathrooms, balconies and ACs",
+				body: [
+					"Square feet don’t capture everything. Many flats add a fixed premium for an attached bathroom, a balcony or a room AC, for example ₹1,000 a month, taken off the other rooms equally. Agree the premiums before you move in, and write the final percentages in your group chat so nobody re-argues them later.",
+					"Split the deposit and brokerage in the same proportions as the rent, so whoever has the bigger room puts in the bigger share and gets it back when you move out.",
+				],
+			},
+			{
+				heading: "Make it automatic",
+				body: [
+					"In the SplitBiller app, make a group for the flat and add the rent as a monthly repeating expense with these shares. Add electricity, Wi-Fi and groceries as they come, and at the end of the month everyone settles up in as few UPI payments as possible.",
+				],
 			},
 		],
 		faqs: [
 			{
-				q: "Is it really free without signup?",
-				a: "Yes. No freemium gate for basic splitting. No account required.",
+				q: "Is splitting rent by room size fair?",
+				a: "It’s the most common fair method when rooms differ. Shared spaces are split equally because everyone uses them; bedrooms are split by size because only one person uses each.",
 			},
 			{
-				q: "What happens if I clear my browser data?",
-				a: "Local groups are cleared. Shared links still work for anyone who has them, since the data is in the link itself.",
+				q: "Can I enter square feet instead of percentages?",
+				a: "Yes. The percentage mode scales whatever numbers you enter to 100%, so the shares from the example (36.1, 31.9, 31.9) or the final rupee amounts both work.",
+			},
+			{
+				q: "How much extra for an attached bathroom?",
+				a: "There’s no standard. A fixed ₹500 to ₹1,500 a month, or treating the bathroom’s area as part of that bedroom, are both common. What matters is that everyone agrees before moving in.",
+			},
+			{
+				q: "Should a couple sharing one room pay double?",
+				a: "Usually they pay one bedroom share plus two shares of the common area, since two people use the kitchen and living room.",
 			},
 		],
-		related: [
-			"splitwise-alternative",
-			"restaurant-bill-splitter",
-			"upi-bill-splitter",
-		],
-		ctaLabel: "Start without signup",
+		related: ["roommate-expense-splitter", "split-electricity-bill", "split-bill-unequally", "splitwise-alternative"],
+		schemaCategory: "LifestyleApplication",
+		ctaLabel: "Manage monthly rent in SplitBiller",
 	},
 	"splitwise-alternative": {
 		slug: "splitwise-alternative",
 		calculator: "splitwise",
 		title: "Splitwise Alternative",
-		metaTitle: "Splitwise Alternative — Free, No Login Bill Splitter",
+		metaTitle: "Splitwise Alternative in India — Free, No Signup, No Daily Limit",
 		metaDescription:
-			"Looking for a Splitwise alternative? SplitBiller splits expenses with no signup, no app, and privacy-preserving share links.",
+			"A free Splitwise alternative with no account, no daily expense limit and one-tap UPI settle up. Compare features, see when Splitwise is still the better pick, and move a group over in minutes.",
 		headline: "A Splitwise alternative without the account",
 		subhead:
-			"Same job — who owes whom — without forcing friends to download an app or create logins.",
+			"Same job — who owes whom — without making friends sign up, download an app or wait out a daily limit.",
 		intro: [
-			"Splitwise is great for long-running groups. For one-off dinners, weekend trips, or privacy-conscious friends, the signup friction kills momentum.",
-			"SplitBiller focuses on instant splits and shareable settlements. No social graph, no cloud ledger of your spending.",
+			"Splitwise is great for long-running groups. For one-off dinners, weekend trips, or friends who won’t install yet another app, the signup and the free plan’s daily expense limit kill momentum.",
+			"SplitBiller works in any phone browser with no account. Groups stay on your phone, sharing is end-to-end encrypted, and everyone settles up in one tap on UPI. Try the quick split below, or open the app for a full group.",
 		],
 		howTo: [
 			{
 				title: "Skip the app install",
-				body: "Works in any mobile or desktop browser.",
+				body: "Works in any mobile or desktop browser. Add it to your home screen if you want an app icon.",
 			},
 			{
-				title: "Split equal or unequal",
-				body: "Percentages and multi-expense groups are supported in the full app.",
+				title: "Split any way",
+				body: "Equally, by exact amounts, by percentage or by shares, with one or several people paying.",
 			},
 			{
 				title: "Share privately",
-				body: "Encrypted links replace “invite friends to the app.”",
+				body: "Friends open an encrypted link, tap their name and see what they owe. No invites, no logins.",
+			},
+		],
+		guide: [
+			{
+				heading: "SplitBiller and Splitwise compared",
+				body: [
+					"Both answer the same question: who owes whom, settled in as few payments as possible. They differ in what they ask of your friends.",
+				],
+				table: {
+					head: ["", "SplitBiller", "Splitwise (free plan)"],
+					rows: [
+						["Account needed", "No, for anyone", "Yes, for everyone in the group"],
+						["Expenses per day", "No limit", "Limited; reported as 3 to 4 a day since December 2023"],
+						["Price", "Free", "Free with limits; Pro reported at ₹149 a month or ₹999 a year"],
+						["Receipt scanning", "Free, read on your phone", "Pro only"],
+						["Where data lives", "On your phone; shared groups end-to-end encrypted", "In your Splitwise account"],
+					],
+				},
+			},
+			{
+				heading: "When Splitwise is still the better choice",
+				body: [
+					"If your group already lives in Splitwise, has years of history, and everyone is happy with an account, there’s little reason to move. Splitwise also gives each person one balance across all their groups, tied to their login on every device.",
+					"SplitBiller is the better fit when some friends won’t sign up, when you hit the daily limit on a trip, or when you’d rather your spending not sit in anyone’s cloud account.",
+				],
+			},
+			{
+				heading: "Move a group over in five minutes",
+				body: [
+					"Open SplitBiller, create the group and paste everyone’s names at once. For each open balance in Splitwise, add one expense: paid by the person who is owed, split to the person who owes, for the exact amount. The balances then match.",
+					"Tap Share, send the link to your group chat, and each friend taps their own name. From then on anyone in the group can add expenses, and everyone sees the same numbers.",
+				],
 			},
 		],
 		faqs: [
 			{
 				q: "How is this different from Splitwise?",
-				a: "No accounts, no cloud expense history, share-via-encrypted-URL instead of inviting users to a platform.",
+				a: "No accounts, no daily limit, and no cloud ledger of your spending. You share an encrypted link instead of inviting people to a platform, and settle with UPI in one tap.",
+			},
+			{
+				q: "Is it really free without signup?",
+				a: "Yes. Every feature, including scanning a receipt, is free and needs no email or phone number.",
 			},
 			{
 				q: "Can it replace Splitwise for roommates?",
-				a: "For many groups, yes — especially if you settle monthly and don’t need IOU history across years.",
+				a: "For most flats, yes. Add rent as a monthly repeating expense, split the bills by usage or room size, and settle at the end of the month.",
+			},
+			{
+				q: "What happens if I clear my browser data?",
+				a: "Groups you haven’t shared live only in that browser. Turn on “Keep your groups safe” for an encrypted backup you can restore with a recovery link. Shared groups can be opened again from the group link.",
 			},
 			{
 				q: "Is there a mobile app?",
-				a: "No download needed. Add the site to your home screen if you want an app-like shortcut.",
+				a: "No download needed. Open splitbiller.com on your phone and add it to your home screen for an app-like icon.",
 			},
 		],
 		related: [
-			"split-bill-without-signup",
 			"roommate-expense-splitter",
 			"trip-expense-splitter",
+			"split-rent-by-room-size",
+			"upi-bill-splitter",
 		],
+		updated: "October 2026",
 		ctaLabel: "Try SplitBiller free",
 	},
 	"upi-bill-splitter": {
@@ -483,7 +601,6 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		],
 		related: [
 			"restaurant-bill-splitter",
-			"split-bill-without-signup",
 			"roommate-expense-splitter",
 			"upi-charges-above-2000",
 			"upi-qr-code-generator",
@@ -496,7 +613,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		title: "UPI Charges Above ₹2,000",
 		metaTitle: "UPI Charges Above ₹2,000 — Do You Pay? (15 Oct 2026 MDR Explained)",
 		metaDescription:
-			"From 15 Oct 2026 a 0.4% MDR applies to some merchant UPI payments above ₹2,000 — charged to the merchant, not you. Check what you pay, and split bills with friends free.",
+			"From 15 Oct 2026 a 0.4% MDR applies to some merchant UPI payments above ₹2,000 — charged to the merchant, not you. See who pays what with examples, and split bills with friends free.",
 		headline: "Do you pay UPI charges above ₹2,000?",
 		subhead:
 			"Short answer: no. The new fee is charged to merchants — you still pay only the listed price.",
@@ -518,6 +635,39 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 				body: "For group bills, one person pays the merchant and everyone else sends them their share by UPI — a free P2P transfer.",
 			},
 		],
+		guide: [
+			{
+				heading: "Who pays what, with examples",
+				body: [
+					"In every case below, you pay the listed price and nothing more. The fee column is what the merchant’s side bears, as reported for the framework.",
+				],
+				table: {
+					head: ["Payment", "Fee", "Who pays it"],
+					rows: [
+						["₹5,000 to a friend (P2P)", "₹0", "Nobody"],
+						["₹1,500 at a shop", "₹0", "Nobody: ₹2,000 or less is free"],
+						["₹5,000 at a restaurant", "₹20 (0.4%)", "The restaurant"],
+						["₹50,000 at an electronics store", "₹200 (0.4%)", "The store"],
+						["₹1,00,000 at a jeweller", "₹300 (the cap)", "The jeweller"],
+						["₹5,000 for fuel, insurance, railways or telecom", "₹5 flat", "The merchant"],
+						["₹5,000 at a small shop taking up to ₹1 lakh a month by UPI", "₹0", "Nobody: small merchants are exempt"],
+					],
+				},
+			},
+			{
+				heading: "If a shop asks you to pay extra",
+				body: [
+					"The framework is reported as a merchant-side cost that isn’t meant to be added to your bill, and UPI stays free for consumers. If a shop adds a “UPI charge” on top of the listed price, you can ask them to remove it, pay another way, or raise it through the help section of your UPI app or bank.",
+				],
+			},
+			{
+				heading: "How to split a big bill with no fees at all",
+				body: [
+					"Say four friends eat out and the bill is ₹8,000. One person pays the restaurant: they pay ₹8,000, and the restaurant bears its own fee. The other three each send ₹2,000 to that person by UPI. Those are P2P transfers, so they are free at any amount.",
+					"SplitBiller does the maths for you, even when people ordered different things or several people paid, and opens each friend’s UPI app with their exact share filled in.",
+				],
+			},
+		],
 		faqs: [
 			{
 				q: "Will I be charged extra for UPI payments above ₹2,000?",
@@ -532,6 +682,10 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 				a: "As reported: 0.4% of the payment (capped at ₹300) for most merchants; a flat ₹5 for railways, telecom, insurance, fuel, utilities and agri inputs; and 0.02% (capped at ₹300) for capital-markets payments. Merchants receiving up to ₹1 lakh a month over UPI pay nothing.",
 			},
 			{
+				q: "At what amount does the ₹300 cap kick in?",
+				a: "At ₹75,000, because 0.4% of ₹75,000 is ₹300. Above that, the fee stays at ₹300 however large the payment.",
+			},
+			{
 				q: "What about payments up to ₹2,000?",
 				a: "They stay free for both the customer and the merchant.",
 			},
@@ -544,7 +698,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 				a: "15 October 2026. Rules like this can be revised, so confirm the latest on npci.org.in or with your bank. This page is for general information, not financial advice.",
 			},
 		],
-		related: ["upi-mdr-calculator", "upi-payment-split-planner", "upi-bill-splitter"],
+		related: ["upi-mdr-calculator", "upi-payment-split-planner", "upi-bill-splitter", "restaurant-bill-splitter"],
 		updated: "October 2026",
 		ctaLabel: "Split a bill & settle via UPI",
 	},
@@ -608,7 +762,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		title: "Split Electricity Bill",
 		metaTitle: "Split Electricity Bill Between Roommates — Fair by Usage or Equal",
 		metaDescription:
-			"Split an electricity bill fairly between roommates or flatmates — equally, by room, or by AC and meter usage. Instant ₹ shares and a UPI-ready settlement link.",
+			"Split an electricity bill fairly between roommates or flatmates — equally, by sub-meter units, or by AC hours. Worked ₹ examples, instant shares and a UPI-ready settlement link.",
 		headline: "Split the electricity bill fairly",
 		subhead:
 			"Equal, by usage, or by room — enter each person’s share and see who owes whom.",
@@ -630,6 +784,36 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 				body: "Mark who paid the bill, then everyone sends their share. Share the link so nobody has to recalculate.",
 			},
 		],
+		guide: [
+			{
+				heading: "Three fair ways to split it",
+				body: [
+					"Most Indian electricity bills have three parts: a fixed charge for the connection, energy charges for the units used, and electricity duty or taxes on top. The fixed charge doesn’t depend on who uses what, so it’s fair to split it equally. The energy charges are where usage matters.",
+					"Here is one ₹3,600 bill for three flatmates, split three ways. Equal suits a flat where everyone uses about the same. Sub-meter units suit rooms with their own meters. With no meters but one heavy AC user, split half equally and half by AC hours.",
+				],
+				table: {
+					head: ["Method", "Asha", "Ben", "Chitra"],
+					rows: [
+						["Equal", "₹1,200", "₹1,200", "₹1,200"],
+						["Sub-meter units", "₹1,750", "₹925", "₹925"],
+						["Half equal, half by AC hours", "₹1,800", "₹1,200", "₹600"],
+					],
+				},
+			},
+			{
+				heading: "How the examples were worked out",
+				body: [
+					"Sub-meter units: the bill is ₹300 fixed charge plus ₹3,300 of energy and duty. Asha’s meter read 200 units, Ben’s and Chitra’s 100 each, so Asha pays half the ₹3,300 (₹1,650) and the others a quarter each (₹825). Add ₹100 each for the fixed charge.",
+					"AC hours: with no meters, split half the bill (₹1,800) equally, ₹600 each. Split the other half by nightly AC hours: Asha 8, Ben 4, Chitra 0, so ₹1,200, ₹600 and ₹0. In the calculator’s percentage mode that’s 50%, 33.3% and 16.7%.",
+				],
+			},
+			{
+				heading: "Keep it simple every month",
+				body: [
+					"Agree the method once, then reuse the same percentages each month so nobody re-argues it. In the SplitBiller app, make a group for the flat and add the bill each month, alongside rent, Wi-Fi and groceries. At the end of the month everyone settles in as few UPI payments as possible.",
+				],
+			},
+		],
 		faqs: [
 			{
 				q: "What is the fairest way to split electricity between roommates?",
@@ -637,14 +821,19 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			},
 			{
 				q: "How do I split a bill when one person uses the AC more?",
-				a: "Use the percentage mode: give the heavier user a larger percentage, for example 40/30/30, and the calculator works out the amounts.",
+				a: "Use the percentage mode: give the heavier user a larger percentage, for example 50/33/17, and the calculator works out the amounts.",
+			},
+			{
+				q: "What if someone was away for part of the month?",
+				a: "Split the fixed charge equally and the energy charge by days at home. Someone home for 15 of 30 days pays half a share of the energy charge.",
 			},
 			{
 				q: "How do I split it every month?",
-				a: "Reuse the same percentages each month. For rent, groceries and the bill together, use the roommate expense splitter.",
+				a: "Reuse the same percentages each month. For rent, groceries and the bill together, use the roommate expense splitter or a SplitBiller group.",
 			},
 		],
-		related: ["roommate-expense-splitter", "split-bill-unequally", "upi-bill-splitter"],
+		related: ["roommate-expense-splitter", "split-rent-by-room-size", "split-bill-unequally", "upi-bill-splitter"],
+		updated: "October 2026",
 		ctaLabel: "Track monthly bills in SplitBiller",
 	},
 	"split-swiggy-zomato-bill": {
@@ -675,6 +864,30 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 				body: "Send the result in your group chat and everyone pays their exact share by UPI.",
 			},
 		],
+		guide: [
+			{
+				heading: "Why an equal split is unfair on food orders",
+				body: [
+					"Take a ₹620 order for three. Asha had a ₹350 biryani, Ben a ₹200 paneer roll and Chitra a ₹50 lime soda. On top came ₹40 delivery, a ₹10 platform fee and ₹30 GST, minus a ₹60 coupon: ₹20 of extras in all.",
+					"Split equally, everyone pays ₹206.67 and Chitra pays four times what she ordered. Split fairly, each person pays for their own items plus a share of the extras (fees, GST and coupon) in proportion to what they ordered.",
+				],
+				table: {
+					head: ["Person", "Ordered", "Extras", "Pays"],
+					rows: [
+						["Asha", "₹350", "₹11.67", "₹361.67"],
+						["Ben", "₹200", "₹6.67", "₹206.67"],
+						["Chitra", "₹50", "₹1.66", "₹51.66"],
+					],
+				},
+			},
+			{
+				heading: "Shared dishes, coupons and tips",
+				body: [
+					"A starter everyone shared is split between the people who had it; tap their names on that item. A coupon or Swiggy One discount lowers everyone’s share in proportion, so the person who ordered more saves more. Treat a delivery tip like a fee so it’s shared the same way, unless one person tipped on their own.",
+					"Once the shares are worked out, the person who paid sends the result to the group chat and everyone pays their exact amount by UPI, free.",
+				],
+			},
+		],
 		faqs: [
 			{
 				q: "Is my screenshot uploaded anywhere?",
@@ -702,6 +915,7 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 			},
 		],
 		related: ["restaurant-bill-splitter", "split-bill-unequally", "upi-bill-splitter"],
+		updated: "October 2026",
 		ctaLabel: "Open full SplitBiller",
 	},
 	"upi-payment-split-planner": {

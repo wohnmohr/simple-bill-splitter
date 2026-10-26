@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import {
 	ArrowRight, ArrowRightLeft, BadgePercent, Bike, Calculator, Car, Dices, Gift, HandCoins, Home, IndianRupee,
-	Lightbulb, Luggage, Percent, QrCode, Receipt, Scale, ShieldCheck, Split, Tag, UserMinus, Users, UtensilsCrossed,
+	Lightbulb, Luggage, Percent, QrCode, Receipt, Ruler, Scale, ShieldCheck, Split, Tag, Users, UtensilsCrossed,
 } from "lucide-react";
 import { SiteNav } from "@/components/Landing/SiteNav";
 import { SiteFooter } from "@/components/Landing/SiteFooter";
@@ -23,11 +23,11 @@ const TOOLS: Record<ToolSlug, { icon: typeof Receipt; blurb: string }> = {
 	"split-bill-with-tax": { icon: Receipt, blurb: "Include GST or sales tax in each person’s share." },
 	"split-bill-unequally": { icon: Scale, blurb: "Custom amounts or percentages when orders differ." },
 	"split-swiggy-zomato-bill": { icon: Bike, blurb: "Delivery fee, GST and discounts, split fairly." },
-	"split-bill-without-signup": { icon: UserMinus, blurb: "Instant split: no account, no app download." },
 	"splitwise-alternative": { icon: ArrowRightLeft, blurb: "Who owes whom, without forcing friends onto an app." },
 	"trip-expense-splitter": { icon: Luggage, blurb: "Hotels, rides, meals: settle the whole trip." },
 	"road-trip-cost-splitter": { icon: Car, blurb: "Fuel, tolls and parking, split per person." },
 	"roommate-expense-splitter": { icon: Home, blurb: "Rent, utilities and groceries without the spreadsheet." },
+	"split-rent-by-room-size": { icon: Ruler, blurb: "Fair rent when bedrooms differ in size." },
 	"split-electricity-bill": { icon: Lightbulb, blurb: "Fair shares by usage, AC hours or room." },
 	"group-contribution-collector": { icon: HandCoins, blurb: "Collect equal shares for gifts and festivals." },
 	"upi-bill-splitter": { icon: IndianRupee, blurb: "Split in ₹ and open UPI pay links for each settlement." },
@@ -46,9 +46,9 @@ const GROUPS: { id: string; title: string; slugs: ToolSlug[] }[] = [
 	{
 		id: "split-a-bill",
 		title: "Split a bill",
-		slugs: ["restaurant-bill-splitter", "split-bill-with-tip", "split-bill-with-tax", "split-bill-unequally", "split-swiggy-zomato-bill", "split-bill-without-signup", "splitwise-alternative"],
+		slugs: ["restaurant-bill-splitter", "split-bill-with-tip", "split-bill-with-tax", "split-bill-unequally", "split-swiggy-zomato-bill", "splitwise-alternative"],
 	},
-	{ id: "trips-and-home", title: "Trips and home", slugs: ["trip-expense-splitter", "road-trip-cost-splitter", "roommate-expense-splitter", "split-electricity-bill", "group-contribution-collector"] },
+	{ id: "trips-and-home", title: "Trips and home", slugs: ["trip-expense-splitter", "road-trip-cost-splitter", "roommate-expense-splitter", "split-rent-by-room-size", "split-electricity-bill", "group-contribution-collector"] },
 	{ id: "upi", title: "UPI payments", slugs: ["upi-bill-splitter", "upi-charges-above-2000", "upi-mdr-calculator", "upi-payment-split-planner", "upi-qr-code-generator"] },
 	{ id: "everyday", title: "Everyday calculators", slugs: ["gst-calculator", "discount-calculator"] },
 	{ id: "with-friends", title: "Fun with friends", slugs: ["secret-santa-generator", "random-name-picker", "random-team-generator"] },

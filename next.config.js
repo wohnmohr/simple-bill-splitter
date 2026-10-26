@@ -36,6 +36,8 @@ const nextConfig = {
 			{ source: "/about-us", destination: "/about", permanent: true },
 			// Feature requests moved onto the roadmap.
 			{ source: "/feature-requests", destination: "/roadmap#request", permanent: true },
+			// Merged so two pages stop competing for the same "no signup" searches.
+			{ source: "/split-bill-without-signup", destination: "/splitwise-alternative", permanent: true },
 		];
 	},
 	async headers() {

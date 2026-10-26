@@ -11,19 +11,13 @@ import {
 	useDefaultCurrency,
 } from "./shared";
 
-/** Simple equal split — used by no-signup & splitwise alternative pages */
-export const SimpleSplitCalculator = ({
-	emphasis,
-}: {
-	emphasis: "privacy" | "alternative";
-}) => {
+/** Simple equal split for the Splitwise alternative page */
+export const SimpleSplitCalculator = () => {
 	const [currency, setCurrency] = useDefaultCurrency("INR");
 	const [amount, setAmount] = useState("128.50");
 	const [names, setNames] = useState("You, Friend A, Friend B");
 	const [payerIndex, setPayerIndex] = useState(0);
-	const [description, setDescription] = useState(
-		emphasis === "privacy" ? "Lunch split" : "Group expense"
-	);
+	const [description, setDescription] = useState("Group expense");
 
 	const people = useMemo(
 		() => makePeople(names.split(",").map((n) => n.trim())),
@@ -40,17 +34,10 @@ export const SimpleSplitCalculator = ({
 	return (
 		<div className="grid lg:grid-cols-2 gap-6">
 			<div className="space-y-4 surface p-4 sm:p-5">
-				{emphasis === "privacy" && (
-					<p className="text-sm text-indigo-800 bg-indigo-50 rounded-xl px-3 py-2">
-						No email wall. Calculate below — share stays encrypted in the link.
-					</p>
-				)}
-				{emphasis === "alternative" && (
-					<p className="text-sm text-indigo-800 bg-indigo-50 rounded-xl px-3 py-2">
-						Same “who owes whom” outcome as Splitwise — without inviting everyone
-						to an account.
-					</p>
-				)}
+				<p className="text-sm text-indigo-800 bg-indigo-50 rounded-xl px-3 py-2">
+					Same “who owes whom” outcome as Splitwise — without inviting everyone
+					to an account.
+				</p>
 
 				<div>
 					<label className={labelClass}>What for?</label>
@@ -107,11 +94,7 @@ export const SimpleSplitCalculator = ({
 				people={people}
 				expenses={expenses}
 				currency={currency}
-				tool={
-					emphasis === "privacy"
-						? "split-bill-without-signup"
-						: "splitwise-alternative"
-				}
+				tool="splitwise-alternative"
 			/>
 		</div>
 	);
