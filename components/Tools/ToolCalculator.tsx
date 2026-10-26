@@ -33,10 +33,8 @@ export const ToolCalculator = ({ kind }: { kind: CalculatorKind }) => {
 			return <MultiExpenseCalculator variant="trip" />;
 		case "roommate":
 			return <MultiExpenseCalculator variant="roommate" />;
-		case "simple":
-			return <SimpleSplitCalculator emphasis="privacy" />;
 		case "splitwise":
-			return <SimpleSplitCalculator emphasis="alternative" />;
+			return <SimpleSplitCalculator />;
 		case "upi":
 			return <UpiCalculator />;
 		case "upi-fee-customer":

@@ -112,6 +112,49 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 				</div>
 			</section>
 
+			{config.guide && (
+				<section className="px-4 sm:px-6 pb-10 sm:pb-14">
+					<div className="max-w-3xl mx-auto space-y-10">
+						{config.guide.map((section) => (
+							<div key={section.heading} className="space-y-4">
+								<h2 className="text-xl sm:text-2xl font-bold text-ink">{section.heading}</h2>
+								{section.body.map((p, i) => (
+									<p key={i} className="text-base text-ink-soft leading-relaxed">
+										{p}
+									</p>
+								))}
+								{section.table && (
+									<div className="overflow-x-auto rounded-xl border border-line bg-white">
+										<table className="w-full text-left text-sm">
+											<thead className="bg-paper text-ink">
+												<tr>
+													{section.table.head.map((h) => (
+														<th key={h} scope="col" className="px-3 py-2.5 font-semibold">
+															{h}
+														</th>
+													))}
+												</tr>
+											</thead>
+											<tbody className="divide-y divide-line text-ink-soft">
+												{section.table.rows.map((row) => (
+													<tr key={row[0]}>
+														{row.map((cell, i) => (
+															<td key={i} className="px-3 py-2.5 tabular-nums">
+																{cell}
+															</td>
+														))}
+													</tr>
+												))}
+											</tbody>
+										</table>
+									</div>
+								)}
+							</div>
+						))}
+					</div>
+				</section>
+			)}
+
 			<section className="px-4 sm:px-6 py-12 sm:py-16 bg-white border-y border-line">
 				<div className="max-w-3xl mx-auto">
 					<h2 className="text-xl sm:text-2xl font-bold text-ink mb-6 text-center">
