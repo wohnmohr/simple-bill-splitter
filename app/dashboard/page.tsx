@@ -21,6 +21,10 @@ import { ThemeModal } from "@/components/Group/ThemeModal";
 import { IdentitySheet } from "@/components/Group/IdentitySheet";
 import { InviteNudge } from "@/components/Group/InviteNudge";
 import { TripCard } from "@/components/Group/TripCard";
+import { GroupAwards } from "@/components/Group/GroupAwards";
+import { SettledCardModal } from "@/components/Group/SettledCardModal";
+import { useAwardNews } from "@/hooks/useAwardNews";
+import { groupAwards, paysOnTime, settleStreak } from "@/utils/awards";
 import { shownMembers } from "@/utils/identity";
 import { canSetUpi, currentMembers, entriesWith, isOnEntry, upiChangedLately } from "@/utils/members";
 import { applyTheme } from "@/utils/themes";
@@ -147,6 +151,15 @@ export default function Home() {
 
 	const nameOf = (id: string) => people.find((p) => p.id === id)?.name || "Unknown";
 
+	const awards = groupAwards({ members: people, expenses }, minorUnits(currency));
+	const [showCard, setShowCard] = useState(false);
+	const openCard = awards.length ? () => setShowCard(true) : undefined;
+	useAwardNews(currentGroup, awards, nameOf, (message) => {
+		// Never over an Undo the person may still need.
+		setToast((t) => t ?? { id: Date.now(), message });
+		track("award_news_shown");
+	});
+
 	const paymentUndo = useRef<PaymentUndo | null>(null);
 	const handleRecordPayments = (list: Settlement[]) => {
 		const added = list.flatMap((s) => recordPayment(s.from, s.to, s.amount) ?? []);
@@ -154,10 +167,12 @@ export default function Home() {
 		const undo = nextPaymentUndo(paymentUndo.current, toast?.id, currentGroup.id, added, Date.now());
 		paymentUndo.current = undo;
 		const [s] = list;
+		// Paying back within a day of the last shared expense keeps your settle streak going.
+		const streak = list.length === 1 && s.from === currentGroup.meId && paysOnTime(expenses, s.from) ? settleStreak(groups) + 1 : 0;
 		setToast({
 			id: undo.toastId,
 			message: undo.ids.length === 1
-				? `${nameOf(s.from)} paid ${nameOf(s.to)} ${formatCurrency(s.amount, currency)}`
+				? `${nameOf(s.from)} paid ${nameOf(s.to)} ${formatCurrency(s.amount, currency)}${streak ? ` · ⚡ Settle streak ${streak}` : ""}`
 				: `${undo.ids.length} payments marked paid`,
 			actionLabel: "Undo",
 			onAction: () => undo.ids.forEach((id) => deleteExpense(id)),
@@ -198,6 +213,7 @@ export default function Home() {
 			onClose={() => closeGroup(true)}
 			onReopen={() => closeGroup(false)}
 			onStartNext={() => setNextFrom(currentGroup)}
+			onCard={openCard}
 		/>
 	);
 
@@ -444,6 +460,15 @@ export default function Home() {
 
 	// On wide screens Balances lives in a side panel, so it leaves the tab bar.
 	const isWide = useMediaQuery("(min-width: 1024px)") ?? false;
+	const groupAwardsCard = (
+		<GroupAwards
+			awards={awards}
+			people={people}
+			currency={currency}
+			meId={currentGroup?.meId}
+			onCard={settlements.length === 0 ? openCard : undefined}
+		/>
+	);
 	const inGroup = !!currentGroup && currentGroup.members.length > 0;
 	// A closed group is a record: no new expenses until it's reopened. Nor when everyone has left: there's nobody to add one for.
 	const canAdd = inGroup && current.length > 0 && !currentGroup.closedAt;
@@ -572,11 +597,14 @@ export default function Home() {
 										)}
 
 										{shownTab === "balances" && (
-											<BalanceList
-												balances={balances}
-												people={people}
-												currency={currency}
-											/>
+											<>
+												<BalanceList
+													balances={balances}
+													people={people}
+													currency={currency}
+												/>
+												{groupAwardsCard}
+											</>
 										)}
 
 										{shownTab === "settlements" && (
@@ -638,6 +666,7 @@ export default function Home() {
 								Balances
 							</h2>
 							<BalanceList balances={balances} people={people} currency={currency} />
+							{groupAwardsCard}
 						</aside>
 					)}
 					</div>
@@ -645,6 +674,10 @@ export default function Home() {
 				)}
 
 				<ConfirmDialog confirm={deletePrompt()} onClose={() => setDeleting(null)} />
+
+				{currentGroup && (
+					<SettledCardModal isOpen={showCard} onClose={() => setShowCard(false)} group={currentGroup} awards={awards} />
+				)}
 
 				<Toast
 					toast={toast}

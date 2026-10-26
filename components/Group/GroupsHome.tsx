@@ -10,6 +10,7 @@ import { BackupCard } from "@/components/Group/BackupCard";
 import { RemindCard } from "@/components/Group/RemindCard";
 import type { useBackup } from "@/hooks/useBackup";
 import { currentMembers } from "@/utils/members";
+import { settleStreak } from "@/utils/awards";
 
 interface GroupsHomeProps {
 	groups: Group[];
@@ -34,6 +35,7 @@ export const GroupsHome = ({
 	const canCreate = groups.length < MAX_GROUPS;
 	// With one group its own row already says it; the sum earns a line from two.
 	const totals = groups.length > 1 ? myTotals(groups) : [];
+	const streak = settleStreak(groups);
 
 	return (
 		<div>
@@ -59,6 +61,11 @@ export const GroupsHome = ({
 					) : (
 						<p className="mt-1 text-sm text-ink-muted">
 							Saved on this device. Share a group to add expenses together, end-to-end encrypted.
+						</p>
+					)}
+					{streak > 0 && (
+						<p className="mt-1 text-sm font-semibold text-brand-700" title="Times in a row you paid back within a day">
+							⚡ Settle streak: {streak}
 						</p>
 					)}
 				</div>

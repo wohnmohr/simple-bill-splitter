@@ -42,6 +42,7 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "Group awards that change hands as you split, a settle streak, and a story card to share when everyone has paid", href: "/dashboard" },
 			{ title: "Split rent by room size: a fair-rent calculator with a worked example", href: "/split-rent-by-room-size" },
 			{ title: "Clearer balances: settled people say Settled, and payments sit apart from expenses", href: "/dashboard" },
 			{ title: "Deleting anything asks first, and Undo is still there after", href: "/dashboard" },

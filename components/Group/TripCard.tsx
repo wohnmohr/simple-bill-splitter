@@ -1,4 +1,4 @@
-import { Archive, ArrowRight, RotateCcw } from "lucide-react";
+import { Archive, ArrowRight, RotateCcw, Sparkles } from "lucide-react";
 import { Group } from "@/types";
 import { groupSummary } from "@/utils/calculations";
 import { formatCurrency } from "@/utils/formatting";
@@ -12,13 +12,15 @@ interface TripCardProps {
 	onReopen: () => void;
 	/** A new group with the same people. */
 	onStartNext: () => void;
+	/** Opens the group's shareable card; missing when it has no awards. */
+	onCard?: () => void;
 }
 
 /**
  * The end of a trip: once everyone has settled, offers to close the group with
  * its final numbers; once closed, shows them and leads into the next one.
  */
-export const TripCard = ({ group, onClose, onReopen, onStartNext }: TripCardProps) => {
+export const TripCard = ({ group, onClose, onReopen, onStartNext, onCard }: TripCardProps) => {
 	const { total, count, days, sharers, perPerson } = groupSummary(group.expenses);
 	const closed = !!group.closedAt;
 	const facts = [
@@ -48,7 +50,13 @@ export const TripCard = ({ group, onClose, onReopen, onStartNext }: TripCardProp
 					)}
 				</div>
 			</div>
-			<div className="mt-4 flex gap-2">
+			{onCard && (
+				<button type="button" onClick={onCard} className="btn-primary mt-4 w-full">
+					<Sparkles className="h-4 w-4" />
+					Get your card
+				</button>
+			)}
+			<div className={`${onCard ? "mt-2" : "mt-4"} flex gap-2`}>
 				{closed ? (
 					<button type="button" onClick={onReopen} className="btn-ghost">
 						<RotateCcw className="h-4 w-4" />
@@ -59,7 +67,7 @@ export const TripCard = ({ group, onClose, onReopen, onStartNext }: TripCardProp
 						Close the group
 					</button>
 				)}
-				<button type="button" onClick={onStartNext} className="btn-primary flex-1">
+				<button type="button" onClick={onStartNext} className={`${onCard ? "btn-secondary" : "btn-primary"} flex-1`}>
 					Start the next one
 					<ArrowRight className="h-4 w-4" />
 				</button>
