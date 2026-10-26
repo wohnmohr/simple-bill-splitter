@@ -78,9 +78,9 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		slug: "restaurant-bill-splitter",
 		calculator: "restaurant",
 		title: "Restaurant Bill Splitter",
-		metaTitle: "Restaurant Bill Splitter — Split Dinner with Tip & Service Charge",
+		metaTitle: "Split a Restaurant Bill in ₹ — Service Charge, Tip, Pay by UPI",
 		metaDescription:
-			"Split a restaurant bill among friends including tip or service charge. Instant per-person amounts, then share an encrypted settlement link. No signup.",
+			"Split a dinner bill with friends, service charge or tip included, and see each share in rupees. Everyone pays you back by UPI from one link. Free, no signup.",
 		headline: "Split the restaurant bill in seconds",
 		subhead:
 			"Add the bill, tip or service charge, and how many people — get who owes what instantly.",
@@ -213,9 +213,9 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		slug: "split-bill-with-tax",
 		calculator: "tax",
 		title: "Split Bill with Tax",
-		metaTitle: "Split Bill with Tax Calculator — Fair Shares Including Tax",
+		metaTitle: "Split a Bill with GST or Tax — Each Share in ₹, Free",
 		metaDescription:
-			"Calculate each person’s share of a bill including sales tax or GST. Instant tax-inclusive split with a shareable settlement link.",
+			"Work out each person’s share of a bill with GST or any tax rate included. Instant amounts in rupees and one link where everyone pays you back by UPI. Free, no signup.",
 		headline: "Split a bill with tax included",
 		subhead:
 			"Enter the pre-tax amount and tax rate — or the final total — and split fairly among your group.",
@@ -258,9 +258,9 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		slug: "split-bill-with-tip",
 		calculator: "tip",
 		title: "Split Bill with Tip",
-		metaTitle: "Split Bill with Tip Calculator — Tip % Then Divide",
+		metaTitle: "Split Bill with Tip — Add Tip %, Divide, Collect by UPI",
 		metaDescription:
-			"Add a tip percentage to your bill and split among friends. Quick tip calculator with per-person totals and private share links.",
+			"Add a tip percentage to the bill and split it among friends. Per-person totals in rupees and one private link where everyone pays you back by UPI. Free, no signup.",
 		headline: "Add the tip, then split the bill",
 		subhead:
 			"Choose 10%, 15%, 18%, 20%, or a custom tip — see each person’s share including gratuity.",
@@ -303,9 +303,9 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		slug: "split-bill-unequally",
 		calculator: "unequal",
 		title: "Split Bill Unequally",
-		metaTitle: "Split Bill Unequally — Custom Shares by Amount or %",
+		metaTitle: "Split a Bill Unequally — By Amount or %, Settle by UPI",
 		metaDescription:
-			"Split a bill unevenly by custom amounts or percentages. Ideal when people ordered differently. Share the settlement privately.",
+			"Split a bill unevenly by exact amounts or percentages when people ordered different things. See who owes whom in rupees and settle up by UPI. Free, no signup.",
 		headline: "Split unevenly — by amount or percent",
 		subhead:
 			"Someone ordered steak, someone had water. Assign exact shares without awkward debates.",
@@ -348,9 +348,9 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		slug: "roommate-expense-splitter",
 		calculator: "roommate",
 		title: "Roommate Expense Splitter",
-		metaTitle: "Roommate Expense Splitter — Rent, Utilities & Shared Bills",
+		metaTitle: "Roommate Expense Splitter India — Rent, Bills, Settle by UPI",
 		metaDescription:
-			"Split rent, utilities, groceries, and household bills among roommates. Fair settlements without forcing everyone onto an app account.",
+			"Split rent, electricity, groceries and other flat bills among roommates in rupees. See who owes whom and settle up by UPI. No app to install, no signup.",
 		headline: "Split roommate expenses fairly",
 		subhead:
 			"Rent, Wi‑Fi, electricity, groceries — log shared costs and settle with minimal transfers.",
@@ -565,9 +565,9 @@ export const TOOL_PAGES: Record<ToolSlug, ToolPageConfig> = {
 		slug: "upi-bill-splitter",
 		calculator: "upi",
 		title: "UPI Bill Splitter",
-		metaTitle: "UPI Bill Splitter — Split & Pay via UPI (₹)",
+		metaTitle: "UPI Bill Splitter — Split in ₹, Friends Pay You in One Tap",
 		metaDescription:
-			"Split bills in rupees and generate UPI payment links for each settlement. Perfect for India — no signup, share privately.",
+			"Split any bill in rupees and send one link: each friend taps Pay and their UPI app opens with the amount filled in. Works with GPay, PhonePe and Paytm. Free, no signup.",
 		headline: "Split the bill, pay with UPI",
 		subhead:
 			"Calculate who owes whom in ₹, then open a UPI intent with the exact amount — or share the settlement link.",
