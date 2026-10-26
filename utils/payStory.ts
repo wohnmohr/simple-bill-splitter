@@ -45,11 +45,11 @@ export const TEMPLATES: SplitTemplate[] = [
 		people: 5,
 		who: "friend",
 		theme: { from: "#ea580c", to: "#be123c" },
-		headline: "Split the dinner bill, skip the awkward maths",
+		headline: "Collect the dinner money with one link",
 		sub: "Set the total and the headcount. Everyone gets one link and pays you straight through UPI.",
-		seoTitle: "Split a Dinner or Restaurant Bill with Friends via UPI",
+		seoTitle: "Collect Dinner Money from Friends with One UPI Link",
 		seoDescription:
-			"Split a dinner or outing bill evenly and send one UPI payment link to the group. See who has paid. Free, no signup.",
+			"Paid for dinner? Send one UPI payment link to the group, everyone pays their share straight to you, and you see who has paid. Free, no signup.",
 		presets: [1500, 3000, 6000],
 		tips: [
 			"Share the link in the group before the waiter brings the bill, so payments land while everyone is still there.",
@@ -73,9 +73,9 @@ export const TEMPLATES: SplitTemplate[] = [
 		theme: { from: "#4f46e5", to: "#0369a1" },
 		headline: "Collect the flat rent without chasing anyone",
 		sub: "Each flatmate gets their share and a one-tap UPI payment to you. You can see who has paid.",
-		seoTitle: "Split Flat Rent Between Flatmates via UPI",
+		seoTitle: "Collect Rent from Flatmates with One UPI Link",
 		seoDescription:
-			"Split monthly flat rent between roommates and collect each share by UPI with one link. See who has paid. Free, no signup.",
+			"Paying the landlord? Send flatmates one UPI payment link for their share of the rent and see who has paid. Free, no signup.",
 		presets: [18000, 24000, 36000],
 		tips: [
 			"Send the link on the 1st with the same title each month, so people know what it is.",
@@ -123,11 +123,11 @@ export const TEMPLATES: SplitTemplate[] = [
 		people: 3,
 		who: "flatmate",
 		theme: { from: "#fde68a", to: "#fbbf24", darkText: true },
-		headline: "Split the electricity bill fairly",
+		headline: "Collect the electricity bill from flatmates",
 		sub: "Enter the bill and the number of people. Everyone pays their share by UPI.",
-		seoTitle: "Split the Electricity Bill Between Flatmates via UPI",
+		seoTitle: "Collect the Electricity Bill from Flatmates by UPI Link",
 		seoDescription:
-			"Split an electricity bill between flatmates and collect each share by UPI with one link. Free, no signup.",
+			"Paid the electricity bill? Send flatmates one UPI payment link for their share and see who has paid. Free, no signup.",
 		presets: [1800, 3600, 6000],
 		tips: [
 			"Use the exact amount from the bill so there is nothing to argue about.",
