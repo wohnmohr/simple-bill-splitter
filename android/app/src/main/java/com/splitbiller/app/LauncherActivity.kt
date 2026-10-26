@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.browser.customtabs.CustomTabsCallback
 import androidx.browser.trusted.TrustedWebActivityIntentBuilder
+import com.google.androidbrowserhelper.trusted.LauncherActivityMetadata
 import com.google.androidbrowserhelper.trusted.SessionStore
 import com.google.androidbrowserhelper.trusted.SharedPreferencesTokenStore
 import com.google.androidbrowserhelper.trusted.TwaLauncher
@@ -27,14 +28,12 @@ class LauncherActivity : com.google.androidbrowserhelper.trusted.LauncherActivit
     override fun getCustomTabsCallback(): CustomTabsCallback = bridge
 
     // Same launcher as the library's, except it hands the bridge the session the site opens in.
-    override fun createTwaLauncher(): TwaLauncher {
-        val metadata = metadata!!
-        return object : TwaLauncher(
+    override fun createTwaLauncher(): TwaLauncher =
+        object : TwaLauncher(
             this,
-            metadata.launchingBrowser,
+            LauncherActivityMetadata.parse(this).launchingBrowser,
             SessionStore.makeSessionId(taskId),
             SharedPreferencesTokenStore(this),
-            metadata.launchingBrowserToken,
         ) {
             override fun launch(
                 twaBuilder: TrustedWebActivityIntentBuilder,
@@ -50,5 +49,4 @@ class LauncherActivity : com.google.androidbrowserhelper.trusted.LauncherActivit
                 fallbackStrategy,
             )
         }
-    }
 }
