@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the app icon: Add expense, same as the site's manifest shortcut. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutId="add_expense"
+        android:shortcutShortLabel="@string/addExpense">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="https://splitbiller.com/dashboard?add"
+            android:targetClass="com.splitbiller.app.LauncherActivity"
+            android:targetPackage="com.splitbiller.app" />
+    </shortcut>
+</shortcuts>

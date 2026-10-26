@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The site's default palette (app/globals.css). -->
+<resources>
+    <color name="brand">#53307B</color>
+    <color name="black">#000000</color>
+    <color name="paper">#F7F6F3</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="ink">#1C1826</color>
+    <color name="inkMuted">#6B6576</color>
+    <color name="positive">#11754C</color>
+    <color name="negative">#B42318</color>
+    <color name="accent">#53307B</color>
+    <color name="onAccent">#FFFFFF</color>
+</resources>
