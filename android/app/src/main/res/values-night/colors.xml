@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark mode follows the site's Graphite-style dark tokens, with the brand purple lifted for contrast. -->
+<resources>
+    <color name="surface">#1B1B1F</color>
+    <color name="ink">#F4F4F5</color>
+    <color name="inkMuted">#A1A1AA</color>
+    <color name="positive">#4ADE80</color>
+    <color name="negative">#F87171</color>
+    <color name="accent">#BD9FDB</color>
+    <color name="onAccent">#1F1230</color>
+</resources>
