@@ -9,6 +9,7 @@ import { disableAlerts } from "@/utils/groupAlerts";
 import { newId } from "@/utils/ids";
 import { addDueRepeatsToGroups } from "@/utils/recurring";
 import { cleanText } from "@/utils/text";
+import { updateWidget } from "@/lib/androidWidget";
 
 export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -43,10 +44,11 @@ export const useGroups = () => {
   // Opt-in: once turned on, every change is backed up too, encrypted.
   const backup = useBackup(groups, loaded);
 
-  // Save groups to localStorage whenever groups change (after initial load)
+  // Save groups to localStorage whenever groups change (after initial load), and keep the Android widget's totals current
   useEffect(() => {
     if (loaded) {
       saveGroupsToStorage(groups);
+      updateWidget(groups);
     }
   }, [groups, loaded]);
 

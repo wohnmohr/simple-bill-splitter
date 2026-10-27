@@ -16,6 +16,7 @@ const PATHS = [
 	"/roadmap",
 	"/about",
 	"/contact",
+	"/privacy",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

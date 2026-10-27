@@ -12,6 +12,11 @@ export type ShippedItem = { title: string; href: string };
 /** Being designed or built now. */
 export const NEXT: PlannedItem[] = [
 	{
+		icon: "download",
+		title: "SplitBiller on Google Play, with a widget",
+		body: "Install it from the Play Store, and see what you owe and get back on your home screen, with a one-tap Add expense.",
+	},
+	{
 		icon: "scan",
 		title: "Scan paper restaurant bills",
 		body: "Take a photo of a printed bill at the table and SplitBiller fills in the items, the way it reads app screenshots today.",
@@ -42,6 +47,8 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "Move your groups from another browser: paste your recovery link or a group link", href: "/dashboard" },
+			{ title: "A privacy policy that spells out what we store and what we never see", href: "/privacy" },
 			{ title: "Split rent by room size: a fair-rent calculator with a worked example", href: "/split-rent-by-room-size" },
 			{ title: "Clearer balances: settled people say Settled, and payments sit apart from expenses", href: "/dashboard" },
 			{ title: "Deleting anything asks first, and Undo is still there after", href: "/dashboard" },

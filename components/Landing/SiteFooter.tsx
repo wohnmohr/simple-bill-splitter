@@ -15,6 +15,7 @@ const LINKS: [string, string][] = [
 	["/roadmap", "Roadmap"],
 	["/about", "About"],
 	["/contact", "Contact"],
+	["/privacy", "Privacy"],
 ];
 
 /** Footer of the marketing pages (home, features, tools, roadmap, about, contact). */
