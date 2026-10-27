@@ -66,6 +66,7 @@ export type AnalyticsEvent =
 	| "backup_turned_off"
 	| "backup_link_saved"
 	| "backup_restored"
+	| "link_pasted"
 	| "backup_restore_failed"
 	| "group_link_reset"
 	| "group_deleted_for_everyone"

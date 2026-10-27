@@ -46,7 +46,7 @@ To build on your Mac, open this `android` folder in Android Studio, or run
    - Play Console → Test and release → App integrity → App signing: copy the SHA-256
      fingerprints of the app signing key and the upload key.
    - Vercel → Production env vars: `ANDROID_CERT_FINGERPRINTS` = `FP1,FP2`, then redeploy.
-   - Check https://splitbiller.com/.well-known/assetlinks.json lists them.
+   - Check https://www.splitbiller.com/.well-known/assetlinks.json lists them.
 
 ## Try the widget before Play
 

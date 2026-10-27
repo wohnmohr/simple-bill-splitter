@@ -7,6 +7,7 @@ import { myBalance, myTotals, totalSpent } from "@/utils/calculations";
 import { BalanceHeadline } from "@/components/Group/GroupSelector";
 import { InstallCard } from "@/components/Group/InstallCard";
 import { BackupCard } from "@/components/Group/BackupCard";
+import { PasteLink } from "@/components/Group/PasteLink";
 import { RemindCard } from "@/components/Group/RemindCard";
 import type { useBackup } from "@/hooks/useBackup";
 import { currentMembers } from "@/utils/members";
@@ -135,6 +136,9 @@ export const GroupsHome = ({
 
 			{/* Worth a home-screen spot once they've actually split something. */}
 			<BackupCard backup={backup} />
+			<div className="mt-4 text-sm">
+				<PasteLink />
+			</div>
 			{groups.some((g) => g.expenses.length > 0) && <InstallCard />}
 		</div>
 	);

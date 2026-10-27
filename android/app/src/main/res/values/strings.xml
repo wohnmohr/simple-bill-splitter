@@ -12,5 +12,5 @@
     <!-- Same as share_target in the site's manifest.json. -->
     <string name="shareTarget" translatable="false">{\"action\":\"/share-target\",\"method\":\"POST\",\"enctype\":\"multipart/form-data\",\"params\":{\"files\":[{\"name\":\"bill\",\"accept\":[\"image/*\"]}]}}</string>
 
-    <string name="assetStatements" translatable="false">[{\"relation\":[\"delegate_permission/common.handle_all_urls\"],\"target\":{\"namespace\":\"web\",\"site\":\"https://splitbiller.com\"}}]</string>
+    <string name="assetStatements" translatable="false">[{\"relation\":[\"delegate_permission/common.handle_all_urls\"],\"target\":{\"namespace\":\"web\",\"site\":\"https://www.splitbiller.com\"}}]</string>
 </resources>

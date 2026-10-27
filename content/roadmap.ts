@@ -47,6 +47,8 @@ export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
 		month: "October 2026",
 		items: [
+			{ title: "Move your groups from another browser: paste your recovery link or a group link", href: "/dashboard" },
+			{ title: "A privacy policy that spells out what we store and what we never see", href: "/privacy" },
 			{ title: "Split rent by room size: a fair-rent calculator with a worked example", href: "/split-rent-by-room-size" },
 			{ title: "Clearer balances: settled people say Settled, and payments sit apart from expenses", href: "/dashboard" },
 			{ title: "Deleting anything asks first, and Undo is still there after", href: "/dashboard" },

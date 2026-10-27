@@ -44,6 +44,9 @@ const RecoveryLink = ({ url, hasPass }: { url: string; hasPass: boolean }) => {
 			</div>
 			<button type="button" onClick={toWhatsApp} className="btn-primary mt-2 w-full">Send it to myself on WhatsApp</button>
 			<p className="mt-2 text-sm text-ink-soft">
+				Moving to the SplitBiller app? Copy this link, open the app and tap Paste a link.
+			</p>
+			<p className="mt-2 text-sm text-ink-soft">
 				Or keep it in your password manager. Anyone with this link{hasPass ? " and your passphrase" : ""} can open your groups, so don&apos;t share it.
 			</p>
 		</div>
