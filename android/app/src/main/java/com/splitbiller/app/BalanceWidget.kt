@@ -44,7 +44,7 @@ class BalanceWidget : AppWidgetProvider() {
             return WidgetTotals(getBack, prefs.getString(OWE, null).orEmpty())
         }
 
-        private fun views(context: Context) = RemoteViews(context.packageName, R.layout.widget_balance).apply {
+        internal fun views(context: Context) = RemoteViews(context.packageName, R.layout.widget_balance).apply {
             setOnClickPendingIntent(R.id.root, open(context, R.string.launchUrl))
             setOnClickPendingIntent(R.id.add, open(context, R.string.addExpenseUrl))
 
