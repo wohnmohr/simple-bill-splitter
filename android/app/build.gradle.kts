@@ -4,7 +4,8 @@ plugins {
 }
 
 // The site the app opens. Its /.well-known/assetlinks.json must list this app's signing keys.
-val host = "splitbiller.com"
+// www, not the bare domain: Vercel redirects splitbiller.com to www, and Chrome treats them as different origins.
+val host = "www.splitbiller.com"
 
 android {
     namespace = "com.splitbiller.app"

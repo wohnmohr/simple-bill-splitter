@@ -8,7 +8,7 @@
         android:shortcutShortLabel="@string/addExpense">
         <intent
             android:action="android.intent.action.VIEW"
-            android:data="https://splitbiller.com/dashboard?add"
+            android:data="https://www.splitbiller.com/dashboard?add"
             android:targetClass="com.splitbiller.app.LauncherActivity"
             android:targetPackage="com.splitbiller.app" />
     </shortcut>

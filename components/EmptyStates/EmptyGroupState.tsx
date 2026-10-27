@@ -5,6 +5,7 @@ import { formatCurrency } from "@/utils/formatting";
 import { MAX_AMOUNT } from "@/utils/groupOps";
 import { splitNames, type FirstExpenseInput } from "@/utils/firstExpense";
 import { pasteNames } from "@/components/UI/pasteNames";
+import { PasteLink } from "@/components/Group/PasteLink";
 import { loadMyName } from "@/utils/myName";
 
 interface EmptyGroupStateProps {
@@ -107,8 +108,11 @@ export const EmptyGroupState = ({ onFirstExpense, onCreateGroup, quickAdd }: Emp
 					<button type="button" onClick={onCreateGroup} className="font-medium text-brand-700 hover:underline">
 						Create an empty group
 					</button>
-					. Had groups on another phone? Open your recovery link here.
+					.
 				</p>
+				<div className="mt-3 text-sm">
+					<PasteLink label="Had groups in another browser or phone? Paste the link" />
+				</div>
 			</div>
 		</section>
 	);
