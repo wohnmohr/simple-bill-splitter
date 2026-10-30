@@ -138,7 +138,7 @@ export const GroupSelector = ({
 						)}
 						{onManageMembers && (
 							<Menu.Item leftSection={<Users className="h-4 w-4" />} onClick={onManageMembers}>
-								Members & UPI IDs
+								{selectedGroup.currency.code === "INR" ? "Members & UPI IDs" : "Members"}
 							</Menu.Item>
 						)}
 						{onShare && (

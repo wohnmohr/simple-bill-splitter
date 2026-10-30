@@ -147,7 +147,7 @@ export const UpiPaymentPlanner = () => {
 									setTotalStr(String(p));
 									setPick(null);
 								}}
-								className="rounded-lg border border-line-strong bg-white px-2.5 py-1.5 text-xs font-semibold text-ink-soft hover:border-ink-muted"
+								className="rounded-lg border border-line-strong bg-surface px-2.5 py-1.5 text-xs font-semibold text-ink-soft hover:border-ink-muted"
 							>
 								{inr(p)}
 							</button>
@@ -269,7 +269,7 @@ export const UpiPaymentPlanner = () => {
 									["You save", inr(saved)],
 								].map(([label, value]) => (
 									<div key={label} className="px-2 py-2.5">
-										<dt className="text-[11px] uppercase tracking-wide text-ink-muted">{label}</dt>
+										<dt className="text-xs text-ink-muted">{label}</dt>
 										<dd className="mt-0.5 text-base font-semibold tabular-nums text-ink">{value}</dd>
 									</div>
 								))}

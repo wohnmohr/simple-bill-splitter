@@ -6,6 +6,7 @@ import { useMediaQuery } from "@mantine/hooks";
 import { Link2, Plus, UserPlus } from "lucide-react";
 import { Tab, Currency, Expense, Group, Settlement, SplitChoice } from "@/types";
 import { CURRENCIES, DEFAULT_CURRENCY, MAX_GROUPS } from "@/constants";
+import { localCurrency } from "@/utils/localCurrency";
 import { calculateBalances, calculateSettlements, enteredWeights, minorUnits, splitChoice } from "@/utils/calculations";
 import { useGroups } from "@/hooks/useGroups";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
@@ -53,7 +54,7 @@ import { QuickAddBox } from "@/components/QuickAdd/QuickAddBox";
 import { QuickAddPreview } from "@/components/QuickAdd/QuickAddPreview";
 
 /** A new group from a typed sentence is in the currency it was written in ("$50"), else rupees. */
-const quickCurrency = (quick: QuickResolved) => CURRENCIES.find((c) => c.code === quick.currency) ?? DEFAULT_CURRENCY;
+const quickCurrency = (quick: QuickResolved) => CURRENCIES.find((c) => c.code === quick.currency) ?? localCurrency();
 
 export default function Home() {
 	const router = useRouter();
@@ -270,7 +271,7 @@ export default function Home() {
 
 	// The first run's form: the group is made around its first expense, named after it.
 	const handleFirstExpense = (input: FirstExpenseInput) => {
-		const ok = createGroup(input.description || "Shared expenses", DEFAULT_CURRENCY, (g) => applyQuickAdd(g, firstExpense(input)));
+		const ok = createGroup(input.description || "Shared expenses", localCurrency(), (g) => applyQuickAdd(g, firstExpense(input)));
 		if (!ok) return;
 		rememberMyName(input.myName);
 		track("first_expense_added", { participant_count: input.others.length + 1 });

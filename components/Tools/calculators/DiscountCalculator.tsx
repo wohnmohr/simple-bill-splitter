@@ -79,11 +79,11 @@ export const DiscountCalculator = () => {
 				<p className="label-text">You pay</p>
 				<p className="font-display text-4xl font-semibold text-ink tabular-nums">{fmt(final)}</p>
 				<div className="mt-3 divide-y divide-line text-sm">
-					<div className="flex justify-between py-2 text-gray-700">
+					<div className="flex justify-between py-2 text-ink-soft">
 						<span>You save</span>
 						<span className="font-semibold text-positive tabular-nums">{fmt(saved)}</span>
 					</div>
-					<div className="flex justify-between py-2 text-gray-700">
+					<div className="flex justify-between py-2 text-ink-soft">
 						<span>Effective discount</span>
 						<span className="tabular-nums">{effective}%</span>
 					</div>

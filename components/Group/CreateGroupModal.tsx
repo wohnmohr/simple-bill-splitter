@@ -3,7 +3,8 @@ import { TextInput } from "@mantine/core";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
 import { Dropdown } from "@/components/UI/Dropdown";
-import { MAX_GROUPS, CURRENCIES, DEFAULT_CURRENCY } from "@/constants";
+import { MAX_GROUPS, CURRENCIES } from "@/constants";
+import { localCurrency } from "@/utils/localCurrency";
 import { Currency } from "@/types";
 
 interface CreateGroupModalProps {
@@ -24,21 +25,21 @@ export const CreateGroupModal = ({
 }: CreateGroupModalProps) => {
 	const [groupName, setGroupName] = React.useState("");
 	const [selectedCurrency, setSelectedCurrency] =
-		React.useState<Currency>(DEFAULT_CURRENCY);
+		React.useState<Currency>(localCurrency);
 	const atLimit = groupCount >= MAX_GROUPS;
 
 	const handleSubmit = () => {
 		if (groupName.trim() && !atLimit) {
 			onCreate(groupName.trim(), selectedCurrency);
 			setGroupName("");
-			setSelectedCurrency(DEFAULT_CURRENCY);
+			setSelectedCurrency(localCurrency());
 			onClose();
 		}
 	};
 
 	const handleClose = () => {
 		setGroupName("");
-		setSelectedCurrency(DEFAULT_CURRENCY);
+		setSelectedCurrency(localCurrency());
 		onClose();
 	};
 
@@ -74,11 +75,10 @@ export const CreateGroupModal = ({
 						}))}
 						placeholder="Select currency"
 					/>
-					<p className="mt-1.5 text-sm text-ink-muted">
-						{selectedCurrency.code === "INR"
-							? "Settlements will include one-tap UPI pay links."
-							: "UPI pay links are only available for rupee groups."}
-					</p>
+					{/* UPI exists only for rupees; other currencies don't hear about it at all. */}
+					{selectedCurrency.code === "INR" && (
+						<p className="mt-1.5 text-sm text-ink-muted">Settlements will include one-tap UPI pay links.</p>
+					)}
 				</div>
 				{atLimit && (
 					<p className="text-sm text-negative" role="alert">

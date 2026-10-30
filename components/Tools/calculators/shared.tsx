@@ -93,7 +93,7 @@ export const CalculatorResult = ({
 
 	if (people.length < 2 || expenses.length === 0) {
 		return (
-			<div className="rounded-2xl border border-dashed border-indigo-200 bg-white/60 p-6 text-center text-sm text-gray-500">
+			<div className="rounded-2xl border border-dashed border-indigo-200 bg-surface/60 p-6 text-center text-sm text-ink-muted">
 				Fill in the calculator to see who owes whom.
 			</div>
 		);
@@ -110,7 +110,7 @@ export const CalculatorResult = ({
 						Result
 					</p>
 					<h3 className="font-display text-xl font-semibold text-ink">{title}</h3>
-					<p className="text-sm text-gray-500">
+					<p className="text-sm text-ink-muted">
 						Total {formatCurrency(total, currency)} · {people.length} people
 					</p>
 				</div>
@@ -129,9 +129,9 @@ export const CalculatorResult = ({
 						return (
 							<li
 								key={i}
-								className="flex items-center justify-between gap-2 rounded-xl border border-line bg-white px-3 py-2.5"
+								className="flex items-center justify-between gap-2 rounded-xl border border-line bg-surface px-3 py-2.5"
 							>
-								<span className="text-sm font-semibold text-gray-800 flex items-center gap-1.5 min-w-0">
+								<span className="text-sm font-semibold text-ink flex items-center gap-1.5 min-w-0">
 									<span className="truncate">{from}</span>
 									<ArrowRight className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
 									<span className="truncate">{to}</span>
@@ -180,9 +180,9 @@ export const CalculatorResult = ({
 };
 
 export const fieldClass =
-	"w-full min-w-0 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-base sm:text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent";
+	"w-full min-w-0 rounded-xl border border-line bg-surface px-3 py-2.5 text-base sm:text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent";
 
-export const labelClass = "block text-sm font-medium text-gray-700 mb-1";
+export const labelClass = "block text-sm font-medium text-ink-soft mb-1";
 
 export function CurrencySelect({
 	value,

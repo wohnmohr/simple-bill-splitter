@@ -352,14 +352,14 @@ export const SettlementList = ({
 							</div>
 						) : canRecord ? (
 							<div className="mt-4 grid grid-cols-2 gap-2">
-								<button type="button" onClick={() => remind(s)} className="btn-secondary !py-2.5">
+								<button type="button" onClick={() => remind(s)} className="btn-secondary !px-3">
 									{remindCopied === s.from ? <Check className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
 									{remindCopied === s.from ? "Copied" : "Remind"}
 								</button>
 								<button
 									type="button"
 									onClick={() => confirmPaid(s, "hero_received")}
-									className="btn-primary !py-2.5"
+									className="btn-primary !px-3"
 								>
 									<Check className="h-4 w-4" />
 									Mark received

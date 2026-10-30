@@ -51,7 +51,7 @@ export default async function SplitTemplatePage({ params }: { params: Promise<{ 
 					<h2 className="font-display text-2xl font-semibold text-ink">How it works</h2>
 					<ol className="mt-4 grid gap-3 sm:grid-cols-3">
 						{STEPS.map(([h, b], i) => (
-							<li key={h} className="rounded-xl border border-line bg-white p-4">
+							<li key={h} className="rounded-xl border border-line bg-surface p-4">
 								<span
 									className="flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold"
 									style={{ background: themeGradient(t), color: fg }}
@@ -79,7 +79,7 @@ export default async function SplitTemplatePage({ params }: { params: Promise<{ 
 
 				<section>
 					<h2 className="font-display text-2xl font-semibold text-ink">Questions</h2>
-					<div className="mt-4 divide-y divide-line rounded-xl border border-line bg-white">
+					<div className="mt-4 divide-y divide-line rounded-xl border border-line bg-surface">
 						{t.faqs.map((f) => (
 							<details key={f.q} className="group p-4">
 								<summary className="cursor-pointer font-semibold text-ink">{f.q}</summary>

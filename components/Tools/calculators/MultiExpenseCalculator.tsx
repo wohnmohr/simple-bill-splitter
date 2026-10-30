@@ -103,7 +103,7 @@ export const MultiExpenseCalculator = ({
 					{lines.map((line, i) => (
 						<div
 							key={i}
-							className="rounded-xl border border-gray-100 bg-gray-50/80 p-3 space-y-2"
+							className="rounded-xl border border-line bg-paper/80 p-3 space-y-2"
 						>
 							<div className="flex gap-2">
 								<input
@@ -120,7 +120,7 @@ export const MultiExpenseCalculator = ({
 										onClick={() =>
 											setLines((prev) => prev.filter((_, j) => j !== i))
 										}
-										className="text-gray-400 hover:text-red-600 px-1"
+										className="text-ink-muted hover:text-negative px-1"
 									>
 										✕
 									</button>

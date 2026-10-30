@@ -33,7 +33,7 @@ export const GstCalculator = () => {
 
 	const fmt = (n: number) => formatCurrency(n, INR);
 	const row = (label: string, value: string, strong = false) => (
-		<div className={`flex justify-between gap-3 py-2 ${strong ? "font-semibold text-ink" : "text-gray-700"}`}>
+		<div className={`flex justify-between gap-3 py-2 ${strong ? "font-semibold text-ink" : "text-ink-soft"}`}>
 			<span>{label}</span>
 			<span className="tabular-nums">{value}</span>
 		</div>
@@ -42,7 +42,7 @@ export const GstCalculator = () => {
 	return (
 		<div className="grid gap-6 lg:grid-cols-2">
 			<div className="surface space-y-4 p-4 sm:p-5">
-				<div className="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 text-sm font-medium">
+				<div className="grid grid-cols-2 gap-1 rounded-xl bg-paper p-1 text-sm font-medium">
 					{(["add", "remove"] as const).map((m) => (
 						<button
 							key={m}
@@ -51,7 +51,7 @@ export const GstCalculator = () => {
 								engaged();
 								setMode(m);
 							}}
-							className={`rounded-lg px-3 py-2 ${mode === m ? "bg-white shadow-sm text-ink" : "text-gray-600"}`}
+							className={`rounded-lg px-3 py-2 ${mode === m ? "bg-surface shadow-sm text-ink" : "text-ink-soft"}`}
 						>
 							{m === "add" ? "Add GST" : "Remove GST"}
 						</button>
@@ -83,7 +83,7 @@ export const GstCalculator = () => {
 								key={r}
 								type="button"
 								onClick={() => setRate(r)}
-								className={`rounded-full border px-3 py-1 text-sm ${rate === r ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 text-gray-600"}`}
+								className={`rounded-full border px-3 py-1 text-sm ${rate === r ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-line text-ink-soft"}`}
 							>
 								{r}%
 							</button>

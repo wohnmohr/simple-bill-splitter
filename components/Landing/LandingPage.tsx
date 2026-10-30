@@ -1,4 +1,5 @@
-import { ArrowRight, Check, ChevronDown, IndianRupee, Lock, Scale } from "lucide-react";
+import { ArrowRight, ChevronDown, IndianRupee, Lock, Scale } from "lucide-react";
+import { SettlementPreview } from "@/components/Landing/SettlementPreview";
 import { TrackedLink } from "@/components/UI/TrackedLink";
 import { StickyCta } from "@/components/Landing/StickyCta";
 import { SiteNav } from "@/components/Landing/SiteNav";
@@ -10,12 +11,12 @@ import { ALL_TOOL_SLUGS } from "@/content/tools";
 import { SPLIT_TTL_DAYS } from "@/utils/splitCloud";
 import { SITE_URL } from "@/lib/site";
 
-// Bills get split at the table, on a phone with UPI apps; desktop visitors scan to continue there.
+// Bills get split at the table, on a phone; desktop visitors scan to continue there.
 const PHONE_APP_URL = `${SITE_URL}/dashboard?utm_source=desktop_qr`;
 
 const PROMISES = [
 	{ icon: Scale, title: "Who owes whom, in seconds", body: "Split equally, by percentage or exact amounts, and settle in the fewest payments." },
-	{ icon: IndianRupee, title: "Settle in one tap on UPI", body: "GPay, PhonePe, Paytm or any UPI app, with the amount filled in." },
+	{ icon: IndianRupee, title: "One-tap UPI in India", body: "Rupee groups pay through GPay, PhonePe, Paytm or any UPI app, with the amount filled in. Every other currency settles up and marks it paid." },
 	{ icon: Lock, title: "Private by design", body: "No signup. Groups stay on your device, and sharing is end-to-end encrypted." },
 ];
 
@@ -38,60 +39,13 @@ const FAQS = [
 	},
 	{
 		q: "Does it support different currencies?",
-		a: "Yes: rupees by default, plus dollars, euros, pounds and yen.",
+		a: "Yes: rupees, dollars, euros, pounds and yen. New groups start in your local currency, and rupee groups also get one-tap UPI pay links.",
 	},
 	{
 		q: "Do split pages store my data on a server?",
 		a: `Yes, but end-to-end encrypted. Split pages are saved on our server so payments update live for everyone with the link. Each split is encrypted in your browser before upload, and the key stays in your link, which browsers never send to us. Our server only holds scrambled data that we can’t read, and every split is deleted automatically ${SPLIT_TTL_DAYS} days after it’s made. Groups you make in the app stay on your device unless you choose to share them, end-to-end encrypted.`,
 	},
 ];
-
-/** A faithful, static preview of the settle-up screen. */
-const SettlementPreview = () => (
-	<div className="relative mx-auto w-full max-w-sm" aria-hidden>
-		<div className="surface shadow-raised p-4 sm:p-5">
-			<div className="flex items-start justify-between">
-				<div>
-					<p className="font-display text-xl font-semibold text-ink">Goa trip</p>
-					<p className="text-sm text-ink-muted">4 members · 11 expenses</p>
-				</div>
-				<div className="text-right">
-					<p className="label-text">Total</p>
-					<p className="font-semibold tabular-nums text-ink">₹38,460</p>
-				</div>
-			</div>
-			<div className="mt-4 space-y-2.5 border-t border-line pt-4">
-				{[
-					["Rohan", "Priya", "₹6,215"],
-					["Aisha", "Priya", "₹2,940"],
-				].map(([from, to, amt], i) => (
-					<div key={from} className="rounded-xl border border-line p-3">
-						<div className="flex items-center justify-between gap-2">
-							<span className="flex items-center gap-1.5 font-semibold text-ink">
-								{from}
-								<ArrowRight className="h-3.5 w-3.5 text-ink-muted" />
-								{to}
-							</span>
-							<span className="font-semibold tabular-nums text-ink">{amt}</span>
-						</div>
-						{i === 0 && (
-							<div className="mt-2.5 flex items-center justify-center gap-1.5 rounded-lg bg-brand-700 py-2 text-sm font-semibold text-white">
-								<IndianRupee className="h-3.5 w-3.5" />
-								Pay {amt} with UPI
-							</div>
-						)}
-					</div>
-				))}
-			</div>
-		</div>
-		<div className="surface absolute -bottom-5 -left-3 sm:-left-8 hidden sm:flex items-center gap-2 px-3 py-2 shadow-raised">
-			<span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive-soft">
-				<Check className="h-3.5 w-3.5 text-positive" strokeWidth={3} />
-			</span>
-			<span className="text-sm font-medium text-ink">2 payments settle it</span>
-		</div>
-	</div>
-);
 
 const SectionHeading = ({ children }: { children: React.ReactNode }) => (
 	<h2 className="mx-auto mb-10 max-w-2xl text-center font-display text-3xl font-semibold text-ink sm:text-4xl">{children}</h2>
@@ -107,10 +61,10 @@ export const LandingPage = () => {
 				<div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
 					<div className="min-w-0 text-center lg:text-left">
 						<h1 className="font-display text-[clamp(2.25rem,6vw,4rem)] font-semibold leading-[1.05] text-ink">
-							Split bills in&nbsp;₹, settle&nbsp;with&nbsp;UPI
+							Split bills, privately
 						</h1>
 						<p className="mx-auto mt-5 max-w-xl text-lg text-ink-soft lg:mx-0">
-							Who owes whom in seconds — share privately, pay via UPI. No signup, no app download.
+							Who owes whom in seconds, shared end-to-end encrypted. No signup, no app download.
 						</p>
 						<HeroQuickAdd />
 						<TrackedLink
@@ -126,7 +80,7 @@ export const LandingPage = () => {
 							<p className="text-sm text-ink-muted">
 								<span className="font-medium text-ink">Splitting at the table?</span>
 								<br />
-								Scan to open SplitBiller on your phone, next to your UPI apps.
+								Scan to open SplitBiller on your phone.
 							</p>
 						</div>
 					</div>

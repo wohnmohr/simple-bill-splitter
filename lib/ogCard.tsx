@@ -1,7 +1,8 @@
 /**
- * Link preview cards (Open Graph images) in SplitBiller's own look: the paper
- * background, Fraunces headlines, Outfit text and the aubergine palette from
- * app/globals.css. Rendered at build time by the opengraph-image routes.
+ * Link preview cards (Open Graph images) in SplitBiller's own look (design system v1):
+ * warm paper, the outlined logo, DejaVu Sans Bold headlines and amounts (the logo's
+ * own letterforms, and it has ₹), Outfit text. Rendered at build time by the
+ * opengraph-image routes.
  *
  * WhatsApp and others crop previews towards the middle, so the headline sits
  * in the left column and nothing that matters touches the edges.
@@ -13,26 +14,29 @@ import type { ReactNode } from "react";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
-/** Aubergine, the default theme (utils/themes.ts). */
+/** The light tokens from app/globals.css. */
 export const C = {
-	paper: "#f7f6f3",
+	paper: "#faf7f2",
 	surface: "#ffffff",
-	ink: "#1c1826",
-	inkSoft: "#4a4556",
-	inkMuted: "#6b6576",
-	line: "#e7e3ea",
-	brand50: "#f6f2fa",
-	brand100: "#ece3f5",
-	brand700: "#53307b",
-	brand800: "#432763",
-	positive: "#11754c",
-	positiveSoft: "#e8f4ee",
+	ink: "#282326",
+	inkSoft: "#4f454a",
+	inkMuted: "#71656b",
+	line: "#ded3d9",
+	brand50: "#faf4f7",
+	brand100: "#f2ecef",
+	brand700: "#713f57",
+	brand800: "#5d3046",
+	positive: "#286344",
+	positiveSoft: "#e5f1e7",
 };
+
+/** Headline and amount face; Outfit has no ₹. */
+export const DISPLAY = "DejaVu Sans";
 
 const asset = (path: string) => readFile(join(process.cwd(), path));
 
 type Props = {
-	/** One or two short lines, in Fraunces. */
+	/** One or two short lines, in the display face. */
 	title: string;
 	sub: string;
 	/** The right-hand picture: a slice of the app. */
@@ -40,11 +44,11 @@ type Props = {
 };
 
 export async function ogCard({ title, sub, visual }: Props) {
-	const [fraunces, outfitMedium, outfitSemi, mark] = await Promise.all([
-		asset("assets/fonts/Fraunces-SemiBold.ttf"),
+	const [display, outfitMedium, outfitSemi, logo] = await Promise.all([
+		asset("assets/fonts/DejaVuSans-Bold.ttf"),
 		asset("assets/fonts/Outfit-Medium.ttf"),
 		asset("assets/fonts/Outfit-SemiBold.ttf"),
-		asset("public/web-app-manifest-512x512.png"),
+		asset("assets/brand/logo-horizontal-light.svg"),
 	]);
 
 	return new ImageResponse(
@@ -58,22 +62,16 @@ export async function ogCard({ title, sub, visual }: Props) {
 					gap: 56,
 					padding: "0 72px",
 					background: C.paper,
-					backgroundImage: `radial-gradient(circle at 86% 14%, ${C.brand100} 0%, ${C.paper} 48%)`,
-					// Outfit has no ₹, so rupee amounts fall back to Fraunces (as the app's display amounts are).
-					fontFamily: "Outfit, Fraunces",
+					// Outfit has no ₹, so amounts fall back to the display face.
+					fontFamily: `Outfit, ${DISPLAY}`,
 					color: C.ink,
 				}}
 			>
 				<div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-					<div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-						{/* The mark sits on a white tile, like the app icon. */}
-						<div style={{ display: "flex", padding: 6, borderRadius: 18, background: C.surface, border: `2px solid ${C.line}` }}>
-							{/* eslint-disable-next-line @next/next/no-img-element */}
-							<img src={`data:image/png;base64,${mark.toString("base64")}`} width={52} height={52} alt="" />
-						</div>
-						<span style={{ fontFamily: "Fraunces", fontSize: 36 }}>SplitBiller</span>
-					</div>
-					<div style={{ display: "flex", marginTop: 40, fontFamily: "Fraunces", fontSize: 68, lineHeight: 1.06, letterSpacing: "-1px" }}>
+					{/* The supplied lockup; its wordmark is outlined, so it needs no font. */}
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img src={`data:image/svg+xml;base64,${logo.toString("base64")}`} width={260} height={50} alt="" />
+					<div style={{ display: "flex", marginTop: 40, fontFamily: DISPLAY, fontSize: 64, lineHeight: 1.08, letterSpacing: "-1px" }}>
 						{title}
 					</div>
 					<div style={{ display: "flex", marginTop: 22, fontSize: 30, lineHeight: 1.35, color: C.inkSoft }}>{sub}</div>
@@ -84,7 +82,7 @@ export async function ogCard({ title, sub, visual }: Props) {
 		{
 			...OG_SIZE,
 			fonts: [
-				{ name: "Fraunces", data: fraunces, weight: 600, style: "normal" },
+				{ name: DISPLAY, data: display, weight: 700, style: "normal" },
 				{ name: "Outfit", data: outfitMedium, weight: 500, style: "normal" },
 				{ name: "Outfit", data: outfitSemi, weight: 600, style: "normal" },
 			],
@@ -103,9 +101,8 @@ export const Surface = ({ children, style }: { children: ReactNode; style?: Reac
 			width: "100%",
 			background: C.surface,
 			border: `2px solid ${C.line}`,
-			borderRadius: 28,
+			borderRadius: 24,
 			padding: 32,
-			boxShadow: "0 24px 48px -16px rgba(67,39,99,0.28)",
 			...style,
 		}}
 	>
@@ -121,7 +118,7 @@ export const PayButton = ({ children }: { children: ReactNode }) => (
 			gap: 9,
 			marginTop: 22,
 			padding: "18px 0",
-			borderRadius: 16,
+			borderRadius: 12,
 			background: C.brand700,
 			color: "#ffffff",
 			fontSize: 26,

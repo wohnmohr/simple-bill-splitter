@@ -106,8 +106,8 @@ export const UnequalCalculator = () => {
 							onClick={() => setMode(id)}
 							className={`flex-1 rounded-lg py-2 text-sm font-medium ${
 								mode === id
-									? "bg-indigo-600 text-white"
-									: "bg-gray-100 text-gray-700 hover:bg-gray-200"
+									? "bg-indigo-600 text-on-brand"
+									: "bg-paper text-ink-soft hover:bg-line"
 							}`}
 						>
 							{label}
@@ -136,7 +136,7 @@ export const UnequalCalculator = () => {
 								<button
 									type="button"
 									onClick={() => setRows((r) => r.filter((_, j) => j !== i))}
-									className="icon-btn hover:!text-red-600"
+									className="icon-btn hover:!text-negative"
 									aria-label="Remove"
 								>
 									✕
@@ -157,7 +157,7 @@ export const UnequalCalculator = () => {
 
 				<p
 					className={`text-xs ${
-						balanced ? "text-green-700" : "text-amber-700"
+						balanced ? "text-positive" : "text-warning"
 					}`}
 				>
 					{mode === "amount"

@@ -277,7 +277,7 @@ export const ClaimView = ({ id, req, append, expiresAt }: Props) => {
 			</p>
 
 			{/* Your share and what to do next, always in reach. */}
-			<div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 backdrop-blur">
+			<div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3">
 				<div className="mx-auto max-w-xl">
 					<div className="flex items-baseline justify-between gap-3">
 						<span className="text-sm text-ink-soft">{organiser ? "Your part" : "Your share"}</span>

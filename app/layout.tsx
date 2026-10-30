@@ -19,9 +19,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
 	metadataBase: new URL(SITE_URL),
-	title: "SplitBiller — Split Bills in ₹ | No Login, UPI Ready",
+	title: "SplitBiller — Split Bills with Friends | No Signup, Private",
 	description:
-		"Split group expenses in rupees instantly. Calculate who owes whom, share a private settlement link, and pay via UPI — no signup, no app download.",
+		"Split group expenses in seconds. See who owes whom, share an end-to-end encrypted link and settle up, with one-tap UPI in India. No signup, no app download.",
 	keywords: [
 		"bill splitter",
 		"upi bill splitter",
@@ -58,18 +58,18 @@ export const metadata: Metadata = {
 		title: "SplitBiller",
 	},
 	openGraph: {
-		title: "SplitBiller — Split Bills in ₹ | No Login, UPI Ready",
+		title: "SplitBiller — Split Bills with Friends | No Signup, Private",
 		description:
-			"Split expenses in rupees, share privately, pay via UPI. No signup required.",
+			"Split expenses with friends, share privately, settle up. No signup required.",
 		type: "website",
 		url: "/",
 		siteName: "SplitBiller",
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "SplitBiller — Split Bills in ₹ | No Login, UPI Ready",
+		title: "SplitBiller — Split Bills with Friends | No Signup, Private",
 		description:
-			"Split expenses in rupees, share privately, pay via UPI. No signup required.",
+			"Split expenses with friends, share privately, settle up. No signup required.",
 	},
 };
 

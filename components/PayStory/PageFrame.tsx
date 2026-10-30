@@ -5,7 +5,7 @@ import { LogoMark } from "@/components/UI/LogoMark";
 /** Shared page chrome for the /split pages and the shared-link view. */
 export const PageFrame = ({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) => (
 	<main className="page-shell min-h-screen bg-paper text-ink safe-pb">
-		<header className="border-b border-line bg-white px-4">
+		<header className="border-b border-line bg-surface px-4">
 			<div className={`mx-auto flex h-14 items-center justify-between ${wide ? "max-w-5xl" : "max-w-3xl"}`}>
 				<Link href="/" className="flex min-w-0 items-center gap-2.5">
 					<LogoMark />
