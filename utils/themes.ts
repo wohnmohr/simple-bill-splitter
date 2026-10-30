@@ -64,9 +64,10 @@ const dark = (id: string, name: string, tagline: string, brand: Scale, rest: Omi
 export const DEFAULT_THEME_ID = "aubergine";
 
 export const THEMES: Theme[] = [
-	light("aubergine", "Aubergine", "SplitBiller classic",
-		["#f6f2fa", "#ece3f5", "#d8c6ea", "#bd9fdb", "#9d73c7", "#7e4fb0", "#663a96", "#53307b", "#432763", "#2f1b46", "#1f1230"],
-		{ ink: "#1c1826", "ink-soft": "#4a4556", "ink-muted": "#6b6576", paper: "#f7f6f3", line: "#e7e3ea", "line-strong": "#d4cfd9" }),
+	// The default: CSS tokens in app/globals.css, which also switch to dark mode. These are its light values (for the picker swatch).
+	light("aubergine", "SplitBiller", "Follows your light or dark setting",
+		["#faf4f7", "#f2ecef", "#e6d3dd", "#d2b2c3", "#b88aa2", "#9a6582", "#82506a", "#713f57", "#5d3046", "#46233a", "#2e1726"],
+		{ ink: "#282326", "ink-soft": "#4f454a", "ink-muted": "#71656b", paper: "#faf7f2", line: "#ded3d9", "line-strong": "#8b7a83" }),
 	light("ocean", "Ocean", "Calm corporate blue",
 		["#eff6ff", "#dbeafe", "#bfdbfe", "#93c5fd", "#60a5fa", "#3b82f6", "#2563eb", "#1d4ed8", "#1e40af", "#1e3a8a", "#172554"],
 		{ ink: "#111827", "ink-soft": "#374151", "ink-muted": "#5b6472", paper: "#f5f7fa", line: "#e3e8ef", "line-strong": "#cfd6e0" }),
@@ -124,9 +125,10 @@ export function applyTheme(id?: string) {
 		if (theme) root.style.setProperty(`--sb-${token}`, channels(theme.colors[token]));
 		else root.style.removeProperty(`--sb-${token}`);
 	}
-	const greys = theme?.dark ? [theme.colors.paper, theme.colors.line, theme.colors["line-strong"]] : null;
+	// A light group theme also needs light greys when the app itself is in dark mode.
+	const greys = theme ? (theme.dark ? [theme.colors.paper, theme.colors.line, theme.colors["line-strong"]] : ["#f8f9fa", "#f1f3f5", "#e9ecef"]) : null;
 	MANTINE_DARK_GREYS.forEach((v, i) => (greys ? root.style.setProperty(v, greys[i]) : root.style.removeProperty(v)));
-	root.style.colorScheme = theme?.dark ? "dark" : "";
+	root.style.colorScheme = theme ? (theme.dark ? "dark" : "light") : "";
 	root.toggleAttribute("data-sb-dark", !!theme?.dark);
 	root.dataset.sbTheme = theme?.id ?? DEFAULT_THEME_ID;
 }

@@ -40,7 +40,7 @@ export const GroupsHome = ({
 		<div>
 			<div className="mb-4 flex items-end justify-between gap-3">
 				<div>
-					<h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink">
+					<h1 className="font-display text-[28px] leading-[34px] sm:text-[32px] sm:leading-[38px] font-bold text-ink">
 						Your groups
 					</h1>
 					{totals.length > 0 ? (
@@ -48,7 +48,7 @@ export const GroupsHome = ({
 							{totals.map(({ currency, owe, getBack }) => (
 								<span key={currency.code} className="block">
 									{owe > 0 && (
-										<>You owe <span className="tabular-nums text-negative">{formatCurrency(owe, currency)}</span></>
+										<>You owe <span className="tabular-nums font-semibold text-ink">{formatCurrency(owe, currency)}</span></>
 									)}
 									{owe > 0 && getBack > 0 && " · "}
 									{getBack > 0 && (
@@ -71,10 +71,6 @@ export const GroupsHome = ({
 				)}
 			</div>
 
-			{canCreate && <div className="mb-4">{quickAdd}</div>}
-
-			<RemindCard groups={groups} />
-
 			{/* A list on phones; a grid of cards on wide screens. */}
 			<ul className="surface divide-y divide-line overflow-hidden lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none">
 				{/* Closed groups are records: they go below the ones still in use. */}
@@ -87,9 +83,6 @@ export const GroupsHome = ({
 								onClick={() => onSelectGroup(group.id)}
 								className="flex flex-1 min-w-0 items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-paper"
 							>
-								<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 font-display text-lg font-semibold text-brand-700">
-									{group.name.trim().charAt(0).toUpperCase() || "G"}
-								</span>
 								<span className="min-w-0 flex-1">
 									<span className="flex items-center gap-1.5 font-semibold text-ink">
 										<span className="truncate">{group.name}</span>
@@ -99,7 +92,14 @@ export const GroupsHome = ({
 										{group.closedAt ? (
 											<>Closed · {plural(group.expenses.filter((e) => e.kind !== "payment").length, "expense")}</>
 										) : mine !== null ? (
-											<BalanceHeadline balance={mine} group={group} size="sm" />
+											<>
+												{/* Phones: your balance here. Wider: it moves to the right column, and this line says who and how much. */}
+												<span className="sm:hidden"><BalanceHeadline balance={mine} group={group} size="sm" /></span>
+												<span className="hidden sm:inline">
+													{plural(currentMembers(group.members).length, "member")} ·{" "}
+													<span className="tabular-nums">{formatCurrency(total, group.currency)}</span> spent
+												</span>
+											</>
 										) : (
 											<>
 												{plural(currentMembers(group.members).length, "member")} ·{" "}
@@ -109,10 +109,25 @@ export const GroupsHome = ({
 									</span>
 								</span>
 								<span className="hidden sm:block text-right shrink-0 pr-10">
-									<span className="block font-semibold tabular-nums text-ink">
-										{formatCurrency(total, group.currency)}
-									</span>
-									<span className="block text-xs text-ink-muted">spent</span>
+									{mine !== null && !group.closedAt ? (
+										Math.abs(mine) < 0.01 ? (
+											<span className="block text-sm text-ink-muted">All square</span>
+										) : (
+											<>
+												<span className={`block font-semibold tabular-nums ${mine > 0 ? "text-positive" : "text-ink"}`}>
+													{formatCurrency(Math.abs(mine), group.currency)}
+												</span>
+												<span className="block text-xs text-ink-muted">{mine > 0 ? "you get back" : "you owe"}</span>
+											</>
+										)
+									) : (
+										<>
+											<span className="block font-semibold tabular-nums text-ink">
+												{formatCurrency(total, group.currency)}
+											</span>
+											<span className="block text-xs text-ink-muted">spent</span>
+										</>
+									)}
 								</span>
 								<ChevronRight className="h-5 w-5 shrink-0 text-ink-muted sm:hidden" />
 							</button>
@@ -127,6 +142,12 @@ export const GroupsHome = ({
 					);
 				})}
 			</ul>
+
+			{/* Your groups lead; adding by typing and reminders come after them. */}
+			<div className="mt-4 space-y-4">
+				{canCreate && quickAdd}
+				<RemindCard groups={groups} />
+			</div>
 
 			{!canCreate && (
 				<p className="mt-3 text-xs text-ink-muted">
@@ -151,7 +172,6 @@ export const GroupsSkeleton = () => (
 		<ul className="surface divide-y divide-line overflow-hidden">
 			{[0, 1].map((i) => (
 				<li key={i} className="flex items-center gap-3 px-4 py-4">
-					<span className="h-10 w-10 shrink-0 rounded-xl bg-ink/[0.06]" />
 					<span className="flex-1 space-y-2">
 						<span className="block h-4 w-2/5 rounded bg-ink/[0.06]" />
 						<span className="block h-3 w-1/4 rounded bg-ink/[0.05]" />

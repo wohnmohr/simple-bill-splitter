@@ -12,13 +12,13 @@ const inputStyles = {
 		borderColor: "rgb(var(--sb-line-strong))",
 		backgroundColor: "rgb(var(--sb-surface))",
 		color: "rgb(var(--sb-ink))",
-		minHeight: 44,
+		minHeight: 48,
 		fontSize: 16,
 	},
 	label: {
-		fontSize: 13,
+		fontSize: 14,
 		fontWeight: 600,
-		color: "rgb(var(--sb-ink-soft))",
+		color: "rgb(var(--sb-ink))",
 		marginBottom: 6,
 	},
 };
@@ -32,15 +32,16 @@ const theme = createTheme({
 		indigo: brand as unknown as MantineColorsTuple,
 		purple: brand as unknown as MantineColorsTuple,
 	},
-	black: "#1c1826",
+	black: "#282326",
+	// Controls 12px, dialogs 24px (design system v1).
 	defaultRadius: "md",
+	radius: { md: "12px", xl: "24px" },
 	cursorType: "pointer",
 	focusRing: "auto",
-	fontFamily: "var(--font-outfit), ui-sans-serif, system-ui, sans-serif",
+	fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 	headings: {
-		fontFamily:
-			"var(--font-fraunces), var(--font-outfit), ui-serif, Georgia, serif",
-		fontWeight: "600",
+		fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+		fontWeight: "700",
 	},
 	components: {
 		TextInput: { styles: inputStyles },
@@ -48,7 +49,8 @@ const theme = createTheme({
 		Select: { styles: inputStyles },
 		Modal: {
 			defaultProps: {
-				overlayProps: { backgroundOpacity: 0.4, color: "#1c1826" },
+				overlayProps: { backgroundOpacity: 0.5, color: "#171317" },
+				radius: "xl",
 			},
 		},
 	},

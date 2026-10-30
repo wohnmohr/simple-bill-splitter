@@ -11,6 +11,7 @@ import { reminderText } from "@/utils/reminderText";
 import { track, trackError } from "@/lib/analytics";
 import { sendViaWhatsApp } from "@/utils/whatsapp";
 import { isValidUpiId } from "@/utils/upi";
+import { ConfirmDialog, type ConfirmState } from "@/components/UI/ConfirmDialog";
 
 interface SettlementListProps {
 	settlements: Settlement[];
@@ -108,6 +109,19 @@ export const SettlementList = ({
 		onRecordPayment?.([s]);
 		track("settlement_marked_paid", { source, is_me: s.from === meId || s.to === meId });
 	};
+
+	// Recording is a note to everyone in the group, so it's confirmed first. The return-from-UPI
+	// prompt is its own confirmation and records straight away.
+	const [confirm, setConfirm] = useState<ConfirmState>(null);
+	const nameOrYou = (id: string) => (id === meId ? "you" : getPersonName(id));
+	const confirmPaid = (s: Settlement, source: string) =>
+		setConfirm({
+			title: `Record ${formatCurrency(s.amount, currency)} from ${nameOrYou(s.from)} to ${nameOrYou(s.to)} as paid?`,
+			detail: "This notes a payment made outside SplitBiller, for everyone in the group. SplitBiller doesn't move or check money.",
+			action: "Record",
+			tone: "primary",
+			onConfirm: () => markPaid(s, source),
+		});
 
 	// ── Identity ────────────────────────────────────────────────
 	const identityPicker = meId === undefined && onSetMe && (
@@ -265,6 +279,7 @@ export const SettlementList = ({
 
 	return (
 		<div className="space-y-4">
+			<ConfirmDialog confirm={confirm} onClose={() => setConfirm(null)} />
 			{identityPicker}
 			{viewingAs}
 
@@ -278,18 +293,29 @@ export const SettlementList = ({
 				return (
 					<section
 						key={`${s.from}-${s.to}`}
-						className="surface border-brand-200 p-4 sm:p-5 shadow-raised"
+						className="surface p-4 sm:p-5"
 					>
-						<p className="text-sm font-medium text-ink-muted">
-							{iPay ? `You pay ${other}` : `${other} owes you`}
-						</p>
-						<p
-							className={`mt-1 whitespace-nowrap font-display ${amount.length > 13 ? "text-3xl" : "text-4xl"} font-semibold tabular-nums ${
-								iPay ? "text-ink" : "text-positive"
-							}`}
-						>
-							{amount}
-						</p>
+						{/* Nothing here is recorded until someone marks it; opening a UPI app proves nothing. */}
+						<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+							<p
+								className={`whitespace-nowrap font-display ${amount.length > 13 ? "text-3xl" : "text-4xl"} font-bold tabular-nums ${
+									iPay ? "text-ink" : "text-positive"
+								}`}
+							>
+								{amount}
+							</p>
+							<p className="rounded-full bg-brand-100 px-3 py-1 text-xs font-medium text-ink-soft">Not recorded as paid</p>
+						</div>
+						<dl className="mt-2 divide-y divide-line">
+							<div className="flex items-baseline justify-between gap-3 py-2.5">
+								<dt className="text-sm text-ink-muted">From</dt>
+								<dd className="break-words text-right font-semibold text-ink">{iPay ? "You" : other}</dd>
+							</div>
+							<div className="flex items-baseline justify-between gap-3 py-2.5">
+								<dt className="text-sm text-ink-muted">To</dt>
+								<dd className="break-words text-right font-semibold text-ink">{iPay ? other : "You"}</dd>
+							</div>
+						</dl>
 
 						{iPay ? (
 							<div className="mt-4 space-y-2">
@@ -312,12 +338,15 @@ export const SettlementList = ({
 								{canRecord && !(askConfirm && sameSettlement(pending, s)) && (
 									<button
 										type="button"
-										onClick={() => markPaid(s, "hero")}
-										className={payByUpi ? "btn-ghost w-full" : "btn-primary w-full !py-3"}
+										onClick={() => confirmPaid(s, "hero")}
+										className={payByUpi ? "btn-secondary w-full" : "btn-primary w-full"}
 									>
 										<Check className="h-4 w-4" />
-										{payByUpi ? "Already paid? Mark as paid" : "Mark as paid"}
+										Mark as paid
 									</button>
+								)}
+								{canRecord && !(askConfirm && sameSettlement(pending, s)) && (
+									<p className="text-sm text-ink-muted">Record it only after the payment goes through.</p>
 								)}
 								{canRecord && confirmPrompt(s)}
 							</div>
@@ -329,7 +358,7 @@ export const SettlementList = ({
 								</button>
 								<button
 									type="button"
-									onClick={() => markPaid(s, "hero_received")}
+									onClick={() => confirmPaid(s, "hero_received")}
 									className="btn-primary !py-2.5"
 								>
 									<Check className="h-4 w-4" />
@@ -362,11 +391,19 @@ export const SettlementList = ({
 						{canRecord && others.length > 1 && (
 							<button
 								type="button"
-								onClick={() => {
-									onRecordPayment(others);
-									track("settlement_marked_paid", { source: "all", count: others.length });
-								}}
-								className="shrink-0 text-sm font-medium text-brand-700 hover:underline"
+								onClick={() =>
+									setConfirm({
+										title: `Record all ${others.length} payments as paid?`,
+										detail: `${formatCurrency(others.reduce((sum, o) => sum + o.amount, 0), currency)} in total. This notes payments made outside SplitBiller, for everyone in the group.`,
+										action: "Record all",
+										tone: "primary",
+										onConfirm: () => {
+											onRecordPayment(others);
+											track("settlement_marked_paid", { source: "all", count: others.length });
+										},
+									})
+								}
+								className="btn-ghost shrink-0 !text-brand-700"
 							>
 								Mark all paid
 							</button>
@@ -381,8 +418,8 @@ export const SettlementList = ({
 								{canRecord && (
 									<button
 										type="button"
-										onClick={() => markPaid(s, "row")}
-										className="btn-secondary shrink-0 !px-3 !py-1.5 text-sm"
+										onClick={() => confirmPaid(s, "row")}
+										className="btn-ghost shrink-0 !text-brand-700"
 										aria-label={`Mark ${getPersonName(s.from)}'s payment to ${getPersonName(s.to)} as paid`}
 									>
 										Mark paid

@@ -16,7 +16,6 @@ export default function SecretSantaPage() {
 				<div className="mx-auto flex h-14 max-w-2xl items-center">
 					<Link href="/" className="flex min-w-0 items-center gap-2.5">
 						<LogoMark />
-						<span className="truncate font-display text-lg font-semibold text-ink">SplitBiller</span>
 					</Link>
 				</div>
 			</header>

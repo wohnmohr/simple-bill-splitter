@@ -57,9 +57,6 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 				<div className="max-w-5xl mx-auto flex h-14 items-center justify-between gap-3 min-w-0">
 					<Link href="/" className="flex items-center gap-2 group">
 						<LogoMark />
-						<span className="font-display text-lg font-semibold text-ink">
-							SplitBiller
-						</span>
 					</Link>
 					<div className="flex items-center gap-1 sm:gap-2">
 						<Link href="/tools" className="btn-ghost">

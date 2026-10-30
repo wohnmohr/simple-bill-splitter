@@ -99,6 +99,7 @@ export const useExpenses = (
       splitMethod: "equally",
       kind: "payment",
       createdAt: Date.now(),
+      ...(currentGroup.meId ? { recordedBy: currentGroup.meId } : {}),
     };
     setGroups((prev) =>
       prev.map((g) =>

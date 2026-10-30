@@ -9,7 +9,6 @@ export const PageFrame = ({ children, wide = false }: { children: React.ReactNod
 			<div className={`mx-auto flex h-14 items-center justify-between ${wide ? "max-w-5xl" : "max-w-3xl"}`}>
 				<Link href="/" className="flex min-w-0 items-center gap-2.5">
 					<LogoMark />
-					<span className="truncate font-display text-lg font-semibold">SplitBiller</span>
 				</Link>
 				<div className="flex shrink-0 items-center gap-1">
 					<FeedbackButton />

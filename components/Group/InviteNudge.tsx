@@ -133,7 +133,7 @@ export const InviteNudge = ({ group, shareLink, onInvite }: InviteNudgeProps) =>
 						track("invite_nudge_clicked");
 						onInvite();
 					}}
-					className="btn-primary mt-3 !py-2"
+					className="btn-secondary mt-3"
 				>
 					<Link2 className="h-4 w-4" />
 					Invite with a link

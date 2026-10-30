@@ -157,8 +157,8 @@ export default function Home() {
 		setToast({
 			id: undo.toastId,
 			message: undo.ids.length === 1
-				? `${nameOf(s.from)} paid ${nameOf(s.to)} ${formatCurrency(s.amount, currency)}`
-				: `${undo.ids.length} payments marked paid`,
+				? `Recorded: ${nameOf(s.from)} paid ${nameOf(s.to)} ${formatCurrency(s.amount, currency)}`
+				: `Recorded ${undo.ids.length} payments as paid`,
 			actionLabel: "Undo",
 			onAction: () => undo.ids.forEach((id) => deleteExpense(id)),
 		});
@@ -496,6 +496,15 @@ export default function Home() {
 									onRename={(name) => renameGroup(currentGroup.id, name)}
 									syncStatus={sync.status[currentGroup.id]}
 									onChangeMe={() => setIdentityAsk("pick")}
+									onSettle={
+										settlements.length > 0
+											? () => {
+													handleTabChange("settlements");
+													// After the tab renders, so the scroll lands on the settle cards.
+													setTimeout(() => document.getElementById("tab-settlements")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+												}
+											: undefined
+									}
 								/>
 
 								{currentGroup.members.length === 0 && (
@@ -613,8 +622,9 @@ export default function Home() {
 										)}
 										</div>
 
-										{/* On wide screens "Add expense" sits at the top of the side panel instead. */}
-										{!isWide && canAdd && (
+										{/* On wide screens "Add expense" sits at the top of the side panel instead.
+										    Off on Settle up, where it would compete with Pay and cover the cards. */}
+										{!isWide && canAdd && shownTab !== "settlements" && (
 											<FloatingActionButton
 												onClick={() => setShowExpenseForm(true)}
 												showTooltip={expenses.length === 0}
