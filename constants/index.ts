@@ -8,7 +8,7 @@ export const CURRENCIES: Currency[] = [
   { code: "JPY", symbol: "¥", name: "Japanese Yen" },
 ];
 
-/** Default for new groups and calculators — India-first. */
+/** Fallback before the browser is known (server render, old data). New groups use utils/localCurrency. */
 export const DEFAULT_CURRENCY = CURRENCIES[0];
 
 /** Generous: groups live in this browser's storage, and synced groups people join count too. */

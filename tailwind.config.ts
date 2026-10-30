@@ -44,24 +44,24 @@ const config: Config = {
           DEFAULT: token("negative"),
           soft: token("negative-soft"),
         },
+        // Pending or "check this" states; never the only signal (always with text).
+        warning: {
+          DEFAULT: token("warning"),
+          soft: token("warning-soft"),
+        },
         // Text on a brand-colored or ink-colored background.
         "on-brand": token("on-brand"),
         "on-ink": token("on-ink"),
       },
+      // The design system uses the platform's own sans: no font downloads.
       fontFamily: {
-        sans: ["var(--font-outfit)", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: [
-          "var(--font-fraunces)",
-          "var(--font-outfit)",
-          "ui-serif",
-          "Georgia",
-          "serif",
-        ],
+        sans: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        display: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
       },
       boxShadow: {
-        card: "0 1px 2px rgba(28, 24, 38, 0.04), 0 1px 1px rgba(28, 24, 38, 0.03)",
+        card: "0 1px 2px rgba(40, 35, 38, 0.04)",
         raised:
-          "0 1px 2px rgba(28, 24, 38, 0.06), 0 8px 24px -8px rgba(47, 27, 70, 0.22)",
+          "0 1px 2px rgba(40, 35, 38, 0.06), 0 8px 24px -8px rgba(46, 23, 38, 0.22)",
       },
       keyframes: {
         "fade-in-up": {

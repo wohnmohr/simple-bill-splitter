@@ -5,7 +5,8 @@ import { RotateCw } from "lucide-react";
 import { fieldClass, labelClass, parseNames, randomInt, useEngaged, useTrackResult } from "./shared";
 
 const TOOL = "random-name-picker";
-const COLORS = ["#6366f1", "#06b6d4", "#f59e0b", "#ec4899", "#10b981", "#8b5cf6", "#f97316", "#3b82f6"];
+// Design system v1 hues (plum, success green, warning brown, ink) and deeper steps of them; each holds white text.
+const COLORS = ["#713F57", "#286344", "#805000", "#4F454A", "#9A4F72", "#2F5D4A", "#6B4A1F", "#5D3046"];
 const SPIN_MS = 4500;
 
 const point = (deg: number, r: number) => {
@@ -72,20 +73,20 @@ export const NamePickerWheel = () => {
 						disabled={spinning}
 					/>
 				</div>
-				<label className="flex items-center gap-2 text-sm text-gray-700">
+				<label className="flex items-center gap-2 text-sm text-ink-soft">
 					<input
 						type="checkbox"
 						checked={removeWinner}
 						onChange={(e) => setRemoveWinner(e.target.checked)}
-						className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+						className="rounded border-line-strong text-brand-700 focus:ring-brand-700"
 					/>
 					Remove the winner after each spin
 				</label>
-				{n < 2 && <p className="text-sm text-gray-500">Add at least 2 names to spin.</p>}
+				{n < 2 && <p className="text-sm text-ink-muted">Add at least 2 names to spin.</p>}
 				{history.length > 0 && (
 					<div>
 						<p className="label-text">Previous winners</p>
-						<p className="text-sm text-gray-700">{history.join(" · ")}</p>
+						<p className="text-sm text-ink-soft">{history.join(" · ")}</p>
 					</div>
 				)}
 			</div>
@@ -108,7 +109,7 @@ export const NamePickerWheel = () => {
 						onTransitionEnd={onSpinEnd}
 					>
 						{n === 0 ? (
-							<circle cx="100" cy="100" r="96" fill="#e5e7eb" />
+							<circle cx="100" cy="100" r="96" className="fill-line" />
 						) : n === 1 ? (
 							<circle cx="100" cy="100" r="96" fill={COLORS[0]} />
 						) : (
@@ -117,7 +118,7 @@ export const NamePickerWheel = () => {
 									key={name}
 									d={`M100 100 L${point(i * seg, 96)} A96 96 0 0 1 ${point((i + 1) * seg, 96)} Z`}
 									fill={COLORS[i % COLORS.length]}
-									stroke="#fff"
+									className="stroke-surface"
 									strokeWidth="0.8"
 								/>
 							))
@@ -138,7 +139,7 @@ export const NamePickerWheel = () => {
 									{name.length > 14 ? `${name.slice(0, 13)}…` : name}
 								</text>
 							))}
-						<circle cx="100" cy="100" r="8" fill="#fff" stroke="#d1d5db" />
+						<circle cx="100" cy="100" r="8" className="fill-surface stroke-line-strong" />
 					</svg>
 				</div>
 

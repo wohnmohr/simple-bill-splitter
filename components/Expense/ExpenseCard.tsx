@@ -19,6 +19,8 @@ interface ExpenseCardProps {
 	paidByName: string;
 	/** For payments: who received the money. */
 	toName?: string;
+	/** For payments: "Recorded by you · 3:40 pm". */
+	recorded?: string;
 	/** The viewer's part of this expense, when they're in it. */
 	myShare?: number;
 	commentCount?: number;
@@ -33,6 +35,7 @@ export const ExpenseCard = ({
 	paidByName,
 	toName,
 	myShare,
+	recorded,
 	commentCount = 0,
 	onClick,
 	onEdit,
@@ -49,9 +52,12 @@ export const ExpenseCard = ({
 					<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-positive-soft">
 						<Check className="h-3.5 w-3.5 text-positive" strokeWidth={3} aria-hidden />
 					</span>
-					<span className="min-w-0 flex-1 truncate text-sm text-ink-soft">
-						<span className="font-medium text-ink">{paidByName}</span> paid{" "}
-						<span className="font-medium text-ink">{toName}</span>
+					<span className="min-w-0 flex-1 text-sm text-ink-soft">
+						<span className="block truncate">
+							<span className="font-medium text-ink">{paidByName}</span> paid{" "}
+							<span className="font-medium text-ink">{toName}</span>
+						</span>
+						{recorded && <span className="block text-xs text-ink-muted">{recorded}</span>}
 					</span>
 					<span className="shrink-0 text-sm font-medium tabular-nums text-ink-soft">
 						{formatCurrency(expense.amount, currency)}

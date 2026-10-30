@@ -58,8 +58,7 @@ export default function FeaturesPage() {
 							}`}
 						>
 							<div className={i % 2 && !wide ? "lg:order-2" : ""}>
-								<p className="text-sm font-semibold uppercase tracking-wide text-brand-700">{f.eyebrow}</p>
-								<h2 id={`${f.id}-title`} className="mt-2 font-display text-3xl font-semibold sm:text-4xl">
+								<h2 id={`${f.id}-title`} className="font-display text-3xl font-semibold sm:text-4xl">
 									{f.title}
 								</h2>
 								<p className="mt-4 text-lg text-ink-soft">{f.body}</p>

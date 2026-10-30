@@ -2,7 +2,7 @@ import { Expense, ExpenseComment, Person, Currency } from "@/types";
 import { ChevronDown } from "lucide-react";
 import { ExpenseCard } from "./ExpenseCard";
 import { expensePayers, expenseShares, minorUnits } from "@/utils/calculations";
-import { joinNames } from "@/utils/formatting";
+import { joinNames, recordedNote } from "@/utils/formatting";
 
 interface ExpenseListProps {
 	expenses: Expense[];
@@ -60,6 +60,7 @@ export const ExpenseList = ({
 				currency={currency}
 				paidByName={joinNames([...expensePayers(expense).keys()].map(getPersonName))}
 				toName={getPersonName(expense.participants[0])}
+				recorded={expense.kind === "payment" ? recordedNote(expense, meId, getPersonName) : undefined}
 				myShare={meId ? expenseShares(expense, minorUnits(currency)).get(meId) : undefined}
 				commentCount={commentCounts.get(expense.id)}
 				onClick={() => onExpenseClick(expense.id)}

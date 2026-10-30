@@ -7,7 +7,7 @@ Shared groups that everyone edits from their own phone, end-to-end encrypted. Jo
 "Split bills, privately." Privacy is the thread through every new feature: the server can't read the group, and you don't have to give it your name. The video is the real app, recorded from the feature clips, with the product's own copy.
 
 ## Format
-Landscape 1920x1080, 30fps, 42s. It uses the same look, fonts and SFX as `../brag.mp4` and `../split-links/brag.mp4`, so the three read as a series, with its own original track.
+Landscape 1920x1080, 30fps, 42s. It shares its SFX with `../brag.mp4` and `../split-links/brag.mp4`, with its own original track. Restyled to design system v1 (October 2026): warm paper and plum, the system sans in bold instead of Fraunces and Outfit, the outlined logo lockup (`assets/logo-horizontal.svg`), and clips re-recorded from the new UI.
 
 The homepage serves a 720p web encode (`public/promo/splitbiller-promo.mp4`, about 2 MB) with a poster taken at 15.5s.
 
@@ -49,7 +49,7 @@ The label sits on the left and the real app runs in a phone frame on the right. 
 - **Loudness:** the renderer mixes to about −23 LUFS. The final files are normalised to −16 LUFS with a −1.5 dBTP ceiling, the usual level for web and social video.
 
 ## Data note
-Names and amounts are illustrative: Asha, Ben, Chen, Dev, a Goa trip, and the made-up name "Mikoox". On-screen UI is the real app, recorded by `scripts/feature-clips/clips.mjs`. No user data appears.
+Names and amounts are illustrative: Asha, Ben, Chen, Dev (`asha@okaxis` is a made-up UPI ID), a Goa trip, and the made-up name "Mikoox". On-screen UI is the real app, recorded by `scripts/feature-clips/clips.mjs`. No user data appears.
 
 ## Rebuild
 1. If the UI changed, re-record the clips (`node scripts/feature-clips/clips.mjs`) and copy the ones used into `composition/assets/clips/`.

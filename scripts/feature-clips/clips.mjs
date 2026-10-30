@@ -7,7 +7,8 @@ async function setupGroup(page, { name = "Goa trip", members, expenses = [], me 
 	await page.getByRole("button", { name: /create/i }).first().click();
 	await page.getByLabel("Group name").fill(name);
 	await page.getByRole("button", { name: "Create group" }).click();
-	await page.getByRole("button", { name: "Add members" }).first().click();
+	// Creating a group opens Add members straight away; older builds needed the tap.
+	if (!(await page.getByLabel("Name", { exact: true }).isVisible())) await page.getByRole("button", { name: "Add members" }).first().click();
 	for (const [n, upi] of members) {
 		await page.getByLabel("Name", { exact: true }).fill(n);
 		if (upi) await page.getByPlaceholder(/UPI ID/).first().fill(upi);
@@ -17,7 +18,7 @@ async function setupGroup(page, { name = "Goa trip", members, expenses = [], me 
 	for (const [amount, desc, payer] of expenses) {
 		await page.getByRole("button", { name: "Add expense" }).first().click();
 		const d = page.getByRole("dialog");
-		await d.getByLabel("Amount").fill(String(amount));
+		await d.getByLabel("Amount", { exact: true }).fill(String(amount));
 		await d.getByLabel("What was it for?").fill(desc);
 		await d.locator("fieldset").first().getByRole("button", { name: payer, exact: true }).click();
 		await d.getByRole("button", { name: "Add expense" }).click();
@@ -41,7 +42,7 @@ const whoAreYou = (page) => page.getByRole("dialog", { name: /Who are you in/ })
 
 /** Turns on sync off camera and returns the group link. */
 async function shareGroup(page) {
-	await page.getByRole("button", { name: /Share & sync, end-to-end encrypted/ }).click();
+	await page.getByRole("button", { name: /^Share, encrypted/ }).first().click();
 	await page.getByRole("button", { name: "Turn on sync" }).click();
 	await page.locator("#group-link").waitFor();
 	const link = await page.locator("#group-link").inputValue();
@@ -60,13 +61,13 @@ const CLIPS = {
 		await beat(p, 400);
 		const rec = await capture(p);
 		await beat(p, 900);
-		await p.getByRole("button", { name: /Create a group/ }).first().click();
+		await p.getByRole("button", { name: /Create an empty group/ }).first().click();
 		await beat(p, 700);
 		await type(p.getByLabel("Group name"), "Goa trip");
 		await beat(p, 500);
 		await p.getByRole("button", { name: "Create group" }).click();
 		await beat(p, 900);
-		await p.getByRole("button", { name: "Add members" }).first().click();
+		if (!(await p.getByLabel("Name", { exact: true }).isVisible())) await p.getByRole("button", { name: "Add members" }).first().click();
 		await beat(p, 600);
 		for (const [n, upi] of [["Asha", "asha@okaxis"], ["Ben"], ["Chen"]]) {
 			await type(p.getByLabel("Name", { exact: true }), n);
@@ -89,7 +90,7 @@ const CLIPS = {
 		const d = p.getByRole("dialog");
 		await p.getByRole("button", { name: "Add expense" }).first().click();
 		await beat(p, 600);
-		await type(d.getByLabel("Amount"), "1200", 110);
+		await type(d.getByLabel("Amount", { exact: true }), "1200", 110);
 		await type(d.getByLabel("What was it for?"), "Hotel");
 		await beat(p, 300);
 		await d.locator("fieldset").first().getByRole("button", { name: "Asha", exact: true }).click();
@@ -98,12 +99,12 @@ const CLIPS = {
 		await beat(p, 1100);
 		await p.getByRole("button", { name: "Add expense" }).first().click();
 		await beat(p, 600);
-		await type(d.getByLabel("Amount"), "900", 110);
+		await type(d.getByLabel("Amount", { exact: true }), "900", 110);
 		await type(d.getByLabel("What was it for?"), "Dinner");
 		await beat(p, 300);
 		await d.locator("fieldset").first().getByRole("button", { name: "Ben", exact: true }).click();
 		await beat(p, 500);
-		await d.getByText("By percentage", { exact: true }).click();
+		await d.getByText("By %", { exact: true }).click();
 		await beat(p, 700);
 		for (const [n, v] of [["Asha", "50"], ["Ben", "25"], ["Chen", "25"]]) {
 			const f = d.getByLabel(`${n}'s percentage`);
@@ -133,14 +134,13 @@ const CLIPS = {
 		// The UPI app can't open here; stand in for it by stopping the jump.
 		await p.context().addInitScript(() =>
 			addEventListener("click", (e) => { if (e.target.closest?.('a[href^="upi:"]')) e.preventDefault(); }, true));
-		await setupGroup(p, { members: MEMBERS, expenses: EXPENSES });
+		// Seen from Dev's phone: he owes Asha, whose UPI ID is in the group.
+		await setupGroup(p, { members: MEMBERS, expenses: EXPENSES, me: "Dev" });
 		await p.getByRole("tab", { name: /Settle up/ }).click();
 		await beat(p, 400);
 		const rec = await capture(p);
-		await beat(p, 1000);
-		await p.getByRole("button", { name: "Dev", exact: true }).click();
-		await beat(p, 1600);
-		await p.getByRole("link", { name: /with UPI/ }).first().click();
+		await beat(p, 2000);
+		await p.getByRole("link", { name: /^Pay Asha/ }).first().click();
 		await beat(p, 1200);
 		await p.evaluate(() => dispatchEvent(new Event("focus")));
 		await beat(p, 1300);
@@ -177,7 +177,7 @@ const CLIPS = {
 		await beat(a, 400);
 		const ra = await capture(a), rb = await capture(b);
 		await beat(a, 900);
-		await a.getByRole("button", { name: /Share & sync, end-to-end encrypted/ }).click();
+		await a.getByRole("button", { name: /^Share, encrypted/ }).first().click();
 		await beat(a, 900);
 		await a.getByRole("button", { name: "Turn on sync" }).click();
 		await a.locator("#group-link").waitFor();
@@ -192,9 +192,12 @@ const CLIPS = {
 		await whoAreYou(b).waitFor({ state: "detached" });
 		await beat(b, 900);
 		const d = b.getByRole("dialog");
+		// A joiner lands on Settle up, where Add expense is hidden; adding happens on Expenses.
+		await b.getByRole("tab", { name: /Expenses/ }).click();
+		await beat(b, 400);
 		await b.getByRole("button", { name: "Add expense" }).first().click();
 		await beat(b, 500);
-		await type(d.getByLabel("Amount"), "1500", 100);
+		await type(d.getByLabel("Amount", { exact: true }), "1500", 100);
 		await type(d.getByLabel("What was it for?"), "Sunset cruise", 70);
 		await d.locator("fieldset").first().getByRole("button", { name: "Chen", exact: true }).click();
 		await beat(b, 400);
@@ -309,6 +312,13 @@ const CLIPS = {
 
 const names = process.argv.slice(2);
 for (const name of names.length ? names : Object.keys(CLIPS)) {
-	await CLIPS[name]();
+	try {
+		await CLIPS[name]();
+	} catch (err) {
+		// What was on screen when a step failed: the UI usually moved on from the script.
+		const page = browser.contexts().at(-1)?.pages().at(-1);
+		if (page) await page.screenshot({ path: `${process.env.TMPDIR || "/tmp"}/clip-${name}-failed.png` }).catch(() => {});
+		throw err;
+	}
 }
 await browser.close();

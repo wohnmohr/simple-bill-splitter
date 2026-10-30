@@ -6,7 +6,6 @@ import {
 import { SiteNav } from "@/components/Landing/SiteNav";
 import { SiteFooter } from "@/components/Landing/SiteFooter";
 import { TrackedLink } from "@/components/UI/TrackedLink";
-import { themeGradient } from "@/components/PayStory/TemplateGrid";
 import { ALL_TOOL_SLUGS, TOOL_PAGES, type ToolSlug } from "@/content/tools";
 import { TEMPLATES } from "@/utils/payStory";
 
@@ -64,8 +63,7 @@ export default function ToolsPage() {
 
 			<header className="px-4 pb-10 pt-12 text-center sm:px-6 sm:pb-12 sm:pt-16">
 				<div className="mx-auto max-w-3xl">
-					<p className="label-text">Tools</p>
-					<h1 className="mt-3 font-display text-[clamp(2.25rem,6vw,3.5rem)] font-semibold leading-[1.05]">Free tools for splitting money</h1>
+					<h1 className="font-display text-[clamp(2.25rem,6vw,3.5rem)] font-semibold leading-[1.05]">Free tools for splitting money</h1>
 					<p className="mx-auto mt-5 max-w-xl text-lg text-ink-soft">
 						Split links that collect money for you, and a calculator for every situation. No signup.
 					</p>
@@ -105,12 +103,9 @@ export default function ToolsPage() {
 									href={`/split/${t.id}`}
 									location="tools_splits"
 									properties={{ tool: t.id }}
-									className="group flex h-full flex-col overflow-hidden rounded-xl border border-line bg-surface transition-shadow hover:shadow-card"
+									className="group flex h-full min-h-12 items-center rounded-xl border border-line bg-surface px-3 py-3 transition-colors hover:border-line-strong"
 								>
-									<span aria-hidden className="flex h-14 items-center justify-center text-2xl" style={{ background: themeGradient(t) }}>
-										{t.emoji}
-									</span>
-									<span className="p-2.5 text-sm font-semibold leading-snug text-ink group-hover:text-brand-700">{t.label}</span>
+									<span className="text-sm font-semibold leading-snug text-ink group-hover:text-brand-700">{t.label}</span>
 								</TrackedLink>
 							</li>
 						))}

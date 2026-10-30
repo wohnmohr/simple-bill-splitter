@@ -7,6 +7,8 @@ export type ConfirmState = {
 	title: string;
 	detail?: string;
 	action: string;
+	/** "primary" for a confirmation that isn't destructive (recording a payment). */
+	tone?: "danger" | "primary";
 	onConfirm: () => void;
 } | null;
 
@@ -15,7 +17,7 @@ interface ConfirmDialogProps {
 	onClose: () => void;
 }
 
-/** A small centered "are you sure?" for deletes, even on phones. */
+/** A small centered "are you sure?" for deletes and payment records, even on phones. */
 export const ConfirmDialog = ({ confirm, onClose }: ConfirmDialogProps) => {
 	useBackClose(!!confirm, onClose);
 	return (
@@ -44,7 +46,7 @@ export const ConfirmDialog = ({ confirm, onClose }: ConfirmDialogProps) => {
 								confirm.onConfirm();
 								onClose();
 							}}
-							className="btn-primary !bg-negative hover:!bg-negative/90"
+							className={confirm.tone === "primary" ? "btn-primary" : "btn-primary !bg-negative hover:!bg-negative/90"}
 						>
 							{confirm.action}
 						</button>

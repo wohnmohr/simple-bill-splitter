@@ -6,6 +6,7 @@ import { useMediaQuery } from "@mantine/hooks";
 import { Link2, Plus, UserPlus } from "lucide-react";
 import { Tab, Currency, Expense, Group, Settlement, SplitChoice } from "@/types";
 import { CURRENCIES, DEFAULT_CURRENCY, MAX_GROUPS } from "@/constants";
+import { localCurrency } from "@/utils/localCurrency";
 import { calculateBalances, calculateSettlements, enteredWeights, minorUnits, splitChoice } from "@/utils/calculations";
 import { useGroups } from "@/hooks/useGroups";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
@@ -53,7 +54,7 @@ import { QuickAddBox } from "@/components/QuickAdd/QuickAddBox";
 import { QuickAddPreview } from "@/components/QuickAdd/QuickAddPreview";
 
 /** A new group from a typed sentence is in the currency it was written in ("$50"), else rupees. */
-const quickCurrency = (quick: QuickResolved) => CURRENCIES.find((c) => c.code === quick.currency) ?? DEFAULT_CURRENCY;
+const quickCurrency = (quick: QuickResolved) => CURRENCIES.find((c) => c.code === quick.currency) ?? localCurrency();
 
 export default function Home() {
 	const router = useRouter();
@@ -157,8 +158,8 @@ export default function Home() {
 		setToast({
 			id: undo.toastId,
 			message: undo.ids.length === 1
-				? `${nameOf(s.from)} paid ${nameOf(s.to)} ${formatCurrency(s.amount, currency)}`
-				: `${undo.ids.length} payments marked paid`,
+				? `Recorded: ${nameOf(s.from)} paid ${nameOf(s.to)} ${formatCurrency(s.amount, currency)}`
+				: `Recorded ${undo.ids.length} payments as paid`,
 			actionLabel: "Undo",
 			onAction: () => undo.ids.forEach((id) => deleteExpense(id)),
 		});
@@ -270,7 +271,7 @@ export default function Home() {
 
 	// The first run's form: the group is made around its first expense, named after it.
 	const handleFirstExpense = (input: FirstExpenseInput) => {
-		const ok = createGroup(input.description || "Shared expenses", DEFAULT_CURRENCY, (g) => applyQuickAdd(g, firstExpense(input)));
+		const ok = createGroup(input.description || "Shared expenses", localCurrency(), (g) => applyQuickAdd(g, firstExpense(input)));
 		if (!ok) return;
 		rememberMyName(input.myName);
 		track("first_expense_added", { participant_count: input.others.length + 1 });
@@ -496,6 +497,15 @@ export default function Home() {
 									onRename={(name) => renameGroup(currentGroup.id, name)}
 									syncStatus={sync.status[currentGroup.id]}
 									onChangeMe={() => setIdentityAsk("pick")}
+									onSettle={
+										settlements.length > 0
+											? () => {
+													handleTabChange("settlements");
+													// After the tab renders, so the scroll lands on the settle cards.
+													setTimeout(() => document.getElementById("tab-settlements")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+												}
+											: undefined
+									}
 								/>
 
 								{currentGroup.members.length === 0 && (
@@ -613,8 +623,9 @@ export default function Home() {
 										)}
 										</div>
 
-										{/* On wide screens "Add expense" sits at the top of the side panel instead. */}
-										{!isWide && canAdd && (
+										{/* On wide screens "Add expense" sits at the top of the side panel instead.
+										    Off on Settle up, where it would compete with Pay and cover the cards. */}
+										{!isWide && canAdd && shownTab !== "settlements" && (
 											<FloatingActionButton
 												onClick={() => setShowExpenseForm(true)}
 												showTooltip={expenses.length === 0}

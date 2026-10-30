@@ -1,5 +1,4 @@
-import type { Metadata } from "next";
-import { Outfit, Fraunces } from "next/font/google";
+import type { Metadata, Viewport } from "next";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { VercelAnalytics } from "@/components/providers/VercelAnalytics";
 import { FeedbackNudge } from "@/components/Feedback/FeedbackNudge";
@@ -7,25 +6,22 @@ import { InstallPromptCapture } from "@/components/providers/InstallPromptCaptur
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
-const outfit = Outfit({
-	subsets: ["latin"],
-	variable: "--font-outfit",
-	display: "swap",
-});
+// Runs before paint so a saved light or dark choice never flashes the other theme.
+// With no saved choice the CSS follows the OS (app/globals.css). Keep in sync with utils/colorMode.ts.
+const colorModeScript = `try{var m=localStorage.getItem("splitbiller-color-mode");if(m==="light"||m==="dark")document.documentElement.dataset.theme=m}catch(e){}`;
 
-// Headings use a single Fraunces weight (600); one static file loads instead of the variable font or a second weight.
-const fraunces = Fraunces({
-	subsets: ["latin"],
-	weight: ["600"],
-	variable: "--font-fraunces",
-	display: "swap",
-});
+export const viewport: Viewport = {
+	themeColor: [
+		{ media: "(prefers-color-scheme: light)", color: "#FAF7F2" },
+		{ media: "(prefers-color-scheme: dark)", color: "#171317" },
+	],
+};
 
 export const metadata: Metadata = {
 	metadataBase: new URL(SITE_URL),
-	title: "SplitBiller — Split Bills in ₹ | No Login, UPI Ready",
+	title: "SplitBiller — Split Bills with Friends | No Signup, Private",
 	description:
-		"Split group expenses in rupees instantly. Calculate who owes whom, share a private settlement link, and pay via UPI — no signup, no app download.",
+		"Split group expenses in seconds. See who owes whom, share an end-to-end encrypted link and settle up, with one-tap UPI in India. No signup, no app download.",
 	keywords: [
 		"bill splitter",
 		"upi bill splitter",
@@ -41,6 +37,7 @@ export const metadata: Metadata = {
 	icons: {
 		icon: [
 			{ url: "/favicon.ico", sizes: "any" },
+			{ url: "/favicon.svg", type: "image/svg+xml" },
 			{
 				url: "/web-app-manifest-192x192.png",
 				sizes: "192x192",
@@ -61,18 +58,18 @@ export const metadata: Metadata = {
 		title: "SplitBiller",
 	},
 	openGraph: {
-		title: "SplitBiller — Split Bills in ₹ | No Login, UPI Ready",
+		title: "SplitBiller — Split Bills with Friends | No Signup, Private",
 		description:
-			"Split expenses in rupees, share privately, pay via UPI. No signup required.",
+			"Split expenses with friends, share privately, settle up. No signup required.",
 		type: "website",
 		url: "/",
 		siteName: "SplitBiller",
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "SplitBiller — Split Bills in ₹ | No Login, UPI Ready",
+		title: "SplitBiller — Split Bills with Friends | No Signup, Private",
 		description:
-			"Split expenses in rupees, share privately, pay via UPI. No signup required.",
+			"Split expenses with friends, share privately, settle up. No signup required.",
 	},
 };
 
@@ -82,8 +79,11 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en-IN">
-			<body className={`${outfit.variable} ${fraunces.variable} font-sans antialiased`}>
+		<html lang="en-IN" suppressHydrationWarning>
+			<head>
+				<script dangerouslySetInnerHTML={{ __html: colorModeScript }} />
+			</head>
+			<body className="font-sans antialiased">
 				<PostHogProvider>
 					{children}
 					<FeedbackNudge />

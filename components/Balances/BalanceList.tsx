@@ -37,7 +37,7 @@ export const BalanceList = ({
 								</span>
 								{isOwed || owes ? (
 									<span className="shrink-0 text-right">
-										<span className={`font-semibold tabular-nums ${isOwed ? "text-positive" : "text-negative"}`}>
+										<span className={`font-semibold tabular-nums ${isOwed ? "text-positive" : "text-ink"}`}>
 											{isOwed ? "+" : "−"}
 											{formatCurrency(Math.abs(balance.balance), currency)}
 										</span>
@@ -53,7 +53,7 @@ export const BalanceList = ({
 							{(isOwed || owes) && (
 								<div className="mt-2 h-1 rounded-full bg-ink/[0.05]" aria-hidden>
 									<div
-										className={`h-1 rounded-full ${isOwed ? "bg-positive/70" : "bg-negative/70"}`}
+										className={`h-1 rounded-full ${isOwed ? "bg-positive/70" : "bg-ink-muted/50"}`}
 										style={{ width }}
 									/>
 								</div>

@@ -1,20 +1,19 @@
 import Link from "next/link";
 import { LayoutGrid, MessageSquare, Sparkles } from "lucide-react";
 import { LogoMark } from "@/components/UI/LogoMark";
+import { ColorModeToggle } from "@/components/UI/ColorModeToggle";
 
 export const Header = ({ onFeedback }: { onFeedback?: () => void }) => {
 	return (
 		<header className="mb-5 sm:mb-6 flex h-12 items-center justify-between gap-3">
 			<Link
 				href="/"
-				className="flex items-center gap-2 min-w-0 rounded-lg -ml-1 pl-1 pr-2 py-1"
+				className="flex items-center min-w-0 rounded-xl -ml-1 px-1 py-2"
 			>
 				<LogoMark />
-				<span className="font-display text-lg font-semibold text-ink leading-none whitespace-nowrap">
-					SplitBiller
-				</span>
 			</Link>
 			<div className="flex shrink-0 items-center gap-1">
+				<ColorModeToggle />
 				{onFeedback && (
 					<button type="button" onClick={onFeedback} className="btn-ghost" aria-label="Feedback">
 						<MessageSquare className="h-4 w-4" />

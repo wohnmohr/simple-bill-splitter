@@ -35,6 +35,8 @@ export const UpiSettlementActions = ({
 	const [draftUpi, setDraftUpi] = useState(to?.upiId || "");
 	const [copied, setCopied] = useState(false);
 	const [editing, setEditing] = useState(false);
+	// Shown after leaving the field or pressing Save, not while still typing.
+	const [upiError, setUpiError] = useState(false);
 	const canOpenApps = useCanOpenUpiApps();
 
 	if (currency.code !== "INR" || !to) return null;
@@ -78,12 +80,15 @@ export const UpiSettlementActions = ({
 	if (!upiId || editing) {
 		const inputId = `upi-${settlement.from}-${settlement.to}`;
 		const valid = isValidUpiId(draftUpi);
+		const errorId = `${inputId}-error`;
 		return (
 			<form
 				className="space-y-1.5"
+				noValidate
 				onSubmit={(e) => {
 					e.preventDefault();
 					if (valid) handleSave();
+					else setUpiError(true);
 				}}
 			>
 				<label htmlFor={inputId} className="block text-sm font-medium text-ink-soft">
@@ -93,28 +98,41 @@ export const UpiSettlementActions = ({
 					<input
 						id={inputId}
 						value={draftUpi}
-						onChange={(e) => setDraftUpi(e.target.value)}
+						onChange={(e) => {
+							setDraftUpi(e.target.value);
+							if (upiError && isValidUpiId(e.target.value)) setUpiError(false);
+						}}
+						onBlur={() => setUpiError(draftUpi.trim() !== "" && !valid)}
+						aria-invalid={upiError}
+						aria-describedby={upiError ? errorId : undefined}
 						placeholder="name@okaxis"
-						className="h-11 flex-1 min-w-0 rounded-xl border border-line-strong bg-surface px-3 text-base text-ink placeholder:text-ink-muted focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+						className="h-12 flex-1 min-w-0 rounded-xl border border-line-strong aria-[invalid=true]:border-negative bg-surface px-3 text-base text-ink placeholder:text-ink-muted focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
 						inputMode="email"
 						autoComplete="off"
 						autoCapitalize="none"
 						spellCheck={false}
 						data-ph-mask
 					/>
-					<button type="submit" disabled={!valid} className="btn-primary !h-11 shrink-0">
+					<button type="submit" className="btn-primary shrink-0">
 						Save
 					</button>
 					{editing && (
 						<button
 							type="button"
 							onClick={() => setEditing(false)}
-							className="btn-ghost !h-11 shrink-0"
+							className="btn-ghost shrink-0"
 						>
 							Cancel
 						</button>
 					)}
 				</div>
+				{upiError && (
+					<p id={errorId} className="text-sm text-negative">
+						{draftUpi.trim()
+							? "That doesn't look like a UPI ID. It's a name, then @, then the bank, like asha@okaxis."
+							: `Type ${to.name}'s UPI ID first, like asha@okaxis.`}
+					</p>
+				)}
 			</form>
 		);
 	}
@@ -122,12 +140,13 @@ export const UpiSettlementActions = ({
 	return (
 		<div className="space-y-2.5">
 			<div className="flex items-center gap-1 min-w-0 text-sm">
-				<span className="text-ink-muted shrink-0">UPI</span>
-				<span className="truncate font-medium text-ink-soft ml-1">{upiId}</span>
+				<span className="text-ink-muted shrink-0">UPI ID</span>
+				{/* Shown in full: you check who you're paying before the UPI app opens. */}
+				<span className="min-w-0 break-all font-medium text-ink ml-1">{upiId}</span>
 				<button
 					type="button"
 					onClick={handleCopy}
-					className="icon-btn !h-8 !w-8"
+					className="icon-btn"
 					aria-label={copied ? "UPI ID copied" : "Copy UPI ID"}
 				>
 					{copied ? (
@@ -150,7 +169,7 @@ export const UpiSettlementActions = ({
 				)}
 			</div>
 			{upiChanged && (
-				<p className="text-sm font-medium text-amber-700">New UPI ID. Check the name your UPI app shows before you pay.</p>
+				<p className="text-sm font-medium text-warning">New UPI ID. Check the name your UPI app shows before you pay.</p>
 			)}
 			<span className="sr-only" aria-live="polite">
 				{copied ? "UPI ID copied" : ""}
@@ -173,17 +192,20 @@ export const UpiSettlementActions = ({
 				</div>
 			)}
 			{link && canOpenApps !== false && (
+				<>
 				<a
 					href={link}
 					onClick={() => {
 						track("upi_pay_link_clicked");
 						onPay?.();
 					}}
-					className="btn-primary w-full !py-3"
+					className="btn-primary w-full"
 				>
-					<IndianRupee className="h-4 w-4" />
-					Pay {formatCurrency(settlement.amount, currency)} with UPI
+					<IndianRupee className="h-4 w-4" aria-hidden />
+					Pay {to.name} {formatCurrency(settlement.amount, currency)}
 				</a>
+				<p className="text-sm text-ink-muted">Opens your UPI app. Check the name it shows before you pay.</p>
+				</>
 			)}
 			{link && canOpenApps && <UpiLimitHint upiId={upiId} amount={settlement.amount} />}
 		</div>

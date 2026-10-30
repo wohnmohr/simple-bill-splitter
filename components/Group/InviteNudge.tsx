@@ -98,7 +98,7 @@ export const InviteNudge = ({ group, shareLink, onInvite }: InviteNudgeProps) =>
 			</h2>
 			<p className="mt-0.5 pr-6 text-sm text-ink-muted">
 				{owed.length
-					? "Each gets a private link to the group to see it and pay you by UPI. End-to-end encrypted."
+					? `Each gets a private link to the group to see it and ${group.currency.code === "INR" ? "pay you by UPI" : "settle up with you"}. End-to-end encrypted.`
 					: "Send the group one link. Everyone sees what they owe and adds expenses from their own phone. End-to-end encrypted."}
 			</p>
 			{owed.length ? (
@@ -117,7 +117,7 @@ export const InviteNudge = ({ group, shareLink, onInvite }: InviteNudgeProps) =>
 								<button
 									type="button"
 									onClick={() => send(s.from, s.amount)}
-									className={done ? "btn-ghost shrink-0 !py-1.5" : "btn-primary shrink-0 !py-1.5"}
+									className={`btn-ghost shrink-0 ${done ? "" : "!text-brand-700"}`}
 								>
 									{done ? <Check className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
 									{done === "copied" ? "Copy again" : done ? "Send again" : "Send"}
@@ -133,7 +133,7 @@ export const InviteNudge = ({ group, shareLink, onInvite }: InviteNudgeProps) =>
 						track("invite_nudge_clicked");
 						onInvite();
 					}}
-					className="btn-primary mt-3 !py-2"
+					className="btn-secondary mt-3"
 				>
 					<Link2 className="h-4 w-4" />
 					Invite with a link

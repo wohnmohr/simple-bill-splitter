@@ -136,8 +136,8 @@ export const RoadTripCalculator = () => {
 							}}
 							className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors ${
 								mode === id
-									? "border-brand-700 bg-brand-700 text-white"
-									: "border-line-strong bg-white text-ink-soft hover:border-ink-muted"
+									? "border-brand-700 bg-brand-700 text-on-brand"
+									: "border-line-strong bg-surface text-ink-soft hover:border-ink-muted"
 							}`}
 						>
 							{label}

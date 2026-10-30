@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { NumberInput, TextInput } from "@mantine/core";
-import { DEFAULT_CURRENCY } from "@/constants";
+import { localCurrency } from "@/utils/localCurrency";
 import { formatCurrency } from "@/utils/formatting";
 import { MAX_AMOUNT } from "@/utils/groupOps";
 import { splitNames, type FirstExpenseInput } from "@/utils/firstExpense";
@@ -26,6 +26,8 @@ export const EmptyGroupState = ({ onFirstExpense, onCreateGroup, quickAdd }: Emp
 	const [amount, setAmount] = useState<number | string>("");
 	const [description, setDescription] = useState("");
 	const [myName, setMyName] = useState(loadMyName);
+	// The group this makes starts in the visitor's own currency (app/dashboard handleFirstExpense uses the same).
+	const [currency] = useState(localCurrency);
 	const [othersText, setOthersText] = useState("");
 	const [typing, setTyping] = useState(false);
 
@@ -59,7 +61,7 @@ export const EmptyGroupState = ({ onFirstExpense, onCreateGroup, quickAdd }: Emp
 					hideControls
 					inputMode="decimal"
 					size="lg"
-					leftSection={<span className="text-2xl font-semibold text-ink-muted" aria-hidden>{DEFAULT_CURRENCY.symbol}</span>}
+					leftSection={<span className="text-2xl font-semibold text-ink-muted" aria-hidden>{currency.symbol}</span>}
 					leftSectionWidth={44}
 					classNames={{ input: "!text-2xl !font-semibold !tabular-nums" }}
 				/>
@@ -90,7 +92,7 @@ export const EmptyGroupState = ({ onFirstExpense, onCreateGroup, quickAdd }: Emp
 				</div>
 				<button type="submit" disabled={!ready} className="btn-primary w-full !py-3 !text-base">
 					{ready
-						? `Split ${formatCurrency(total, DEFAULT_CURRENCY)} · ${formatCurrency(total / (others.length + 1), DEFAULT_CURRENCY)} each`
+						? `Split ${formatCurrency(total, currency)} · ${formatCurrency(total / (others.length + 1), currency)} each`
 						: "Split it"}
 				</button>
 			</form>

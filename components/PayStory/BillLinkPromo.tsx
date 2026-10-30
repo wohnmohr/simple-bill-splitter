@@ -13,7 +13,7 @@ export const BillLinkPromo = ({ location, className = "" }: { location: string; 
 		</span>
 		<span className="min-w-0 flex-1">
 			<span className="block font-semibold text-ink">
-				<span className="mr-2 rounded bg-brand-700 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-white">New</span>
+				<span className="mr-2 rounded-full bg-brand-700 px-2 py-0.5 align-middle text-xs font-semibold text-on-brand">New</span>
 				Scan the bill, friends tap what they ate
 			</span>
 			<span className="mt-0.5 block text-sm text-ink-soft">One link. Everyone picks their dishes and pays their exact share by UPI.</span>

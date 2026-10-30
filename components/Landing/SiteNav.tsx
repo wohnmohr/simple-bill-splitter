@@ -10,7 +10,6 @@ export const SiteNav = ({ current }: { current?: NavPage }) => (
 		<div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
 			<Link href="/" className="flex items-center gap-2 shrink-0">
 				<LogoMark />
-				<span className="font-display text-lg font-semibold text-ink">SplitBiller</span>
 			</Link>
 			<div className="flex items-center gap-1 sm:gap-2">
 				{NAV_LINKS.map(({ href, label, page }) => (

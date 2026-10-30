@@ -266,7 +266,7 @@ export const ShareViewer = () => {
 				</h2>
 				<p className="mx-auto max-w-sm text-sm text-ink-muted">
 					SplitBiller is free — no signup, no app. Add everyone, see who owes whom,
-					and pay by UPI.
+					and settle up{snapshot.currency.code === "INR" ? " by UPI" : ""}.
 				</p>
 				<TrackedLink
 					href="/dashboard"

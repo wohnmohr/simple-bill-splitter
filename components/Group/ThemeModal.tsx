@@ -7,7 +7,7 @@ import { DEFAULT_THEME_ID, THEMES, type Theme } from "@/utils/themes";
 import { track } from "@/lib/analytics";
 
 /** A miniature of the group screen in the theme's own colors. */
-const Preview = ({ theme }: { theme: Theme }) => {
+const Preview = ({ theme, symbol }: { theme: Theme; symbol: string }) => {
 	const c = theme.colors;
 	return (
 		<div className="rounded-xl p-2.5" style={{ background: c.paper }} aria-hidden>
@@ -15,11 +15,11 @@ const Preview = ({ theme }: { theme: Theme }) => {
 				<p className="font-display text-sm font-semibold leading-tight" style={{ color: c.ink }}>Goa trip</p>
 				<p className="mt-1 flex justify-between text-[11px] leading-snug">
 					<span style={{ color: c["ink-muted"] }}>Asha</span>
-					<span className="font-semibold tabular-nums" style={{ color: c.positive }}>+₹800</span>
+					<span className="font-semibold tabular-nums" style={{ color: c.positive }}>+{symbol}800</span>
 				</p>
 				<p className="flex justify-between text-[11px] leading-snug">
 					<span style={{ color: c["ink-muted"] }}>Ben</span>
-					<span className="font-semibold tabular-nums" style={{ color: c.negative }}>−₹400</span>
+					<span className="font-semibold tabular-nums" style={{ color: c.ink }}>−{symbol}400</span>
 				</p>
 			</div>
 			<p className="mt-2 rounded-lg py-1 text-center text-[11px] font-semibold" style={{ background: c["brand-700"], color: c["on-brand"] }}>
@@ -67,7 +67,7 @@ export const ThemeModal = ({ isOpen, onClose, group, onChange }: Props) => {
 									selected ? "border-brand-700" : "border-transparent hover:border-line-strong"
 								}`}
 							>
-								<Preview theme={theme} />
+								<Preview theme={theme} symbol={group.currency.symbol} />
 								<span className="mt-1.5 flex items-center justify-between gap-1 px-1">
 									<span className="min-w-0">
 										<span className="block truncate text-sm font-semibold text-ink">{theme.name}</span>

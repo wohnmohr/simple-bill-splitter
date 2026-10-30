@@ -5,8 +5,8 @@
   "description": "Split group expenses in seconds and settle up by UPI. No signup.",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#f7f6f3",
-  "theme_color": "#53307b",
+  "background_color": "#FAF7F2",
+  "theme_color": "#713F57",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -20,6 +20,18 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [

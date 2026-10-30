@@ -34,6 +34,8 @@ export type Expense = {
   shares?: Record<string, number>;
   /** "payment" = a recorded settlement: paidBy paid participants[0] back. */
   kind?: "payment";
+  /** For payments: the member who recorded it (the payer, the receiver or someone else). Missing on older data. */
+  recordedBy?: string;
   /** Epoch ms when the entry was created. Missing on older data. */
   createdAt?: number;
   /**

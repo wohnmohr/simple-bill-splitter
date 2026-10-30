@@ -4,36 +4,110 @@
 
 @layer base {
 	/*
-	 * Color tokens as "R G B" channels (see tailwind.config.ts). These are the
-	 * SplitBiller aubergine defaults; a group theme overrides them on <html>
-	 * while that group is open (utils/themes.ts keeps the same values).
+	 * Color tokens as "R G B" channels (see tailwind.config.ts), from the
+	 * SplitBiller design system v1: warm paper in light, deep plum in dark.
+	 * Dark follows the OS unless the user picked a theme (data-theme on <html>,
+	 * set before paint in app/layout.tsx). A group theme overrides these on
+	 * <html> while that group is open (utils/themes.ts).
+	 * line-strong is the control border: inputs and secondary buttons need it.
+	 * negative is for errors and deleting only; money owed stays neutral.
 	 */
 	:root {
-		--sb-brand-50: 246 242 250;
-		--sb-brand-100: 236 227 245;
-		--sb-brand-200: 216 198 234;
-		--sb-brand-300: 189 159 219;
-		--sb-brand-400: 157 115 199;
-		--sb-brand-500: 126 79 176;
-		--sb-brand-600: 102 58 150;
-		--sb-brand-700: 83 48 123;
-		--sb-brand-800: 67 39 99;
-		--sb-brand-900: 47 27 70;
-		--sb-brand-950: 31 18 48;
-		--sb-ink: 28 24 38;
-		--sb-ink-soft: 74 69 86;
-		--sb-ink-muted: 107 101 118;
-		--sb-paper: 247 246 243;
+		--sb-brand-50: 250 244 247;
+		--sb-brand-100: 242 236 239;
+		--sb-brand-200: 230 211 221;
+		--sb-brand-300: 210 178 195;
+		--sb-brand-400: 184 138 162;
+		--sb-brand-500: 154 101 130;
+		--sb-brand-600: 130 80 106;
+		--sb-brand-700: 113 63 87;
+		--sb-brand-800: 93 48 70;
+		--sb-brand-900: 70 35 58;
+		--sb-brand-950: 46 23 38;
+		--sb-ink: 40 35 38;
+		--sb-ink-soft: 79 69 74;
+		--sb-ink-muted: 113 101 107;
+		--sb-paper: 250 247 242;
 		--sb-surface: 255 255 255;
-		--sb-line: 231 227 234;
-		--sb-line-strong: 212 207 217;
-		--sb-positive: 17 117 76;
-		--sb-positive-soft: 232 244 238;
-		--sb-negative: 180 35 24;
-		--sb-negative-soft: 252 236 234;
+		--sb-line: 222 211 217;
+		--sb-line-strong: 139 122 131;
+		--sb-positive: 40 99 68;
+		--sb-positive-soft: 229 241 231;
+		--sb-negative: 166 43 59;
+		--sb-negative-soft: 253 232 235;
 		--sb-on-brand: 255 255 255;
 		--sb-on-ink: 255 255 255;
+		--sb-warning: 128 80 0;
+		--sb-warning-soft: 255 240 204;
 		color-scheme: light;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme="light"]) {
+			--sb-brand-50: 42 31 41;
+			--sb-brand-100: 48 38 48;
+			--sb-brand-200: 62 47 59;
+			--sb-brand-300: 90 65 83;
+			--sb-brand-400: 126 92 115;
+			--sb-brand-500: 168 126 151;
+			--sb-brand-600: 204 154 180;
+			--sb-brand-700: 232 181 204;
+			--sb-brand-800: 244 202 221;
+			--sb-brand-900: 248 220 232;
+			--sb-brand-950: 252 238 244;
+			--sb-ink: 248 243 245;
+			--sb-ink-soft: 221 208 215;
+			--sb-ink-muted: 192 175 186;
+			--sb-paper: 23 19 23;
+			--sb-surface: 34 28 34;
+			--sb-line: 75 60 72;
+			--sb-line-strong: 154 131 147;
+			--sb-positive: 159 215 179;
+			--sb-positive-soft: 24 52 37;
+			--sb-negative: 255 180 191;
+			--sb-negative-soft: 66 33 42;
+			--sb-on-brand: 50 31 42;
+			--sb-on-ink: 23 19 23;
+		--sb-warning: 240 206 135;
+		--sb-warning-soft: 59 45 21;
+			--sb-warning: 240 206 135;
+			--sb-warning-soft: 59 45 21;
+			--mantine-color-gray-0: rgb(var(--sb-paper));
+			--mantine-color-gray-1: rgb(var(--sb-line));
+			--mantine-color-gray-2: rgb(var(--sb-line-strong));
+			color-scheme: dark;
+		}
+	}
+
+	:root[data-theme="dark"] {
+		--sb-brand-50: 42 31 41;
+		--sb-brand-100: 48 38 48;
+		--sb-brand-200: 62 47 59;
+		--sb-brand-300: 90 65 83;
+		--sb-brand-400: 126 92 115;
+		--sb-brand-500: 168 126 151;
+		--sb-brand-600: 204 154 180;
+		--sb-brand-700: 232 181 204;
+		--sb-brand-800: 244 202 221;
+		--sb-brand-900: 248 220 232;
+		--sb-brand-950: 252 238 244;
+		--sb-ink: 248 243 245;
+		--sb-ink-soft: 221 208 215;
+		--sb-ink-muted: 192 175 186;
+		--sb-paper: 23 19 23;
+		--sb-surface: 34 28 34;
+		--sb-line: 75 60 72;
+		--sb-line-strong: 154 131 147;
+		--sb-positive: 159 215 179;
+		--sb-positive-soft: 24 52 37;
+		--sb-negative: 255 180 191;
+		--sb-negative-soft: 66 33 42;
+		--sb-on-brand: 50 31 42;
+		--sb-on-ink: 23 19 23;
+		--mantine-color-gray-0: rgb(var(--sb-paper));
+		--mantine-color-gray-1: rgb(var(--sb-line));
+		--mantine-color-gray-2: rgb(var(--sb-line-strong));
+		color-scheme: dark;
 	}
 
 	/* Mantine (modals, menus, inputs) follows the same tokens. */
@@ -70,7 +144,7 @@
 
 	body {
 		@apply text-ink bg-paper;
-		font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+		font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 		padding-bottom: env(safe-area-inset-bottom);
 		overflow-x: clip;
 		max-width: 100%;
@@ -91,8 +165,8 @@
 	}
 
 	:focus-visible {
-		outline: 2px solid rgb(var(--sb-brand-700));
-		outline-offset: 2px;
+		outline: 3px solid rgb(var(--sb-brand-700));
+		outline-offset: 3px;
 	}
 
 	/* Prevent flex/grid children from forcing page-wide scroll */
@@ -113,10 +187,10 @@
 	h1,
 	h2,
 	.font-display {
-		font-family: var(--font-fraunces), var(--font-outfit), ui-serif, Georgia, serif;
+		font-weight: 700;
 		overflow-wrap: anywhere;
 		text-wrap: balance;
-		letter-spacing: -0.015em;
+		letter-spacing: -0.01em;
 	}
 
 	p {
@@ -158,15 +232,6 @@
 }
 
 @layer components {
-	/* The logo mark follows the group theme: dark themes show the light version (utils/themes applyTheme). */
-	.logo-mark-light,
-	html[data-sb-dark] .logo-mark {
-		display: none;
-	}
-	html[data-sb-dark] .logo-mark-light {
-		display: block;
-	}
-
 	/* Text you edit in place on a split scene: underlined, inherits the scene's type and colour */
 	.inline-edit {
 		@apply min-w-0 bg-transparent outline-none;
@@ -186,23 +251,23 @@
 
 	/* Flat, bordered surface — the one container used across the app */
 	.surface {
-		@apply rounded-2xl border border-line bg-surface shadow-card;
+		@apply rounded-2xl border border-line bg-surface;
 	}
 
 	.btn-primary {
-		@apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-on-brand transition-[color,background-color,transform] duration-150 hover:bg-brand-800 active:scale-[0.98] active:bg-brand-900 disabled:cursor-not-allowed disabled:bg-ink/10 disabled:text-ink-muted;
+		@apply inline-flex items-center justify-center gap-2 min-h-12 rounded-xl bg-brand-700 px-5 py-3 text-base font-semibold text-on-brand transition-[color,background-color,transform] duration-[120ms] hover:bg-brand-800 active:scale-[0.98] active:bg-brand-900 disabled:cursor-not-allowed disabled:bg-brand-100 disabled:text-ink-muted;
 	}
 
 	.btn-secondary {
-		@apply inline-flex items-center justify-center gap-2 rounded-xl border border-line-strong bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-[color,background-color,transform] duration-150 hover:bg-paper active:scale-[0.98] active:bg-line disabled:cursor-not-allowed disabled:opacity-50;
+		@apply inline-flex items-center justify-center gap-2 min-h-12 rounded-xl border border-line-strong bg-surface px-5 py-3 text-base font-semibold text-ink transition-[color,background-color,transform] duration-[120ms] hover:bg-paper active:scale-[0.98] active:bg-line disabled:cursor-not-allowed disabled:opacity-50;
 	}
 
 	.btn-ghost {
-		@apply inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/5 hover:text-ink;
+		@apply inline-flex items-center justify-center min-h-11 gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-ink-soft transition-colors duration-[120ms] hover:bg-ink/5 hover:text-ink;
 	}
 
 	.icon-btn {
-		@apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-ink/5 hover:text-ink;
+		@apply inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-muted transition-colors duration-[120ms] hover:bg-ink/5 hover:text-ink;
 	}
 
 	/* Sentence case: small all-caps labels read as shouting and slow scanning. */
