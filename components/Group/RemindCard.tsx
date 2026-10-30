@@ -55,7 +55,7 @@ export const RemindCard = ({ groups }: { groups: Group[] }) => {
 	if (!due.length) return null;
 
 	return (
-		<section className="surface mb-4 p-4" aria-labelledby="remind-card-title">
+		<section className="surface p-4" aria-labelledby="remind-card-title">
 			<h2 id="remind-card-title" className="font-semibold text-ink">Still waiting on</h2>
 			<ul className="mt-2 divide-y divide-line">
 				{due.map((d) => {
@@ -65,9 +65,10 @@ export const RemindCard = ({ groups }: { groups: Group[] }) => {
 					return (
 						<li key={key} className="flex items-center gap-3 py-2.5">
 							<div className="min-w-0 flex-1">
-								<p className="truncate text-ink">
+								{/* Wraps instead of truncating: an amount someone owes is never cut short. */}
+								<p className="break-words text-ink">
 									{name} owes you{" "}
-									<span className="font-semibold tabular-nums text-positive">
+									<span className="whitespace-nowrap font-semibold tabular-nums text-positive">
 										{formatCurrency(d.settlement.amount, d.group.currency)}
 									</span>
 								</p>
@@ -75,7 +76,7 @@ export const RemindCard = ({ groups }: { groups: Group[] }) => {
 									{d.group.name} · quiet for {d.days} days
 								</p>
 							</div>
-							<button type="button" onClick={() => remind(d)} className={`${again ? "btn-ghost" : "btn-secondary"} shrink-0 !py-2`}>
+							<button type="button" onClick={() => remind(d)} className={`btn-ghost shrink-0 ${again ? "" : "!text-brand-700"}`}>
 								{again ? <Check className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
 								{again ? "Remind again" : "Remind"}
 							</button>

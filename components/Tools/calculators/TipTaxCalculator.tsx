@@ -55,12 +55,12 @@ export const TipTaxCalculator = ({ mode }: { mode: Mode }) => {
 	return (
 		<div className="grid lg:grid-cols-2 gap-6">
 			<div className="space-y-4 surface p-4 sm:p-5">
-				<label className="flex items-center gap-2 text-sm text-gray-700">
+				<label className="flex items-center gap-2 text-sm text-ink-soft">
 					<input
 						type="checkbox"
 						checked={useFinal}
 						onChange={(e) => setUseFinal(e.target.checked)}
-						className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+						className="rounded border-line-strong text-indigo-600 focus:ring-indigo-500"
 					/>
 					I already have the final total (skip {label.toLowerCase()} %)
 				</label>
@@ -118,7 +118,7 @@ export const TipTaxCalculator = ({ mode }: { mode: Mode }) => {
 									</button>
 								))}
 							</div>
-							<p className="text-xs text-gray-500 mt-2">
+							<p className="text-xs text-ink-muted mt-2">
 								{label} amount: {currency.symbol}
 								{added.toFixed(2)} → total {currency.symbol}
 								{computedTotal.toFixed(2)}

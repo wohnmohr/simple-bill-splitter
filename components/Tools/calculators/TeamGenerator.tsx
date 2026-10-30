@@ -69,7 +69,7 @@ export const TeamGenerator = () => {
 					<Shuffle className="h-4 w-4" />
 					{teams ? "Shuffle again" : "Generate teams"}
 				</button>
-				{!valid && <p className="text-sm text-gray-500">Add at least 2 players and ask for at least 2 teams.</p>}
+				{!valid && <p className="text-sm text-ink-muted">Add at least 2 players and ask for at least 2 teams.</p>}
 			</div>
 
 			<div className="space-y-3">
@@ -81,7 +81,7 @@ export const TeamGenerator = () => {
 									<p className="label-text">
 										Team {i + 1} · {team.length}
 									</p>
-									<ul className="mt-1 space-y-0.5 text-sm font-medium text-gray-800">
+									<ul className="mt-1 space-y-0.5 text-sm font-medium text-ink">
 										{team.map((name) => (
 											<li key={name}>{name}</li>
 										))}
@@ -95,7 +95,7 @@ export const TeamGenerator = () => {
 						</button>
 					</>
 				) : (
-					<div className="rounded-2xl border border-dashed border-indigo-200 bg-white/60 p-6 text-center text-sm text-gray-500">
+					<div className="rounded-2xl border border-dashed border-indigo-200 bg-surface/60 p-6 text-center text-sm text-ink-muted">
 						Your teams will appear here.
 					</div>
 				)}

@@ -34,9 +34,9 @@ const problem = (e: QuickResolvedExpense): string | null => {
 /** Highlights a field the parser filled in or wasn't sure of, until it is touched. */
 const Check = ({ on, children }: { on: boolean; children: ReactNode }) =>
 	on ? (
-		<div className="-mx-2 rounded-xl bg-amber-400/10 px-2 py-1.5 ring-1 ring-amber-500/60">
+		<div className="-mx-2 rounded-xl bg-warning-soft px-2 py-1.5 ring-1 ring-warning/60">
 			{children}
-			<p className="mt-1 text-xs font-medium text-amber-700">Check this: we guessed.</p>
+			<p className="mt-1 text-xs font-medium text-warning">Check this: we guessed.</p>
 		</div>
 	) : (
 		<>{children}</>

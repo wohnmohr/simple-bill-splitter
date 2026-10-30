@@ -66,7 +66,7 @@ export const UpiCalculator = () => {
 				<p className="label-text">
 					Pay via UPI
 				</p>
-				<p className="text-xs text-gray-500">
+				<p className="text-xs text-ink-muted">
 					UPI IDs you enter below are included when you share the settlement —
 					friends can tap Pay without retyping.
 				</p>
@@ -86,15 +86,15 @@ export const UpiCalculator = () => {
 					return (
 						<div
 							key={i}
-							className="rounded-xl border border-gray-100 bg-gray-50 p-3 space-y-2"
+							className="rounded-xl border border-line bg-paper p-3 space-y-2"
 						>
-							<p className="text-sm font-medium text-gray-800">
+							<p className="text-sm font-medium text-ink">
 								{from.name} → {to.name}: {formatCurrency(s.amount, INR)}
 							</p>
 							{to.upiId ? (
-								<p className="text-xs text-gray-500">UPI: {to.upiId}</p>
+								<p className="text-xs text-ink-muted">UPI: {to.upiId}</p>
 							) : (
-								<p className="text-xs text-amber-700">
+								<p className="text-xs text-warning">
 									Add {to.name}&apos;s UPI ID on the left so others can pay
 									from the share link.
 								</p>
@@ -109,7 +109,7 @@ export const UpiCalculator = () => {
 									<ExternalLink className="h-3.5 w-3.5" />
 								</a>
 							) : null}
-							{link && to.upiId && <UpiLimitHint upiId={to.upiId} amount={s.amount} className="text-xs text-gray-500" />}
+							{link && to.upiId && <UpiLimitHint upiId={to.upiId} amount={s.amount} className="text-xs text-ink-muted" />}
 						</div>
 					);
 				})}
@@ -143,7 +143,7 @@ export const UpiCalculator = () => {
 					{rows.map((row, i) => (
 						<div
 							key={i}
-							className="rounded-xl border border-gray-100 bg-gray-50/80 p-3 space-y-2"
+							className="rounded-xl border border-line bg-paper/80 p-3 space-y-2"
 						>
 							<div className="flex gap-2">
 								<input
@@ -158,7 +158,7 @@ export const UpiCalculator = () => {
 										onClick={() =>
 											setRows((prev) => prev.filter((_, j) => j !== i))
 										}
-										className="px-2 text-gray-400 hover:text-red-600 text-sm"
+										className="px-2 text-ink-muted hover:text-negative text-sm"
 										aria-label="Remove"
 									>
 										✕
@@ -201,7 +201,7 @@ export const UpiCalculator = () => {
 						))}
 					</select>
 				</div>
-				<p className="text-xs text-gray-500">
+				<p className="text-xs text-ink-muted">
 					Shared links include UPI IDs encrypted in the URL — we never store
 					them on a server. Opens GPay, PhonePe, Paytm via{" "}
 					<code className="text-indigo-700">upi://</code>.

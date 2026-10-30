@@ -31,7 +31,7 @@ const INIT = () => {
 		"pointerdown",
 		(e) => {
 			const d = document.createElement("div");
-			d.style.cssText = `position:fixed;left:${e.clientX - 22}px;top:${e.clientY - 22}px;width:44px;height:44px;border-radius:50%;background:rgba(126,79,176,.28);border:2px solid rgba(255,255,255,.95);box-shadow:0 0 0 1px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.2);pointer-events:none;z-index:2147483647;transform:scale(.55);opacity:1;transition:transform .4s cubic-bezier(.2,.7,.3,1),opacity .55s ease-out .1s`;
+			d.style.cssText = `position:fixed;left:${e.clientX - 22}px;top:${e.clientY - 22}px;width:44px;height:44px;border-radius:50%;background:rgba(113,63,87,.28);border:2px solid rgba(255,255,255,.95);box-shadow:0 0 0 1px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.2);pointer-events:none;z-index:2147483647;transform:scale(.55);opacity:1;transition:transform .4s cubic-bezier(.2,.7,.3,1),opacity .55s ease-out .1s`;
 			document.documentElement.appendChild(d);
 			requestAnimationFrame(() => requestAnimationFrame(() => { d.style.transform = "scale(1.15)"; d.style.opacity = "0"; }));
 			setTimeout(() => d.remove(), 800);
@@ -112,7 +112,7 @@ export function encode(name, captures, { posterAt } = {}) {
 	const per = (i) => `[${i}:v]fps=30,scale=${scaleW}:-2:flags=lanczos,setsar=1[v${i}]`;
 	const graph = lists.length === 1
 		? `${per(0)};[v0]null[out]`
-		: `${per(0)};${per(1)};[v0]pad=iw+2:ih:0:0:color=0xe7e3ea[a];[a][v1]hstack=inputs=2[out]`;
+		: `${per(0)};${per(1)};[v0]pad=iw+2:ih:0:0:color=0xded3d9[a];[a][v1]hstack=inputs=2[out]`;
 	const mp4 = join(OUT, `${name}.mp4`);
 	mkdirSync(OUT, { recursive: true });
 	ff([...inputs, "-filter_complex", graph, "-map", "[out]", ...x264, mp4]);

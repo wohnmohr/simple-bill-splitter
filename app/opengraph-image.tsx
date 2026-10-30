@@ -1,8 +1,8 @@
-import { C, OG_SIZE, PayButton, Surface, ogCard } from "@/lib/ogCard";
+import { C, DISPLAY, OG_SIZE, PayButton, Surface, ogCard } from "@/lib/ogCard";
 
 export const runtime = "nodejs";
 
-export const alt = "SplitBiller: split bills in rupees and settle with UPI. No signup, no app.";
+export const alt = "SplitBiller: split bills with friends, privately. No signup, no app.";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 
@@ -20,13 +20,11 @@ const Row = ({ from, to, amount, pay }: { from: string; to: string; amount: stri
 				<Arrow />
 				{to}
 			</div>
-			<span style={{ fontFamily: "Fraunces" }}>{amount}</span>
+			<span style={{ fontFamily: DISPLAY }}>{amount}</span>
 		</div>
 		{pay && (
 			<PayButton>
-				<span>Pay</span>
-				<span style={{ fontFamily: "Fraunces" }}>{amount}</span>
-				<span>with UPI</span>
+				<span>Mark as paid</span>
 			</PayButton>
 		)}
 	</div>
@@ -35,22 +33,22 @@ const Row = ({ from, to, amount, pay }: { from: string; to: string; amount: stri
 /** The site's preview: the hero line beside the settle-up screen it leads to (as on the landing page). */
 export default function OpengraphImage() {
 	return ogCard({
-		title: "Split bills in ₹, settle with UPI",
-		sub: "Who owes whom in seconds. No signup, no app download.",
+		title: "Split bills, privately",
+		sub: "Who owes whom in seconds, end-to-end encrypted. No signup, no app download.",
 		visual: (
 			<Surface>
 				<div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
 					<div style={{ display: "flex", flexDirection: "column" }}>
-						<span style={{ fontFamily: "Fraunces", fontSize: 34 }}>Goa trip</span>
+						<span style={{ fontFamily: DISPLAY, fontSize: 32 }}>Weekend trip</span>
 						<span style={{ fontSize: 22, color: C.inkMuted, marginTop: 4 }}>4 members · 11 expenses</span>
 					</div>
 					<div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-						<span style={{ fontSize: 18, fontWeight: 600, letterSpacing: "1.5px", color: C.inkMuted }}>TOTAL</span>
-						<span style={{ fontFamily: "Fraunces", fontSize: 28, marginTop: 2 }}>₹38,460</span>
+						<span style={{ fontSize: 20, color: C.inkMuted }}>Total</span>
+						<span style={{ fontFamily: DISPLAY, fontSize: 28, marginTop: 2 }}>$462</span>
 					</div>
 				</div>
-				<Row from="Rohan" to="Priya" amount="₹6,215" pay />
-				<Row from="Aisha" to="Priya" amount="₹2,940" />
+				<Row from="Rohan" to="Priya" amount="$74.60" pay />
+				<Row from="Aisha" to="Priya" amount="$35.30" />
 			</Surface>
 		),
 	});

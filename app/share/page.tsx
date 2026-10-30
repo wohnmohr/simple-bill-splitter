@@ -20,9 +20,6 @@ export default function SharePage() {
 				<div className="max-w-2xl mx-auto flex h-14 items-center gap-2.5 min-w-0">
 					<Link href="/" className="flex items-center gap-2.5 group min-w-0">
 						<LogoMark />
-						<span className="font-display text-lg font-semibold text-ink truncate">
-							SplitBiller
-						</span>
 					</Link>
 				</div>
 			</header>

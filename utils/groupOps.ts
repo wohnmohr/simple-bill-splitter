@@ -196,6 +196,7 @@ export function toExpense(id: string, v: unknown, members: Set<string>): Expense
 	const description = cleanText(str(x.description, 400), 200);
 	if (description) expense.description = description;
 	if (x.kind === "payment") expense.kind = "payment";
+	if (expense.kind && members.has(str(x.recordedBy, 64))) expense.recordedBy = str(x.recordedBy, 64);
 	if (Number.isSafeInteger(x.createdAt) && (x.createdAt as number) > 0) expense.createdAt = x.createdAt;
 	if (!expense.kind && isMonthKey(x.repeat?.next)) expense.repeat = { next: x.repeat.next };
 	const payers = x.payers && typeof x.payers === "object" ? Object.entries(x.payers as Record<string, unknown>) : [];

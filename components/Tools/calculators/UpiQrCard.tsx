@@ -22,7 +22,7 @@ export const UpiQrCard = ({
 			width: 768,
 			margin: 2,
 			errorCorrectionLevel: "M",
-			color: { dark: "#1c1826", light: "#ffffff" },
+			color: { dark: "#282326", light: "#ffffff" },
 		});
 		const a = document.createElement("a");
 		a.href = url;

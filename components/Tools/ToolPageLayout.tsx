@@ -57,9 +57,6 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 				<div className="max-w-5xl mx-auto flex h-14 items-center justify-between gap-3 min-w-0">
 					<Link href="/" className="flex items-center gap-2 group">
 						<LogoMark />
-						<span className="font-display text-lg font-semibold text-ink">
-							SplitBiller
-						</span>
 					</Link>
 					<div className="flex items-center gap-1 sm:gap-2">
 						<Link href="/tools" className="btn-ghost">
@@ -85,7 +82,7 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 						{config.subhead}
 					</p>
 					{config.updated && (
-						<p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+						<p className="text-sm text-ink-muted">
 							Updated {config.updated}
 						</p>
 					)}
@@ -124,7 +121,7 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 									</p>
 								))}
 								{section.table && (
-									<div className="overflow-x-auto rounded-xl border border-line bg-white">
+									<div className="overflow-x-auto rounded-xl border border-line bg-surface">
 										<table className="w-full text-left text-sm">
 											<thead className="bg-paper text-ink">
 												<tr>
@@ -155,7 +152,7 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 				</section>
 			)}
 
-			<section className="px-4 sm:px-6 py-12 sm:py-16 bg-white border-y border-line">
+			<section className="px-4 sm:px-6 py-12 sm:py-16 bg-surface border-y border-line">
 				<div className="max-w-3xl mx-auto">
 					<h2 className="text-xl sm:text-2xl font-bold text-ink mb-6 text-center">
 						How it works
@@ -222,7 +219,7 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 
 			<section className="px-4 sm:px-6 py-8 border-t border-line">
 				<div className="max-w-3xl mx-auto">
-					<h2 className="text-sm font-semibold text-gray-500 mb-3 text-center">
+					<h2 className="text-sm font-semibold text-ink-muted mb-3 text-center">
 						Related tools
 					</h2>
 					<ul className="flex flex-wrap justify-center gap-2">
@@ -230,7 +227,7 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 							<li key={slug}>
 								<Link
 									href={`/${slug}`}
-									className="inline-block rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-medium text-ink-soft hover:text-brand-700 hover:border-line-strong"
+									className="inline-block rounded-lg border border-line bg-surface px-3 py-2.5 text-sm font-medium text-ink-soft hover:text-brand-700 hover:border-line-strong"
 								>
 									{TOOL_PAGES[slug].title}
 								</Link>
@@ -240,7 +237,7 @@ export const ToolPageLayout = ({ config }: { config: ToolPageConfig }) => {
 				</div>
 			</section>
 
-			<footer className="px-4 py-8 text-center text-xs text-gray-500">
+			<footer className="px-4 py-8 text-center text-xs text-ink-muted">
 				<Link href="/" className="inline-block py-2 text-indigo-600 hover:underline">
 					SplitBiller
 				</Link>

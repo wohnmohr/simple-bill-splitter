@@ -16,7 +16,7 @@ const jsonLd = {
 			url: `${SITE_URL}/dashboard`,
 			applicationCategory: "FinanceApplication",
 			operatingSystem: "Any",
-			offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
+			offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
 			publisher: { "@id": `${SITE_URL}/#org` },
 		},
 	],

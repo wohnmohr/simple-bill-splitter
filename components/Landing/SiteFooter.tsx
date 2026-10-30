@@ -25,9 +25,8 @@ export const SiteFooter = () => (
 			<div>
 				<Link href="/" className="flex items-center gap-2">
 					<LogoMark />
-					<span className="font-display text-lg font-semibold text-ink">SplitBiller</span>
 				</Link>
-				<p className="mt-3 max-w-xs text-sm text-ink-muted">Split bills in ₹ and settle with UPI. No signup, no app download.</p>
+				<p className="mt-3 max-w-xs text-sm text-ink-muted">Split bills with friends, privately. No signup, no app download.</p>
 				<div className="mt-4 flex flex-wrap gap-2">
 					<a
 						href="https://www.producthunt.com/products/split-biller?utm_source=badge&utm_medium=embed"

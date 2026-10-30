@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Expense, ExpenseComment, Person, Currency } from "@/types";
 import { Modal } from "@/components/UI/Modal";
 import { Button } from "@/components/UI/Button";
-import { formatCurrency, joinNames } from "@/utils/formatting";
+import { formatCurrency, joinNames, recordedNote } from "@/utils/formatting";
 import { expensePayers, expenseShares, minorUnits, splitChoice } from "@/utils/calculations";
 import { MAX_COMMENT } from "@/utils/groupOps";
 import { ArrowUp, Pencil, Trash2 } from "lucide-react";
@@ -60,12 +60,8 @@ export const ExpenseViewModal = ({
 							<span className="font-medium text-ink-soft">
 								{getPersonName(expense.participants[0])}
 							</span>
-							{expense.createdAt &&
-								` · ${new Date(expense.createdAt).toLocaleDateString("en-IN", {
-									day: "numeric",
-									month: "short",
-								})}`}
 						</p>
+						<p className="mt-0.5 text-sm text-ink-muted">{recordedNote(expense, meId, getPersonName)}</p>
 					</div>
 					<p className="text-sm text-ink-muted">
 						Recorded in SplitBiller as settled. Delete it if the money didn&apos;t

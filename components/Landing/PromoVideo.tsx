@@ -92,7 +92,7 @@ export const PromoVideo = () => {
 		return (
 			<div className="surface relative w-full overflow-hidden shadow-raised">
 				<img src={POSTER} alt="SplitBiller: see who owes whom" width={1280} height={720} decoding="async" className="block aspect-video w-full object-cover" />
-				<p className="absolute inset-x-0 bottom-0 bg-ink/70 px-4 py-2 text-center text-sm text-white">
+				<p className="absolute inset-x-0 bottom-0 bg-black/70 px-4 py-2 text-center text-sm text-white">
 					The video couldn&apos;t load right now.
 				</p>
 			</div>
@@ -147,7 +147,7 @@ export const PromoVideo = () => {
 						aria-label={`Play video: ${LABEL}`}
 						className="absolute inset-0 flex items-center justify-center bg-ink/5 transition-colors hover:bg-ink/10"
 					>
-						<span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-700 text-white shadow-raised">
+						<span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-700 text-on-brand shadow-raised">
 							<Play className="ml-1 h-7 w-7" fill="currentColor" />
 						</span>
 					</button>

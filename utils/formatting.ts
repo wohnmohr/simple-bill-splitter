@@ -29,3 +29,24 @@ export const fromDateInput = (value: string) => {
 	const [y, m, d] = value.split("-").map(Number);
 	return new Date(y, m - 1, d, 12).getTime();
 };
+
+/**
+ * Who recorded a payment and when, for the payments list: "Recorded by you · 3:40 pm",
+ * "Recorded by Ben · 28 Oct", or just "Recorded" on older entries that kept neither.
+ */
+export const recordedNote = (
+	payment: { recordedBy?: string; createdAt?: number },
+	meId: string | null | undefined,
+	nameOf: (id: string) => string,
+	now = Date.now()
+): string => {
+	const who = payment.recordedBy ? (payment.recordedBy === meId ? "you" : nameOf(payment.recordedBy)) : "";
+	let when = "";
+	if (payment.createdAt) {
+		const at = new Date(payment.createdAt);
+		when = at.toDateString() === new Date(now).toDateString()
+			? at.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })
+			: at.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+	}
+	return `Recorded${who ? ` by ${who}` : ""}${when ? ` · ${when}` : ""}`;
+};

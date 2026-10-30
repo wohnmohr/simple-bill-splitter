@@ -88,8 +88,8 @@ export const RestaurantCalculator = () => {
 								onClick={() => setChargeType(id)}
 								className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
 									chargeType === id
-										? "bg-indigo-600 text-white"
-										: "bg-gray-100 text-gray-700 hover:bg-gray-200"
+										? "bg-indigo-600 text-on-brand"
+										: "bg-paper text-ink-soft hover:bg-line"
 								}`}
 							>
 								{label}
