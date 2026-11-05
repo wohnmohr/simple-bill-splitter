@@ -17,9 +17,9 @@
     "@vercel/analytics": "^1.4.0",
     "libsodium-wrappers-sumo": "0.8.4",
     "lucide-react": "^0.562.0",
-    "next": "^16.4.1",
+    "next": "^16.4.5",
     "onnxruntime-web": "1.30.0",
-    "posthog-js": "^1.438.10",
+    "posthog-js": "^1.446.3",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -35,9 +35,23 @@
     "@types/web-push": "3.6.4",
     "autoprefixer": "^10.4.18",
     "eslint": "^8",
-    "eslint-config-next": "^16.4.1",
-    "postcss": "^8",
+    "eslint-config-next": "^16.4.5",
+    "postcss": "^8.5.32",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "overrides": {
+      "nanoid": "^3.3.18",
+      "brace-expansion@<1.1.21": "1.1.21",
+      "minimatch@<3.1.4": "3.1.4",
+      "js-yaml@>=4 <4.3.2": "^4.3.2",
+      "flatted": "^3.4.2",
+      "picomatch@<2.3.2": "2.3.2",
+      "picomatch@>=4 <4.0.4": "4.0.4",
+      "zod@<4.6.6": "^4.6.6",
+      "ajv@<6.14.0": "6.14.0",
+      "postcss-selector-parser@<6.1.5": "6.1.5"
+    }
   }
 }
