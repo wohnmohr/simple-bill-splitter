@@ -2,7 +2,8 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Check, Copy, Info, MessageCircle, Plus, Shuffle, X } from "lucide-react";
-import { Exclusion, SantaPayload, drawSecretSanta, encodeRevealLink } from "@/utils/secretSanta";
+import { Exclusion, SantaPayload, drawSecretSanta, encodeRevealLink, santaGroup } from "@/utils/secretSanta";
+import { SaveAsGroupCard } from "@/components/PayStory/SaveAsGroupCard";
 import { fieldClass, labelClass, useCopy, useTrackResult } from "./shared";
 import { track } from "@/lib/analytics";
 import { sendViaWhatsApp } from "@/utils/whatsapp";
@@ -214,37 +215,47 @@ export const SecretSantaGenerator = () => {
 
 			<div className="space-y-4" aria-live="polite">
 				{draw ? (
-					<div className="surface shadow-raised space-y-3 p-4 sm:p-5">
-						<div>
-							<p className="label-text">Drawn — send each person their link</p>
-							<p className="font-display text-xl font-semibold text-ink">{draw.event}</p>
+					<>
+						<div className="surface shadow-raised space-y-3 p-4 sm:p-5">
+							<div>
+								<p className="label-text">Drawn — send each person their link</p>
+								<p className="font-display text-xl font-semibold text-ink">{draw.event}</p>
+							</div>
+							<p className="flex items-start gap-2 rounded-xl bg-paper px-3 py-2.5 text-sm text-ink-soft">
+								<Info className="mt-0.5 h-4 w-4 shrink-0" />
+								<span>
+									Matches aren’t shown here, so you can play too. Each link reveals only that
+									person’s match — send it to its owner only, and don’t open the others.
+								</span>
+							</p>
+							<ul className="divide-y divide-line rounded-xl border border-line">
+								{draw.links.map(({ name, url }) => (
+									<li key={name} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+										<span className="min-w-0 truncate font-medium text-ink">{name}</span>
+										<span className="flex gap-2">
+											<button type="button" onClick={() => whatsapp(name, url)} className="btn-secondary !px-3 !py-2">
+												{copiedFor === name ? <Check className="h-4 w-4 text-positive" /> : <MessageCircle className="h-4 w-4" />}
+												{copiedFor === name ? "Copied" : "WhatsApp"}
+											</button>
+											<CopyLink url={url} />
+										</span>
+									</li>
+								))}
+							</ul>
+							<p className="text-xs text-ink-muted">
+								Nothing is stored. If you draw again, the old links stop being right — tell
+								everyone to use the new ones.
+							</p>
 						</div>
-						<p className="flex items-start gap-2 rounded-xl bg-paper px-3 py-2.5 text-sm text-ink-soft">
-							<Info className="mt-0.5 h-4 w-4 shrink-0" />
-							<span>
-								Matches aren’t shown here, so you can play too. Each link reveals only that
-								person’s match — send it to its owner only, and don’t open the others.
-							</span>
-						</p>
-						<ul className="divide-y divide-line rounded-xl border border-line">
-							{draw.links.map(({ name, url }) => (
-								<li key={name} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
-									<span className="min-w-0 truncate font-medium text-ink">{name}</span>
-									<span className="flex gap-2">
-										<button type="button" onClick={() => whatsapp(name, url)} className="btn-secondary !px-3 !py-2">
-											{copiedFor === name ? <Check className="h-4 w-4 text-positive" /> : <MessageCircle className="h-4 w-4" />}
-											{copiedFor === name ? "Copied" : "WhatsApp"}
-										</button>
-										<CopyLink url={url} />
-									</span>
-								</li>
-							))}
-						</ul>
-						<p className="text-xs text-ink-muted">
-							Nothing is stored. If you draw again, the old links stop being right — tell
-							everyone to use the new ones.
-						</p>
-					</div>
+						<SaveAsGroupCard
+							heading="Split the party costs"
+							body={`Make a group with these ${draw.links.length} people for the food, decorations and venue. Add what you spend, and everyone sees what they owe.`}
+							toGroup={() => santaGroup(draw.event, draw.links.map((l) => l.name))}
+							emptyMessage="Add everyone first."
+							action="Make the group"
+							onSaved={(snapshot) => track("santa_saved_as_group", { from: "draw", members: snapshot.members.length })}
+						/>
+					</>
 				) : (
 					<div className="surface p-6 text-center text-sm text-ink-muted">
 						Add everyone and tap “Draw names”.

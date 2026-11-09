@@ -45,6 +45,12 @@ export const LATER: PlannedItem[] = [
 /** Most recent first. */
 export const SHIPPED: { month: string; items: ShippedItem[] }[] = [
 	{
+		month: "November 2026",
+		items: [
+			{ title: "Secret Santa: turn the draw into a group for the party costs", href: "/secret-santa-generator" },
+		],
+	},
+	{
 		month: "October 2026",
 		items: [
 			{ title: "Move your groups from another browser: paste your recovery link or a group link", href: "/dashboard" },

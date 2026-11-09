@@ -1,4 +1,7 @@
 /** Secret Santa draw and the private "reveal" links built from it. */
+import type { ShareSnapshot } from "@/types/share";
+import { localCurrency } from "@/utils/localCurrency";
+import { cleanText } from "@/utils/text";
 
 export type Exclusion = [string, string];
 
@@ -100,4 +103,17 @@ export function decodeRevealHash(hash: string): SantaPayload | null {
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * A group for the party's costs (food, decorations, the venue) with the same
+ * people. `me` is who's making it, when known; otherwise the app asks later.
+ */
+export function santaGroup(event: string, names: string[], me?: string): { snapshot: ShareSnapshot; meId?: string } {
+	const members = names.map((n) => cleanText(n, 40)).filter(Boolean).map((name, i) => ({ id: `p${i + 1}`, name }));
+	const meId = me === undefined ? undefined : members.find((m) => m.name === cleanText(me, 40))?.id;
+	return {
+		snapshot: { name: cleanText(event, 60) || "Secret Santa", currency: localCurrency(), members, expenses: [] },
+		...(meId ? { meId } : {}),
+	};
 }

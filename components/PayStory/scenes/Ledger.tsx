@@ -68,6 +68,8 @@ export const LedgerScene = ({ t, d }: { t: SplitTemplate; d: SplitDraft }) => {
 								</tr>
 							</tbody>
 						</table>
+						{/* People tap the rows to type names: say where the names come from. */}
+						<p className="text-xs text-ink-muted">Each {t.who} adds their own name when they pay.</p>
 
 						<div className="grid gap-x-6 pt-2 text-sm text-ink sm:grid-cols-2">
 							<p className="flex h-11 items-center gap-2"><span className="shrink-0 text-ink-muted">Collected by</span><NameField d={d} grow className="font-display text-lg italic" /></p>

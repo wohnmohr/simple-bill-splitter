@@ -9,14 +9,15 @@ type Props = {
 	heading: string;
 	body: string;
 	/** Builds the group from the split as it stands now. */
-	toGroup: () => { snapshot: ShareSnapshot; meId: string };
+	toGroup: () => { snapshot: ShareSnapshot; meId?: string };
 	/** Shown when there's nobody to put in the group yet. */
 	emptyMessage: string;
 	onSaved: (snapshot: ShareSnapshot) => void;
+	action?: string;
 };
 
 /** The organiser's way from a split link to a group: everyone in it becomes a member, and the app opens on it. */
-export const SaveAsGroupCard = ({ heading, body, toGroup, emptyMessage, onSaved }: Props) => {
+export const SaveAsGroupCard = ({ heading, body, toGroup, emptyMessage, onSaved, action = "Save as a group" }: Props) => {
 	const [error, setError] = useState("");
 
 	const save = () => {
@@ -34,7 +35,7 @@ export const SaveAsGroupCard = ({ heading, body, toGroup, emptyMessage, onSaved 
 			</h2>
 			<p className="mt-1 text-sm text-ink-soft">{body}</p>
 			<button type="button" onClick={save} className="btn-primary mt-3 w-full !justify-center">
-				Save as a group
+				{action}
 			</button>
 			{error && (
 				<p role="alert" className="mt-2 text-sm text-negative">
