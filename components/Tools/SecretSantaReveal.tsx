@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Gift, Lock } from "lucide-react";
-import { SantaPayload, decodeRevealHash } from "@/utils/secretSanta";
+import { SantaPayload, decodeRevealHash, santaGroup } from "@/utils/secretSanta";
+import { SaveAsGroupCard } from "@/components/PayStory/SaveAsGroupCard";
 import { TrackedLink } from "@/components/UI/TrackedLink";
 import { track } from "@/lib/analytics";
 
@@ -11,6 +12,8 @@ import { track } from "@/lib/analytics";
 export const SecretSantaReveal = () => {
 	const [state, setState] = useState<"loading" | "invalid" | SantaPayload>("loading");
 	const [shown, setShown] = useState(false);
+	// The party-costs offer waits until they've seen their match, so it never competes with it.
+	const [revealed, setRevealed] = useState(false);
 
 	useEffect(() => {
 		const payload = decodeRevealHash(window.location.hash);
@@ -68,6 +71,7 @@ export const SecretSantaReveal = () => {
 							type="button"
 							onClick={() => {
 								setShown(true);
+								setRevealed(true);
 								track("share_link_opened", { source: "secret-santa" });
 							}}
 							className="btn-primary w-full !py-3"
@@ -77,6 +81,19 @@ export const SecretSantaReveal = () => {
 					</>
 				)}
 			</div>
+
+			{revealed && (
+				<div className="text-left">
+					<SaveAsGroupCard
+						heading="Splitting the party costs?"
+						body={`Start a group for ${state.e}, add who’s coming, and see who owes what for the food and decorations.`}
+						toGroup={() => santaGroup(state.e, [state.g], state.g)}
+						emptyMessage="This link is missing your name."
+						onSaved={() => track("santa_saved_as_group", { from: "reveal", members: 1 })}
+						action="Start a group"
+					/>
+				</div>
+			)}
 
 			<p className="text-xs text-ink-muted">
 				Keep it secret — this link shows your match to anyone who opens it. Nothing is stored on our servers.

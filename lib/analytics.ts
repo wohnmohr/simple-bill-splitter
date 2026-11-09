@@ -55,6 +55,7 @@ export type AnalyticsEvent =
 	| "bill_payment_marked"
 	| "bill_saved_as_group"
 	| "split_saved_as_group"
+	| "santa_saved_as_group"
 	| "group_sync_enabled"
 	| "group_sync_link_shared"
 	| "group_joined"

@@ -53,6 +53,14 @@ export function useOrderScan(where: string) {
 					setState({ status: "error", message: "Couldn’t open that image. Try another screenshot." });
 					return null;
 				}
+				if (ocr && err instanceof ocr.ScannerUnsupportedError) {
+					track("order_scan_failed", { where, reason: "unsupported", seconds: seconds() });
+					setState({
+						status: "error",
+						message: "This browser blocks the scanner (Edge’s enhanced security does this). Add the items yourself, or scan on your phone.",
+					});
+					return null;
+				}
 				track("order_scan_failed", { where, reason: "engine", seconds: seconds() });
 				setState({ status: "error", message: "The scanner couldn’t start. Check your connection and try again." });
 				return null;
