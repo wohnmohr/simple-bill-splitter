@@ -18,6 +18,13 @@ let fromCache = false; // this scan's engine files came from the browser's cache
 /** The file isn't an image the browser can open (corrupt, or a format it can't decode). */
 export class UnreadableImageError extends Error {}
 
+/** This browser can't run the reader: WebAssembly with SIMD is off (e.g. Edge's enhanced security mode). */
+export class ScannerUnsupportedError extends Error {}
+
+// The smallest module that uses a SIMD instruction: it validates only where the reader can run.
+const SIMD_PROBE = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0, 10, 10, 1, 8, 0, 65, 0, 253, 15, 253, 98, 11]);
+const canRunReader = () => typeof WebAssembly === "object" && WebAssembly.validate(SIMD_PROBE);
+
 /** How far along a scan is (0–1), and what it's doing, in words. */
 export type ScanProgress = { share: number; step: string };
 
@@ -78,6 +85,7 @@ async function prepare(file: Blob): Promise<Rgba> {
 
 /** The text of an image, read on this device. `progress` hears each step as it happens. */
 export async function readImageText(file: Blob, progress?: (p: ScanProgress) => void): Promise<string> {
+	if (!canRunReader()) throw new ScannerUnsupportedError("WebAssembly SIMD is unavailable");
 	fromCache = false;
 	progress?.(describe({ stage: "prepare", done: 0, total: 1 }));
 	const image = await prepare(file).catch((err) => {

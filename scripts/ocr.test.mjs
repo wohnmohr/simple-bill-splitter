@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-const { readImageText, UnreadableImageError } = await import("../lib/ocr.ts");
+const { readImageText, ScannerUnsupportedError, UnreadableImageError } = await import("../lib/ocr.ts");
 const { POST: shareTarget } = await import("../app/share-target/route.ts");
 
 // A 1x1 white image, as far as prepare() can tell.
@@ -46,6 +46,17 @@ test("a reader worker that fails to load ends the scan, and the next scan starts
 	assert.equal(workers[0].terminated, true);
 	await assert.rejects(readImageText(blob), /worker failed/);
 	assert.equal(workers.length, 2);
+});
+
+test("a browser with WebAssembly turned off says so, instead of blaming the connection", async () => {
+	openableImage();
+	const real = globalThis.WebAssembly;
+	try {
+		delete globalThis.WebAssembly; // what Edge's enhanced security mode does
+		await assert.rejects(readImageText(new Blob(["png"], { type: "image/png" })), ScannerUnsupportedError);
+	} finally {
+		globalThis.WebAssembly = real;
+	}
 });
 
 test("a share that reaches the server (no service worker yet) still opens Add expense", () => {
