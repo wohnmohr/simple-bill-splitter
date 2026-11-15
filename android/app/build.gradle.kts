@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -6,6 +8,11 @@ plugins {
 // The site the app opens. Its /.well-known/assetlinks.json must list this app's signing keys.
 // www, not the bare domain: Vercel redirects splitbiller.com to www, and Chrome treats them as different origins.
 val host = "www.splitbiller.com"
+
+// The upload key, from android/keystore.properties (gitignored, written by hand, never committed).
+// Without it, bundleRelease still builds, unsigned.
+val keystore = rootProject.file("keystore.properties").takeIf { it.exists() }
+    ?.let { f -> Properties().apply { f.inputStream().use { load(it) } } }
 
 android {
     namespace = "com.splitbiller.app"
@@ -31,8 +38,18 @@ android {
         buildConfig = true
     }
 
+    signingConfigs {
+        if (keystore != null) create("upload") {
+            storeFile = rootProject.file(keystore.getProperty("storeFile"))
+            storePassword = keystore.getProperty("storePassword")
+            keyAlias = keystore.getProperty("keyAlias")
+            keyPassword = keystore.getProperty("keyPassword")
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("upload")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
