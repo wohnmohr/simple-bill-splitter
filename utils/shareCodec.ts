@@ -4,6 +4,7 @@ import type { CompactSharePayload, ShareSnapshot } from "@/types/share";
 import { splitWeights } from "@/utils/calculations";
 import { ID_RE, toExpense, toPerson } from "@/utils/groupOps";
 import { cleanText } from "@/utils/text";
+import { SITE_URL } from "@/lib/site";
 
 const SHARE_PREFIX = "sb1";
 const SHARE_PATH = "/share";
@@ -187,7 +188,7 @@ export async function encodeShareUrl(
 	const fragment = `${SHARE_PREFIX}.${toBase64Url(keyBytes)}.${toBase64Url(packed)}`;
 	const base =
 		origin ||
-		(typeof window !== "undefined" ? window.location.origin : "https://splitbiller.com");
+		(typeof window !== "undefined" ? window.location.origin : SITE_URL);
 
 	return `${base}${SHARE_PATH}#${fragment}`;
 }
